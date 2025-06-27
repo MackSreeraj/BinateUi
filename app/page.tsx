@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -120,8 +121,92 @@ const resourceLinks = [
   },
 ];
 
+// Import the UsersContent component at the top of the file
+import UsersContent from './components/UsersContent';
+
+// Add a type for the content components
+type ContentComponents = {
+  [key: string]: () => JSX.Element;
+};
+
 export default function Dashboard() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [activeNav, setActiveNav] = useState('Home');
+
+  // Update active nav based on URL
+  useEffect(() => {
+    const nav = searchParams.get('tab');
+    if (nav) {
+      setActiveNav(nav);
+    }
+  }, [searchParams]);
+
+  // Update URL when active nav changes
+  const handleNavClick = (nav: string) => {
+    setActiveNav(nav);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', nav);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
+  // Define the content components
+  const contentComponents: ContentComponents = {
+    'Home': () => (
+      <>
+        <div className="mb-6">
+          <div className="flex items-center space-x-2 mb-2">
+            <Home className="h-5 w-5" />
+            <h1 className="text-2xl font-bold">Home</h1>
+          </div>
+          <p className="text-muted-foreground">
+            Smart content, crafted for your brand—powered by your profile, tone, and channels.
+          </p>
+          <div className="mt-2">
+            <Button variant="link" className="px-0 text-xs text-muted-foreground h-auto">
+              Made with love by <ExternalLink className="ml-1 h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+
+        <div>
+          <h2 className="text-xl font-semibold mb-4">AI Content Engine</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {contentEngineCards.map((card) => {
+              const Icon = card.icon;
+              return (
+                <Card 
+                  key={card.title} 
+                  className="hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => handleNavClick(card.title)}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center space-x-2">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-500">
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <CardTitle className="text-base">{card.title}</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <CardDescription className="text-sm">
+                      {card.description}
+                    </CardDescription>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </>
+    ),
+    'Users': () => <UsersContent />,
+    // Add other content components here as needed
+  };
+
+  // Get the current content component or default to Home
+  const CurrentContent = contentComponents[activeNav] || contentComponents['Home'];
 
   return (
     <div className="min-h-screen bg-background">
@@ -144,12 +229,13 @@ export default function Dashboard() {
             <nav className="space-y-1">
               {navigationItems.map((item) => {
                 const Icon = item.icon;
+                const isActive = activeNav === item.label;
                 return (
                   <button
                     key={item.label}
-                    onClick={() => setActiveNav(item.label)}
+                    onClick={() => handleNavClick(item.label)}
                     className={`flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${
-                      activeNav === item.label 
+                      isActive 
                         ? 'bg-accent text-accent-foreground' 
                         : 'text-muted-foreground'
                     }`}
@@ -165,46 +251,7 @@ export default function Dashboard() {
 
         {/* Main Content */}
         <main className="flex-1 p-6">
-          <div className="mb-6">
-            <div className="flex items-center space-x-2 mb-2">
-              <Home className="h-5 w-5" />
-              <h1 className="text-2xl font-bold">Home</h1>
-            </div>
-            <p className="text-muted-foreground">
-              Smart content, crafted for your brand—powered by your profile, tone, and channels.
-            </p>
-            <div className="mt-2">
-              <Button variant="link" className="px-0 text-xs text-muted-foreground h-auto">
-                Made with love by <ExternalLink className="ml-1 h-3 w-3" />
-              </Button>
-            </div>
-          </div>
-
-          <div>
-            <h2 className="text-xl font-semibold mb-4">AI Content Engine</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {contentEngineCards.map((card) => {
-                const Icon = card.icon;
-                return (
-                  <Card key={card.title} className="hover:shadow-md transition-shadow cursor-pointer">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center space-x-2">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-500">
-                          <Icon className="h-4 w-4" />
-                        </div>
-                        <CardTitle className="text-base">{card.title}</CardTitle>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <CardDescription className="text-sm">
-                        {card.description}
-                      </CardDescription>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
+          <CurrentContent />
         </main>
 
         {/* Right Sidebar */}
