@@ -125,6 +125,9 @@ const resourceLinks = [
 import UsersContent from './components/UsersContent';
 import CompanyProfilesContent from './components/CompanyProfilesContent';
 import WriterProfilesContent from './components/WriterProfilesContent';
+import PlatformProfilesContent from './components/PlatformProfilesContent';
+import TrendsListContent from './components/TrendsListContent';
+import TrendWorkshopContent from './components/TrendWorkshopContent';
 
 // Add a type for the content components
 type ContentComponents = {
@@ -206,6 +209,9 @@ export default function Dashboard() {
     'Users': () => <UsersContent />,
     'Company Profiles': () => <CompanyProfilesContent />,
     'Writer Profiles': () => <WriterProfilesContent />,
+    'Platform Profiles': () => <PlatformProfilesContent />,
+    'Trends List': () => <TrendsListContent />,
+    'Trend Workshop': () => <TrendWorkshopContent />,
     // Add other content components here as needed
   };
 
