@@ -43,11 +43,11 @@ export default function TrendWorkshopContent() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-background p-6">
+    <div className="flex flex-col h-full p-6">
       {/* Idea Selection Dropdown */}
       <div className="relative mb-6 w-64">
         <button
-          className="w-full flex items-center justify-between p-2 border rounded-md bg-white"
+          className="w-full flex items-center justify-between p-2 border rounded-md bg-card text-card-foreground hover:bg-accent/50"
           onClick={() => setIsIdeaDropdownOpen(!isIdeaDropdownOpen)}
         >
           <span>{selectedIdea?.title}</span>
@@ -58,11 +58,11 @@ export default function TrendWorkshopContent() {
           )}
         </button>
         {isIdeaDropdownOpen && (
-          <div className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-lg">
+          <div className="absolute z-10 mt-1 w-full bg-card border rounded-md shadow-lg">
             {ideas.map(idea => (
               <div
                 key={idea.id}
-                className="p-2 hover:bg-gray-100 cursor-pointer"
+                className="p-2 hover:bg-accent/50 cursor-pointer"
                 onClick={() => {
                   setSelectedIdea(idea);
                   setIsIdeaDropdownOpen(false);
@@ -77,33 +77,33 @@ export default function TrendWorkshopContent() {
 
       <div className="space-y-6">
         {/* Section 1: Basic Metadata */}
-        <div className="bg-muted/30 p-4 rounded-lg">
+        <div className="bg-card border p-4 rounded-lg">
           <h2 className="font-medium mb-3">Basic Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <label className="text-sm text-muted-foreground">Status</label>
               <div className="relative mt-1">
                 <button
-                  className="w-full flex items-center justify-between p-2 border rounded-md bg-white"
+                  className="w-full flex items-center justify-between p-2 border rounded-md bg-card hover:bg-accent/50"
                   onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
                 >
-                  <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-200">
+                  <Badge className="bg-purple-900/30 text-purple-300 hover:bg-purple-800/50">
                     {selectedStatus.label}
                   </Badge>
                   <ChevronDown className="h-4 w-4" />
                 </button>
                 {isStatusDropdownOpen && (
-                  <div className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-lg">
+                  <div className="absolute z-10 mt-1 w-full bg-card border rounded-md shadow-lg">
                     {statusOptions.map(status => (
                       <div
                         key={status.value}
-                        className="p-2 hover:bg-gray-100 cursor-pointer flex items-center justify-between"
+                        className="p-2 hover:bg-accent/50 cursor-pointer flex items-center justify-between"
                         onClick={() => {
                           setSelectedStatus(status);
                           setIsStatusDropdownOpen(false);
                         }}
                       >
-                        <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-200">
+                        <Badge className="bg-purple-900/30 text-purple-300 hover:bg-purple-800/50">
                           {status.label}
                         </Badge>
                         {selectedStatus.value === status.value && (
@@ -139,7 +139,7 @@ export default function TrendWorkshopContent() {
         </div>
 
         {/* Section 2: Social Stats Summary */}
-        <div className="bg-white border rounded-lg p-4">
+        <div className="bg-card border rounded-lg p-4">
           <h2 className="font-medium mb-3">Social Stats Summary</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-4">
@@ -171,7 +171,7 @@ export default function TrendWorkshopContent() {
 
         {/* Section 3: User Selection */}
         <div className="flex flex-col md:flex-row gap-6">
-          <div className="flex-1 bg-white border rounded-lg p-4">
+          <div className="flex-1 bg-card border rounded-lg p-4">
             <h2 className="font-medium mb-3">Idea Generation</h2>
             <p className="text-lg font-medium mb-4">
               Select one or many users to the right to generate an Idea for them. 👉
@@ -199,7 +199,7 @@ export default function TrendWorkshopContent() {
           </div>
 
           {/* User Selection Sidebar */}
-          <div className="w-full md:w-80 bg-white border rounded-lg p-4">
+          <div className="w-full md:w-80 bg-card border rounded-lg p-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-medium">Select Users</h3>
               <Button
@@ -213,12 +213,12 @@ export default function TrendWorkshopContent() {
             </div>
 
             {isUserSelectorOpen && (
-              <div className="border rounded-md p-2 mb-4 max-h-60 overflow-y-auto">
+              <div className="border rounded-md p-2 mb-4 max-h-60 overflow-y-auto bg-background">
                 {users.map(user => (
                   <div
                     key={user.id}
                     className={`p-2 rounded-md cursor-pointer flex items-center justify-between ${
-                      selectedUsers.includes(user.id) ? 'bg-blue-50' : 'hover:bg-gray-50'
+                      selectedUsers.includes(user.id) ? 'bg-blue-900/20' : 'hover:bg-accent/50'
                     }`}
                     onClick={() => toggleUserSelection(user.id)}
                   >
