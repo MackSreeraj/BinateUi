@@ -127,21 +127,10 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
-        <div className="flex h-16 items-center justify-between px-6">
-          <div className="flex items-center space-x-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-500">
-              <Leaf className="h-5 w-5" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xs text-muted-foreground">→ windgrowth.com</span>
-            </div>
-          </div>
-          <div className="flex-1 text-center">
-            <h1 className="text-xl md:text-2xl font-bold tracking-tight">
-              AI-Enhanced Operating Systems for Fast-Growth Service Businesses
-            </h1>
-          </div>
-          <div className="w-32"></div>
+        <div className="flex h-16 items-center justify-center">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-green-500 to-emerald-500 bg-clip-text text-transparent">
+            Binate
+          </h1>
         </div>
       </header>
 
