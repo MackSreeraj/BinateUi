@@ -121,8 +121,9 @@ const resourceLinks = [
   },
 ];
 
-// Import the UsersContent component at the top of the file
+// Import the content components
 import UsersContent from './components/UsersContent';
+import CompanyProfilesContent from './components/CompanyProfilesContent';
 
 // Add a type for the content components
 type ContentComponents = {
@@ -202,6 +203,7 @@ export default function Dashboard() {
       </>
     ),
     'Users': () => <UsersContent />,
+    'Company Profiles': () => <CompanyProfilesContent />,
     // Add other content components here as needed
   };
 
