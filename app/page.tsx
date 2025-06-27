@@ -128,6 +128,7 @@ import WriterProfilesContent from './components/WriterProfilesContent';
 import PlatformProfilesContent from './components/PlatformProfilesContent';
 import TrendsListContent from './components/TrendsListContent';
 import TrendWorkshopContent from './components/TrendWorkshopContent';
+import ContentList from './components/ContentList';
 
 // Add a type for the content components
 type ContentComponents = {
@@ -212,6 +213,7 @@ export default function Dashboard() {
     'Platform Profiles': () => <PlatformProfilesContent />,
     'Trends List': () => <TrendsListContent />,
     'Trend Workshop': () => <TrendWorkshopContent />,
+    'Content List': () => <ContentList />,
     // Add other content components here as needed
   };
 
