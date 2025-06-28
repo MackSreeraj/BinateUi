@@ -1,11 +1,47 @@
 'use client';
 
-import { Search, Grid, List, Plus } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Search, Grid, List, Plus, X, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 
 export default function UsersContent() {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [username, setUsername] = useState('');
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setProfileImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Handle form submission here
+    console.log({ username, profileImage });
+    // Reset form
+    setUsername('');
+    setProfileImage(null);
+    setPreview(null);
+    setIsDialogOpen(false);
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -15,7 +51,10 @@ export default function UsersContent() {
             <span>👩‍💻</span> Users
           </h1>
         </div>
-        <Button className="rounded-lg h-10 w-10 p-0 flex items-center justify-center">
+        <Button 
+          className="rounded-lg h-10 w-10 p-0 flex items-center justify-center"
+          onClick={() => setIsDialogOpen(true)}
+        >
           <Plus className="h-5 w-5" />
         </Button>
       </div>
@@ -64,6 +103,77 @@ export default function UsersContent() {
           </div>
         </div>
       </div>
+
+      {/* Add User Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Add New User</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input 
+                id="username" 
+                placeholder="Enter username" 
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Profile Picture</Label>
+              <div 
+                className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={triggerFileInput}
+              >
+                <input 
+                  type="file" 
+                  ref={fileInputRef}
+                  onChange={handleImageChange}
+                  accept="image/*"
+                  className="hidden"
+                />
+                {preview ? (
+                  <div className="flex flex-col items-center">
+                    <img 
+                      src={preview} 
+                      alt="Preview" 
+                      className="h-24 w-24 rounded-full object-cover mb-2"
+                    />
+                    <span className="text-sm text-muted-foreground">Click to change</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center">
+                    <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground">
+                      <span className="font-medium">Click to upload</span> or drag and drop
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">PNG, JPG, JPEG (max. 5MB)</p>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => {
+                  setIsDialogOpen(false);
+                  setUsername('');
+                  setProfileImage(null);
+                  setPreview(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="submit">Create User</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
