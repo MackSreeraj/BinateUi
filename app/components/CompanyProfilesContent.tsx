@@ -241,47 +241,49 @@ export default function CompanyProfilesContent() {
 
                   {/* About Section */}
                   <div className="flex-1">
-                    <h3 className="text-sm font-medium mb-2">About the business</h3>
-                    <p className="whitespace-pre-line">
-                      {selectedCompany.about || 'No information provided.'}
-                    </p>
+                    <div className="mb-4">
+                      <h3 className="text-sm font-semibold text-primary/80 uppercase tracking-wider mb-2 pb-1 border-b border-muted">About the business</h3>
+                      <p className="whitespace-pre-line text-muted-foreground">
+                        {selectedCompany.about || 'No information provided.'}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
                 {/* Company Details */}
                 <div className="space-y-6">
                   {selectedCompany.services && (
-                    <div>
-                      <h3 className="text-sm font-medium mb-2">Services</h3>
-                      <p>{selectedCompany.services}</p>
+                    <div className="mb-6">
+                      <h3 className="text-sm font-semibold text-primary/80 uppercase tracking-wider mb-2 pb-1 border-b border-muted">Services</h3>
+                      <p className="text-muted-foreground">{selectedCompany.services}</p>
                     </div>
                   )}
 
                   {selectedCompany.mission && (
-                    <div>
-                      <h3 className="text-sm font-medium mb-2">Mission</h3>
-                      <p>{selectedCompany.mission}</p>
+                    <div className="mb-6">
+                      <h3 className="text-sm font-semibold text-primary/80 uppercase tracking-wider mb-2 pb-1 border-b border-muted">Mission</h3>
+                      <p className="text-muted-foreground">{selectedCompany.mission}</p>
                     </div>
                   )}
 
                   {selectedCompany.valueProposition && (
-                    <div>
-                      <h3 className="text-sm font-medium mb-2">Unique Value Proposition</h3>
-                      <p className="whitespace-pre-line">{selectedCompany.valueProposition}</p>
+                    <div className="mb-6">
+                      <h3 className="text-sm font-semibold text-primary/80 uppercase tracking-wider mb-2 pb-1 border-b border-muted">Unique Value Proposition</h3>
+                      <p className="whitespace-pre-line text-muted-foreground">{selectedCompany.valueProposition}</p>
                     </div>
                   )}
 
                   {selectedCompany.painPoints && (
-                    <div>
-                      <h3 className="text-sm font-medium mb-2">Client Pain Points</h3>
-                      <p className="whitespace-pre-line">{selectedCompany.painPoints}</p>
+                    <div className="mb-6">
+                      <h3 className="text-sm font-semibold text-primary/80 uppercase tracking-wider mb-2 pb-1 border-b border-muted">Client Pain Points</h3>
+                      <p className="whitespace-pre-line text-muted-foreground">{selectedCompany.painPoints}</p>
                     </div>
                   )}
 
                   {selectedCompany.brandVoice && (
-                    <div>
-                      <h3 className="text-sm font-medium mb-2">Brand Voice</h3>
-                      <p className="whitespace-pre-line">{selectedCompany.brandVoice}</p>
+                    <div className="mb-6">
+                      <h3 className="text-sm font-semibold text-primary/80 uppercase tracking-wider mb-2 pb-1 border-b border-muted">Brand Voice</h3>
+                      <p className="whitespace-pre-line text-muted-foreground">{selectedCompany.brandVoice}</p>
                     </div>
                   )}
                 </div>
