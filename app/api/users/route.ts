@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import mongoClient from '@/lib/mongodb';
 import { saveFile } from '@/lib/file-upload';
+import { triggerUserCreatedWebhook } from '@/lib/webhook';
 
 // GET all users
 export async function GET() {
@@ -55,13 +56,19 @@ export async function POST(request: Request) {
       updatedAt: new Date()
     });
 
+    const user = {
+      id: result.insertedId,
+      username,
+      imageUrl
+    };
+
+    // Trigger webhook in the background without awaiting
+    triggerUserCreatedWebhook(user.id.toString())
+      .catch(error => console.error('Background webhook error:', error));
+
     return NextResponse.json({
       success: true,
-      user: {
-        id: result.insertedId,
-        username,
-        imageUrl
-      }
+      user
     });
 
   } catch (error) {
