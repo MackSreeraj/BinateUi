@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PenTool, Search, Grid, List, Filter, Plus, Image as ImageIcon, Upload, Loader2 } from 'lucide-react';
+import { PenTool, Search, Grid, List, Filter, Plus, Image as ImageIcon, Upload, Loader2, RefreshCw } from 'lucide-react';
+import { PlatformProfilesTable, PlatformProfile } from './PlatformProfilesTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -23,6 +24,8 @@ export default function WriterProfilesContent() {
   const [selectedWriter, setSelectedWriter] = useState<WriterProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isTraining, setIsTraining] = useState(false);
+  const [platformProfiles, setPlatformProfiles] = useState<PlatformProfile[]>([]);
+  const [isLoadingProfiles, setIsLoadingProfiles] = useState(false);
 
 
   const fetchWriters = async () => {
@@ -46,12 +49,69 @@ export default function WriterProfilesContent() {
     fetchWriters();
   }, []);
 
+  useEffect(() => {
+    if (selectedWriter) {
+      fetchPlatformProfiles(selectedWriter._id);
+    } else {
+      setPlatformProfiles([]);
+    }
+  }, [selectedWriter]);
+
   const handleWriterSelect = (writer: WriterProfile) => {
     setSelectedWriter(writer);
   };
 
   const handleProfileCreated = () => {
     fetchWriters();
+  };
+
+  const fetchPlatformProfiles = async (writerId: string) => {
+    try {
+      setIsLoadingProfiles(true);
+      
+      console.log(`Fetching platform profile for writer ID: ${writerId}`);
+      // Fetch the platform profile for the current writer
+      const response = await fetch(`/api/writer-profiles/${writerId}/platform-profile`, {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      
+      const responseData = await response.json();
+      console.log('API Response:', { status: response.status, data: responseData });
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          console.log('No platform profile found for this writer yet');
+          // No platform profile exists yet, which is fine
+          setPlatformProfiles([]);
+          return;
+        }
+        throw new Error(responseData.error || 'Failed to fetch platform profile');
+      }
+      
+      // If we get an error message in the response
+      if (responseData.error) {
+        console.error('Error in response:', responseData.error);
+        throw new Error(responseData.error);
+      }
+      
+      console.log('Setting platform profiles with data:', responseData);
+      setPlatformProfiles([responseData]);
+      
+    } catch (error) {
+      console.error('Error fetching platform profile:', error);
+      // Type check the error before accessing its properties
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      // Only show error if it's not a 404 (which we handle gracefully)
+      if (!errorMessage.includes('404')) {
+        toast.error('Failed to load platform profile. Please try training the model first.');
+      }
+      setPlatformProfiles([]);
+    } finally {
+      setIsLoadingProfiles(false);
+    }
   };
 
   const handleTrainModel = async () => {
@@ -75,7 +135,10 @@ export default function WriterProfilesContent() {
       }
 
       const result = await response.json();
-      toast.success('Training model started successfully');
+      toast.success('Training completed successfully');
+      
+      // After training, fetch the platform profiles
+      fetchPlatformProfiles(selectedWriter._id);
     } catch (error) {
       console.error('Error training model:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to start training');
@@ -233,27 +296,50 @@ export default function WriterProfilesContent() {
                   </div>
                 )}
                 
-                {/* Train Model Button */}
-                <div className="flex justify-end pt-4 border-t mt-6">
-                  <Button 
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white transition-colors"
-                    onClick={handleTrainModel}
-                    disabled={isTraining}
-                  >
-                    {isTraining ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Training...
-                      </>
-                    ) : (
-                      <>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                        Train Model
-                      </>
-                    )}
-                  </Button>
+                {/* Train Model Section */}
+                <div className="mt-8 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">Platform Profiles</h3>
+                    <div className="flex space-x-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => selectedWriter && fetchPlatformProfiles(selectedWriter._id)}
+                        disabled={isLoadingProfiles}
+                      >
+                        <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingProfiles ? 'animate-spin' : ''}`} />
+                        Refresh
+                      </Button>
+                      <Button 
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                        onClick={handleTrainModel}
+                        disabled={isTraining || isLoadingProfiles || platformProfiles.length > 0}
+                        size="sm"
+                        title={platformProfiles.length > 0 ? 'Model already trained' : 'Train model'}
+                      >
+                        {isTraining ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Training...
+                          </>
+                        ) : (
+                          <>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Train Model
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="rounded-lg border p-4 bg-muted/20">
+                    <PlatformProfilesTable 
+                      profiles={platformProfiles} 
+                      isLoading={isLoadingProfiles} 
+                    />
+                  </div>
                 </div>
               </>
             ) : (
