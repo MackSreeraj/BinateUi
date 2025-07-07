@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 export default function CreateWriterProfileModal({ onSuccess }: { onSuccess: () => void }) {
   const [open, setOpen] = useState(false);
@@ -54,16 +55,17 @@ export default function CreateWriterProfileModal({ onSuccess }: { onSuccess: () 
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create writer profile');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to create writer profile');
       }
 
+      const data = await response.json();
       toast.success('Writer profile created successfully');
-
       setOpen(false);
       onSuccess();
     } catch (error) {
       console.error('Error creating writer profile:', error);
-      toast.error('Failed to create writer profile');
+      toast.error(error instanceof Error ? error.message : 'Failed to create writer profile');
     } finally {
       setIsSubmitting(false);
     }
@@ -158,11 +160,15 @@ export default function CreateWriterProfileModal({ onSuccess }: { onSuccess: () 
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+            >
               {isSubmitting ? 'Creating...' : 'Create Profile'}
             </Button>
           </div>
         </form>
+
       </DialogContent>
     </Dialog>
   );

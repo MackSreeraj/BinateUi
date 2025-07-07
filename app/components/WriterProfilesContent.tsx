@@ -54,7 +54,7 @@ export default function WriterProfilesContent() {
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden bg-background">
       {/* Header */}
       <div className="flex items-center justify-between pb-4">
         <div className="flex items-center space-x-2">
@@ -87,10 +87,10 @@ export default function WriterProfilesContent() {
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden border rounded-lg">
+      <div className="flex flex-1 overflow-hidden bg-background border-0">
         {/* Left Panel - Writer List */}
-        <div className="w-64 border-r overflow-y-auto">
-          <div className="space-y-1 p-2">
+        <div className="w-64 border-r border-muted/50 overflow-y-auto bg-background">
+          <div className="space-y-0.5 p-1">
             {isLoading ? (
               <div className="flex justify-center p-4">
                 <Loader2 className="h-6 w-6 animate-spin" />
@@ -103,7 +103,7 @@ export default function WriterProfilesContent() {
               writers.map((writer) => (
                 <div
                   key={writer._id}
-                  className={`flex items-center p-3 rounded-lg cursor-pointer ${
+                  className={`flex items-center p-1 rounded-lg cursor-pointer ${
                     selectedWriter?._id === writer._id ? 'bg-muted' : 'hover:bg-muted/50'
                   }`}
                   onClick={() => handleWriterSelect(writer)}
@@ -119,7 +119,7 @@ export default function WriterProfilesContent() {
                       <PenTool className="h-4 w-4 text-muted-foreground" />
                     )}
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 space-y-1">
                     <div className="font-medium truncate">{writer.name}</div>
                     <div className="text-xs text-muted-foreground truncate">
                       {writer.description || 'No description'}
@@ -132,12 +132,12 @@ export default function WriterProfilesContent() {
         </div>
 
         {/* Right Panel - Writer Details */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-          <div className="space-y-6">
+        <div className="flex-1 overflow-y-auto p-2 bg-background">
+          <div className="space-y-4">
             {selectedWriter ? (
               <>
                 {/* Header with Edit button */}
-                <div className="flex justify-between items-start">
+                <div className="flex justify-between items-start gap-2">
                   <div>
                     <h2 className="text-2xl font-bold">{selectedWriter.name}</h2>
                     <p className="text-sm text-muted-foreground">
@@ -153,38 +153,38 @@ export default function WriterProfilesContent() {
                 </div>
 
                 {/* Profile Picture and Description */}
-                <div className="flex flex-col md:flex-row gap-6">
-                  {/* Profile Picture */}
-                  <div className="w-full md:w-1/3 space-y-2">
-                    <div className="w-full max-w-[200px] aspect-square rounded-lg border-2 border-dashed flex items-center justify-center bg-muted/20 overflow-hidden">
-                      {selectedWriter.image ? (
-                        <img 
-                          src={selectedWriter.image} 
-                          alt={selectedWriter.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="text-center p-4">
-                          <ImageIcon className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
-                          <p className="text-sm text-muted-foreground">No Image</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Description */}
-                  <div className="flex-1">
-                    <h3 className="text-sm font-medium mb-2">Description</h3>
-                    <div className="prose prose-sm dark:prose-invert">
-                      {selectedWriter.description || 'No description provided.'}
-                    </div>
+              <div className="flex flex-col md:flex-row gap-2">
+                {/* Profile Picture */}
+                <div className="w-full md:w-1/3">
+                  <div className="w-full max-w-[200px] aspect-square rounded-lg border-2 border-dashed flex items-center justify-center bg-muted/20 overflow-hidden">
+                    {selectedWriter.image ? (
+                      <img 
+                        src={selectedWriter.image} 
+                        alt={selectedWriter.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-center p-4">
+                        <ImageIcon className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground">No Image</p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
+                {/* Description */}
+                <div className="flex-1 space-y-1">
+                  <h3 className="text-sm font-medium">Description</h3>
+                  <div className="prose prose-sm dark:prose-invert p-0">
+                    {selectedWriter.description || 'No description provided.'}
+                  </div>
+                </div>
+              </div>
+
                 {/* Document URL */}
                 {selectedWriter.documentUrl && (
-                  <div className="pt-4">
-                    <h3 className="text-sm font-medium mb-2">Document</h3>
+                  <div className="pt-2 space-y-1">
+                    <h3 className="text-sm font-medium">Document</h3>
                     <div className="flex items-center space-x-2">
                       <a 
                         href={selectedWriter.documentUrl} 
