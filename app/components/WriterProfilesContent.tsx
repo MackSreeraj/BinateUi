@@ -19,6 +19,41 @@ interface WriterProfile {
   updatedAt: string;
 }
 
+// Helper function to get the correct image URL
+const getImageUrl = (imagePath?: string) => {
+  if (!imagePath) {
+    console.log('No image path provided');
+    return null;
+  }
+  
+  // Clean up the path
+  const cleanPath = imagePath.trim();
+  
+  // If it's already a full URL, return as is
+  if (cleanPath.startsWith('http')) {
+    console.log('Using full URL:', cleanPath);
+    return cleanPath;
+  }
+  
+  // If it's a path starting with /uploads, make sure it's served from the public directory
+  if (cleanPath.startsWith('/uploads/')) {
+    console.log('Using absolute upload path:', cleanPath);
+    return cleanPath;
+  }
+  
+  // Handle case where the path might already include uploads but without leading slash
+  if (cleanPath.startsWith('uploads/')) {
+    const path = `/${cleanPath}`;
+    console.log('Fixed upload path:', path);
+    return path;
+  }
+  
+  // For relative paths, assume they're in the uploads directory
+  const path = `/uploads/${cleanPath}`;
+  console.log('Constructed upload path:', path);
+  return path;
+};
+
 export default function WriterProfilesContent() {
   const [writers, setWriters] = useState<WriterProfile[]>([]);
   const [selectedWriter, setSelectedWriter] = useState<WriterProfile | null>(null);
@@ -26,6 +61,8 @@ export default function WriterProfilesContent() {
   const [isTraining, setIsTraining] = useState(false);
   const [platformProfiles, setPlatformProfiles] = useState<PlatformProfile[]>([]);
   const [isLoadingProfiles, setIsLoadingProfiles] = useState(false);
+  const [trainingError, setTrainingError] = useState<string | null>(null);
+  const [trainingId, setTrainingId] = useState<string | null>(null);
 
 
   const fetchWriters = async () => {
@@ -140,6 +177,85 @@ export default function WriterProfilesContent() {
     }
   };
 
+
+
+  // Effect to check for training completion - runs indefinitely until data is found
+  useEffect(() => {
+    if (!trainingId) return;
+    
+    let isMounted = true;
+    const checkInterval = 1000; // 1 second between checks
+    let timeoutId: NodeJS.Timeout;
+
+    const checkTrainingStatus = async () => {
+      if (!isMounted) return;
+      
+      try {
+        // First check the training status
+        const response = await fetch(`/api/train-model/status?trainingId=${trainingId}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Training status check:', data);
+        
+        // If training is completed or in progress, check for the platform profile
+        if (data.status === 'completed' || data.status === 'in_progress' || data.status === 'pending') {
+          if (selectedWriter?._id) {
+            try {
+              // Try to fetch the platform profile
+              const profileResponse = await fetch(`/api/writer-profiles/${selectedWriter._id}/platform-profile`);
+              
+              if (profileResponse.ok) {
+                const profileData = await profileResponse.json();
+                
+                // If we have valid profile data, we're done
+                if (profileData && !profileData.error) {
+                  setPlatformProfiles([profileData]);
+                  setIsTraining(false);
+                  toast.success('Training completed and data is ready!');
+                  return;
+                }
+              }
+              // If we get here, the profile isn't ready yet
+              console.log('Profile data not ready yet, checking again...');
+            } catch (profileError) {
+              console.log('Error fetching profile, will retry:', profileError);
+              // Don't throw, we'll just try again
+            }
+          }
+          
+          // Schedule the next check
+          if (isMounted) {
+            timeoutId = setTimeout(checkTrainingStatus, checkInterval);
+          }
+        }
+        // Handle failed state
+        else if (data.status === 'failed') {
+          setIsTraining(false);
+          setTrainingError(data.error || 'Training failed');
+          toast.error(`Training failed: ${data.error || 'Unknown error'}`);
+        }
+      } catch (error) {
+        console.error('Error checking training status:', error);
+        // On error, just schedule the next check
+        if (isMounted) {
+          timeoutId = setTimeout(checkTrainingStatus, checkInterval);
+        }
+      }
+    };
+
+    // Start the initial check
+    checkTrainingStatus();
+
+    // Cleanup function
+    return () => {
+      isMounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [trainingId, selectedWriter?._id]);
+
   const handleTrainModel = async () => {
     if (!selectedWriter) {
       toast.error('Please select a writer profile first');
@@ -148,6 +264,9 @@ export default function WriterProfilesContent() {
 
     try {
       setIsTraining(true);
+      setTrainingError(null);
+      toast.info('Training started. This may take a few minutes...');
+
       const response = await fetch('/api/train-model', {
         method: 'POST',
         headers: {
@@ -157,19 +276,23 @@ export default function WriterProfilesContent() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to start training');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to start training');
       }
 
-      const result = await response.json();
-      toast.success('Training completed successfully');
+      const data = await response.json();
+      if (!data.trainingId) {
+        throw new Error('No training ID received from server');
+      }
       
-      // After training, fetch the platform profiles
-      fetchPlatformProfiles(selectedWriter._id);
+      setTrainingId(data.trainingId);
+      toast.success('Training started. This may take a few minutes...');
     } catch (error) {
       console.error('Error training model:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to start training');
-    } finally {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to start training';
+      setTrainingError(errorMessage);
       setIsTraining(false);
+      toast.error(errorMessage);
     }
   };
 
@@ -228,15 +351,46 @@ export default function WriterProfilesContent() {
                   }`}
                   onClick={() => handleWriterSelect(writer)}
                 >
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center mr-3">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center mr-3 overflow-hidden">
                     {writer.image ? (
                       <img 
-                        src={writer.image} 
+                        src={getImageUrl(writer.image) || ''}
                         alt={writer.name}
-                        className="w-full h-full rounded-full object-cover"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const parent = target.parentElement;
+                          if (parent) {
+                            // Remove any existing fallback
+                            const existingFallback = parent.querySelector('.image-fallback');
+                            if (!existingFallback) {
+                              const fallback = document.createElement('div');
+                              fallback.className = 'image-fallback w-full h-full flex items-center justify-center bg-muted/30';
+                              fallback.innerHTML = `
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground">
+                                  <path d="M12 5v.01"></path>
+                                  <path d="M3 7l9-4 9 4"></path>
+                                  <path d="M18 13v6a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-6"></path>
+                                  <path d="m3 7 9 4 9-4"></path>
+                                  <path d="M12 22V13"></path>
+                                </svg>
+                              `;
+                              parent.appendChild(fallback);
+                            }
+                          }
+                        }}
                       />
                     ) : (
-                      <PenTool className="h-4 w-4 text-muted-foreground" />
+                      <div className="w-full h-full flex items-center justify-center bg-muted/30">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="text-muted-foreground">
+                          <path d="M12 5v.01"></path>
+                          <path d="M3 7l9-4 9 4"></path>
+                          <path d="M18 13v6a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-6"></path>
+                          <path d="m3 7 9 4 9-4"></path>
+                          <path d="M12 22V13"></path>
+                        </svg>
+                      </div>
                     )}
                   </div>
                   <div className="min-w-0 space-y-1">
@@ -279,16 +433,62 @@ export default function WriterProfilesContent() {
               <div className="flex flex-col md:flex-row gap-2">
                 {/* Profile Picture */}
                 <div className="w-full md:w-1/3">
-                  <div className="w-full max-w-[200px] aspect-square rounded-lg border-2 border-dashed flex items-center justify-center bg-muted/20 overflow-hidden">
+                  <div className="w-full max-w-[200px] aspect-square rounded-lg border-2 border-dashed flex items-center justify-center bg-muted/10 overflow-hidden">
                     {selectedWriter.image ? (
-                      <img 
-                        src={selectedWriter.image} 
-                        alt={selectedWriter.name}
-                        className="w-full h-full object-cover"
-                      />
+                      <>
+                        <img 
+                          src={getImageUrl(selectedWriter.image) || ''}
+                          alt={selectedWriter.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const parent = target.parentElement;
+                            if (parent) {
+                              // Remove any existing fallback
+                              const existingFallback = parent.querySelector('.image-fallback');
+                              if (!existingFallback) {
+                                const fallback = document.createElement('div');
+                                fallback.className = 'image-fallback text-center p-4';
+                                fallback.innerHTML = `
+                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto mb-2 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  </svg>
+                                  <p class="text-sm text-muted-foreground">Image not available</p>
+                                `;
+                                parent.appendChild(fallback);
+                              }
+                            }
+                          }}
+                        />
+                        {/* Preload the image to detect errors before it renders */}
+                        <img 
+                          src={getImageUrl(selectedWriter.image) || ''}
+                          alt="" 
+                          className="hidden"
+                          data-original-src={selectedWriter.image}
+                          onError={(e) => {
+                            console.error('Error loading image:', {
+                              originalSrc: selectedWriter.image,
+                              resolvedSrc: getImageUrl(selectedWriter.image),
+                              error: e
+                            });
+                            const target = e.target as HTMLImageElement;
+                            const parent = target.parentElement;
+                            if (parent) {
+                              const img = parent.querySelector('img:not([alt=""])');
+                              if (img) {
+                                img.dispatchEvent(new Event('error'));
+                              }
+                            }
+                          }}
+                        />
+                      </>
                     ) : (
                       <div className="text-center p-4">
-                        <ImageIcon className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mx-auto mb-2 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
                         <p className="text-sm text-muted-foreground">No Image</p>
                       </div>
                     )}
@@ -339,27 +539,35 @@ export default function WriterProfilesContent() {
                         <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingProfiles ? 'animate-spin' : ''}`} />
                         Refresh
                       </Button>
-                      <Button 
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                        onClick={handleTrainModel}
-                        disabled={isTraining || isLoadingProfiles || platformProfiles.length > 0}
-                        size="sm"
-                        title={platformProfiles.length > 0 ? 'Model already trained' : 'Train model'}
-                      >
-                        {isTraining ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Training...
-                          </>
-                        ) : (
-                          <>
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                            </svg>
-                            Train Model
-                          </>
-                        )}
-                      </Button>
+                      <div className="space-y-2 w-full">
+                        <div className="mt-4">
+                          <Button 
+                            onClick={handleTrainModel} 
+                            disabled={isTraining || !selectedWriter}
+                            className="w-full"
+                            variant={platformProfiles.length > 0 ? 'outline' : 'default'}
+                          >
+                            {isTraining ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Training in progress...
+                              </>
+                            ) : platformProfiles.length > 0 ? (
+                              'Retrain Model'
+                            ) : (
+                              'Train Model'
+                            )}
+                          </Button>
+                          {trainingError && (
+                            <p className="mt-2 text-sm text-red-500">{trainingError}</p>
+                          )}
+                          {platformProfiles.length > 0 && !isTraining && (
+                            <p className="mt-2 text-xs text-muted-foreground">
+                              Model is already trained. Click to retrain if needed.
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                   

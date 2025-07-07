@@ -176,8 +176,18 @@ export function PlatformProfilesTable({ profiles, isLoading }: PlatformProfilesT
 
   if (!profiles || profiles.length === 0) {
     return (
-      <div className="text-center p-8 text-muted-foreground">
-        No platform profile data available. Please train the model to generate profile data.
+      <div className="text-center p-8">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted/50 mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8 text-muted-foreground">
+            <rect width="18" height="18" x="3" y="3" rx="2"/>
+            <path d="M3 9h18"/>
+            <path d="M9 21V9"/>
+          </svg>
+        </div>
+        <h3 className="text-lg font-medium text-foreground mb-2">No Platform Profile Found</h3>
+        <p className="text-muted-foreground max-w-md mx-auto">
+          This writer doesn't have a platform profile yet. Train the model to generate a personalized profile.
+        </p>
       </div>
     );
   }
