@@ -1,27 +1,67 @@
 'use client';
 
-import { PenTool, Search, Grid, List, Filter, Plus, Image as ImageIcon, Upload } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { PenTool, Search, Grid, List, Filter, Plus, Image as ImageIcon, Upload, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
+import CreateWriterProfileModal from './CreateWriterProfileModal';
+
+interface WriterProfile {
+  _id: string;
+  name: string;
+  description: string;
+  image?: string;
+  documentUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function WriterProfilesContent() {
-  // This will be replaced with actual data
-  const writers = [
-    { id: 1, name: 'test', description: 'rwtwt' },
-  ];
+  const [writers, setWriters] = useState<WriterProfile[]>([]);
+  const [selectedWriter, setSelectedWriter] = useState<WriterProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+
+  const fetchWriters = async () => {
+    try {
+      const response = await fetch('/api/writer-profiles');
+      if (!response.ok) throw new Error('Failed to fetch writer profiles');
+      const data = await response.json();
+      setWriters(data);
+      if (data.length > 0 && !selectedWriter) {
+        setSelectedWriter(data[0]);
+      }
+    } catch (error) {
+      console.error('Error fetching writer profiles:', error);
+      toast.error('Failed to load writer profiles');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchWriters();
+  }, []);
+
+  const handleWriterSelect = (writer: WriterProfile) => {
+    setSelectedWriter(writer);
+  };
+
+  const handleProfileCreated = () => {
+    fetchWriters();
+  };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between pb-4">
         <div className="flex items-center space-x-2">
           <PenTool className="h-5 w-5" />
           <h1 className="text-2xl font-semibold">Writer Profiles</h1>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" /> Add Writer Profile
-        </Button>
+        <CreateWriterProfileModal onSuccess={handleProfileCreated} />
       </div>
 
       {/* Search and Filter */}
@@ -51,132 +91,144 @@ export default function WriterProfilesContent() {
         {/* Left Panel - Writer List */}
         <div className="w-64 border-r overflow-y-auto">
           <div className="space-y-1 p-2">
-            {writers.map((writer) => (
-              <div
-                key={writer.id}
-                className="flex items-center p-3 rounded-lg cursor-pointer hover:bg-muted/50"
-              >
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center mr-3">
-                  <PenTool className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div>
-                  <div className="font-medium">{writer.name}</div>
-                  <div className="text-xs text-muted-foreground truncate">{writer.description}</div>
-                </div>
+            {isLoading ? (
+              <div className="flex justify-center p-4">
+                <Loader2 className="h-6 w-6 animate-spin" />
               </div>
-            ))}
+            ) : writers.length === 0 ? (
+              <div className="text-center p-4 text-muted-foreground">
+                No writer profiles found. Create one to get started.
+              </div>
+            ) : (
+              writers.map((writer) => (
+                <div
+                  key={writer._id}
+                  className={`flex items-center p-3 rounded-lg cursor-pointer ${
+                    selectedWriter?._id === writer._id ? 'bg-muted' : 'hover:bg-muted/50'
+                  }`}
+                  onClick={() => handleWriterSelect(writer)}
+                >
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center mr-3">
+                    {writer.image ? (
+                      <img 
+                        src={writer.image} 
+                        alt={writer.name}
+                        className="w-full h-full rounded-full object-cover"
+                      />
+                    ) : (
+                      <PenTool className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{writer.name}</div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {writer.description || 'No description'}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
         {/* Right Panel - Writer Details */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
           <div className="space-y-6">
-            {/* Writer Name */}
-            <div>
-              <Input 
-                className="text-2xl font-bold border-0 shadow-none px-0 focus-visible:ring-0" 
-                placeholder="Writer Profile Name"
-                defaultValue="test"
-              />
-            </div>
-
-            {/* Profile Picture and Description */}
-            <div className="flex flex-col md:flex-row gap-6">
-              {/* Profile Picture Upload */}
-              <div className="w-full md:w-1/3 space-y-2">
-                <div className="w-full aspect-square rounded-lg border-2 border-dashed flex items-center justify-center bg-muted/20">
-                  <div className="text-center p-4">
-                    <ImageIcon className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">Profile Picture</p>
-                  </div>
-                </div>
-                <Button variant="outline" className="w-full">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Attach File
-                </Button>
-              </div>
-
-              {/* Description */}
-              <div className="flex-1">
-                <label className="text-sm font-medium mb-2 block">Description</label>
-                <Input 
-                  placeholder="Enter description..." 
-                  defaultValue="rwtwt"
-                />
-              </div>
-            </div>
-
-            {/* Style Analysis Section */}
-            <div className="border-t pt-6 mt-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">Style Analysis</h2>
-                <Button variant="outline">
-                  Train Model
-                </Button>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Training Google Doc URL</label>
-                  <Input 
-                    placeholder="Please provide the URL of a Google Document containing all your training resources before pressing on 'Train Model'" 
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Training Documents</label>
-                  <div className="border-2 border-dashed rounded-lg p-8 text-center">
-                    <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+            {selectedWriter ? (
+              <>
+                {/* Header with Edit button */}
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h2 className="text-2xl font-bold">{selectedWriter.name}</h2>
                     <p className="text-sm text-muted-foreground">
-                      Drag and drop files here, or click to browse
+                      Created on {new Date(selectedWriter.createdAt).toLocaleDateString()}
                     </p>
-                    <Button variant="outline" size="sm" className="mt-2">
-                      Browse Files
-                    </Button>
+                  </div>
+                  <Button variant="outline" size="sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit
+                  </Button>
+                </div>
+
+                {/* Profile Picture and Description */}
+                <div className="flex flex-col md:flex-row gap-6">
+                  {/* Profile Picture */}
+                  <div className="w-full md:w-1/3 space-y-2">
+                    <div className="w-full max-w-[200px] aspect-square rounded-lg border-2 border-dashed flex items-center justify-center bg-muted/20 overflow-hidden">
+                      {selectedWriter.image ? (
+                        <img 
+                          src={selectedWriter.image} 
+                          alt={selectedWriter.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="text-center p-4">
+                          <ImageIcon className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
+                          <p className="text-sm text-muted-foreground">No Image</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <div className="flex-1">
+                    <h3 className="text-sm font-medium mb-2">Description</h3>
+                    <div className="prose prose-sm dark:prose-invert">
+                      {selectedWriter.description || 'No description provided.'}
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Full Style Guide</label>
-                  <Textarea 
-                    className="min-h-[100px]" 
-                    placeholder="Enter full style guide..."
-                  />
+                {/* Document URL */}
+                {selectedWriter.documentUrl && (
+                  <div className="pt-4">
+                    <h3 className="text-sm font-medium mb-2">Document</h3>
+                    <div className="flex items-center space-x-2">
+                      <a 
+                        href={selectedWriter.documentUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:underline text-sm flex items-center"
+                        title={selectedWriter.documentUrl}
+                      >
+                        {selectedWriter.documentUrl.includes('docs.google.com') ? 'Google Doc' : 'Document'}
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Train Model Button */}
+                <div className="flex justify-end pt-4 border-t mt-6">
+                  <Button 
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white transition-colors"
+                    onClick={() => {
+                      // Add train model functionality here
+                      toast.info('Training model for ' + selectedWriter.name);
+                    }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Train Model
+                  </Button>
                 </div>
-
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Do & Don't List</label>
-                  <Textarea 
-                    className="min-h-[100px]" 
-                    placeholder="List of dos and don'ts..."
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Example Transformations</label>
-                  <Textarea 
-                    className="min-h-[100px]" 
-                    placeholder="Enter example transformations..."
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Style Profile Summary</label>
-                  <Textarea 
-                    className="min-h-[100px]" 
-                    placeholder="Enter style profile summary..."
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium mb-2 block">API-Ready Instructions</label>
-                  <Textarea 
-                    className="min-h-[100px] font-mono text-sm" 
-                    placeholder="Enter API-ready instructions..."
-                  />
-                </div>
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-64 text-center">
+                <PenTool className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium">No writer selected</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {writers.length === 0 
+                    ? 'Create your first writer profile to get started.' 
+                    : 'Select a writer from the list to view details.'}
+                </p>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
