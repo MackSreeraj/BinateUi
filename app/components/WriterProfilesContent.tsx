@@ -22,6 +22,7 @@ export default function WriterProfilesContent() {
   const [writers, setWriters] = useState<WriterProfile[]>([]);
   const [selectedWriter, setSelectedWriter] = useState<WriterProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isTraining, setIsTraining] = useState(false);
 
 
   const fetchWriters = async () => {
@@ -51,6 +52,36 @@ export default function WriterProfilesContent() {
 
   const handleProfileCreated = () => {
     fetchWriters();
+  };
+
+  const handleTrainModel = async () => {
+    if (!selectedWriter) {
+      toast.error('Please select a writer profile first');
+      return;
+    }
+
+    try {
+      setIsTraining(true);
+      const response = await fetch('/api/train-model', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ companyId: selectedWriter._id }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to start training');
+      }
+
+      const result = await response.json();
+      toast.success('Training model started successfully');
+    } catch (error) {
+      console.error('Error training model:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to start training');
+    } finally {
+      setIsTraining(false);
+    }
   };
 
   return (
@@ -206,15 +237,22 @@ export default function WriterProfilesContent() {
                 <div className="flex justify-end pt-4 border-t mt-6">
                   <Button 
                     className="bg-emerald-600 hover:bg-emerald-700 text-white transition-colors"
-                    onClick={() => {
-                      // Add train model functionality here
-                      toast.info('Training model for ' + selectedWriter.name);
-                    }}
+                    onClick={handleTrainModel}
+                    disabled={isTraining}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    Train Model
+                    {isTraining ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Training...
+                      </>
+                    ) : (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Train Model
+                      </>
+                    )}
                   </Button>
                 </div>
               </>
