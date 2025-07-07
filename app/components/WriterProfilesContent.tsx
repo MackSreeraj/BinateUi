@@ -214,7 +214,7 @@ export default function WriterProfilesContent() {
                 if (profileData && !profileData.error) {
                   setPlatformProfiles([profileData]);
                   setIsTraining(false);
-                  toast.success('Training completed and data is ready!');
+                  toast.success('Training completed and ready!');
                   return;
                 }
               }
@@ -529,47 +529,36 @@ export default function WriterProfilesContent() {
                 <div className="mt-8 space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold">Platform Profiles</h3>
-                    <div className="flex space-x-2">
+                    <div className="flex items-center space-x-2">
                       <Button 
                         variant="outline" 
                         size="sm" 
                         onClick={() => selectedWriter && fetchPlatformProfiles(selectedWriter._id)}
                         disabled={isLoadingProfiles}
+                        className="h-10"
                       >
                         <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingProfiles ? 'animate-spin' : ''}`} />
                         Refresh
                       </Button>
-                      <div className="space-y-2 w-full">
-                        <div className="mt-4">
-                          <Button 
-                            onClick={handleTrainModel} 
-                            disabled={isTraining || !selectedWriter}
-                            className="w-full"
-                            variant={platformProfiles.length > 0 ? 'outline' : 'default'}
-                          >
-                            {isTraining ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Training in progress...
-                              </>
-                            ) : platformProfiles.length > 0 ? (
-                              'Retrain Model'
-                            ) : (
-                              'Train Model'
-                            )}
-                          </Button>
-                          {trainingError && (
-                            <p className="mt-2 text-sm text-red-500">{trainingError}</p>
-                          )}
-                          {platformProfiles.length > 0 && !isTraining && (
-                            <p className="mt-2 text-xs text-muted-foreground">
-                              Model is already trained. Click to retrain if needed.
-                            </p>
-                          )}
-                        </div>
-                      </div>
+                      <Button 
+                        onClick={handleTrainModel} 
+                        disabled={isTraining || !selectedWriter}
+                        className="h-10 bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap"
+                      >
+                        {isTraining ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Training in progress...
+                          </>
+                        ) : (
+                          'Train Model'
+                        )}
+                      </Button>
                     </div>
                   </div>
+                  {trainingError && (
+                    <p className="text-sm text-red-500">{trainingError}</p>
+                  )}
                   
                   <div className="rounded-lg border p-4 bg-muted/20">
                     <PlatformProfilesTable 

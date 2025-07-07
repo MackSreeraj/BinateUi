@@ -9,23 +9,23 @@ export async function GET(
     const client = await clientPromise;
     const db = client.db();
     const writerId = params.id;
-    console.log('Searching for platform profile with writerId:', writerId);
+    // console.log('Searching for platform profile with writerId:', writerId);
 
     // List all collections for debugging
     const collections = await db.listCollections().toArray();
-    console.log('Available collections:', collections.map(c => c.name));
+    // console.log('Available collections:', collections.map(c => c.name));
 
     // Find the platform profile where obj_id matches the writer's ID
     const platformProfile = await db.collection('platform_profiles').findOne({
       obj_id: writerId
     });
 
-    console.log('Query result:', platformProfile);
+    // console.log('Query result:', platformProfile);
 
     if (!platformProfile) {
       // Try to find any document in the collection for debugging
       const anyDoc = await db.collection('platform_profiles').findOne({});
-      console.log('Sample document from collection:', anyDoc);
+      // console.log('Sample document from collection:', anyDoc);
       
       return new NextResponse(
         JSON.stringify({ 
