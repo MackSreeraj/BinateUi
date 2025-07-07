@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import clientPromise from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
+import { triggerCompanyCreatedWebhook } from '@/lib/webhook';
 
 export async function POST(request: Request) {
   try {
@@ -45,6 +46,14 @@ export async function POST(request: Request) {
       _id: result.insertedId,
       ...company
     };
+
+    // Trigger the webhook with the company ID
+    try {
+      await triggerCompanyCreatedWebhook(createdCompany._id.toString());
+    } catch (error) {
+      console.error('Failed to trigger company created webhook:', error);
+      // Don't fail the request if webhook fails
+    }
 
     return NextResponse.json(createdCompany, { status: 201 });
   } catch (error) {
