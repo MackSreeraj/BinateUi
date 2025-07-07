@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PenTool, Search, Grid, List, Filter, Plus, Image as ImageIcon, Upload, Loader2, RefreshCw, Trash2 } from 'lucide-react';
+import { PenTool, Search, Grid, List, Filter, Plus, Loader2, RefreshCw, Trash2, Bot } from 'lucide-react';
 import { PlatformProfilesTable, PlatformProfile } from './PlatformProfilesTable';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import CreateWriterProfileModal from './CreateWriterProfileModal';
 
@@ -18,41 +20,6 @@ interface WriterProfile {
   createdAt: string;
   updatedAt: string;
 }
-
-// Helper function to get the correct image URL
-const getImageUrl = (imagePath?: string) => {
-  if (!imagePath) {
-    console.log('No image path provided');
-    return null;
-  }
-  
-  // Clean up the path
-  const cleanPath = imagePath.trim();
-  
-  // If it's already a full URL, return as is
-  if (cleanPath.startsWith('http')) {
-    console.log('Using full URL:', cleanPath);
-    return cleanPath;
-  }
-  
-  // If it's a path starting with /uploads, make sure it's served from the public directory
-  if (cleanPath.startsWith('/uploads/')) {
-    console.log('Using absolute upload path:', cleanPath);
-    return cleanPath;
-  }
-  
-  // Handle case where the path might already include uploads but without leading slash
-  if (cleanPath.startsWith('uploads/')) {
-    const path = `/${cleanPath}`;
-    console.log('Fixed upload path:', path);
-    return path;
-  }
-  
-  // For relative paths, assume they're in the uploads directory
-  const path = `/uploads/${cleanPath}`;
-  console.log('Constructed upload path:', path);
-  return path;
-};
 
 export default function WriterProfilesContent() {
   const [writers, setWriters] = useState<WriterProfile[]>([]);
@@ -430,79 +397,24 @@ export default function WriterProfilesContent() {
                 </div>
 
                 {/* Profile Picture and Description */}
-              <div className="flex flex-col md:flex-row gap-2">
-                {/* Profile Picture */}
-                <div className="w-full md:w-1/3">
-                  <div className="w-full max-w-[200px] aspect-square rounded-lg border-2 border-dashed flex items-center justify-center bg-muted/10 overflow-hidden">
-                    {selectedWriter.image ? (
-                      <>
-                        <img 
-                          src={getImageUrl(selectedWriter.image) || ''}
-                          alt={selectedWriter.name}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                            const parent = target.parentElement;
-                            if (parent) {
-                              // Remove any existing fallback
-                              const existingFallback = parent.querySelector('.image-fallback');
-                              if (!existingFallback) {
-                                const fallback = document.createElement('div');
-                                fallback.className = 'image-fallback text-center p-4';
-                                fallback.innerHTML = `
-                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto mb-2 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                  </svg>
-                                  <p class="text-sm text-muted-foreground">Image not available</p>
-                                `;
-                                parent.appendChild(fallback);
-                              }
-                            }
-                          }}
-                        />
-                        {/* Preload the image to detect errors before it renders */}
-                        <img 
-                          src={getImageUrl(selectedWriter.image) || ''}
-                          alt="" 
-                          className="hidden"
-                          data-original-src={selectedWriter.image}
-                          onError={(e) => {
-                            console.error('Error loading image:', {
-                              originalSrc: selectedWriter.image,
-                              resolvedSrc: getImageUrl(selectedWriter.image),
-                              error: e
-                            });
-                            const target = e.target as HTMLImageElement;
-                            const parent = target.parentElement;
-                            if (parent) {
-                              const img = parent.querySelector('img:not([alt=""])');
-                              if (img) {
-                                img.dispatchEvent(new Event('error'));
-                              }
-                            }
-                          }}
-                        />
-                      </>
-                    ) : (
-                      <div className="text-center p-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mx-auto mb-2 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <p className="text-sm text-muted-foreground">No Image</p>
-                      </div>
-                    )}
+                <div className="w-full flex items-start gap-6 mt-2">
+                  {/* Avatar */}
+                  <div className="rounded-full p-1.5 bg-gradient-to-br from-blue-500 to-purple-600 shrink-0">
+                    <Avatar className="h-16 w-16">
+                      <AvatarFallback className="bg-transparent">
+                        <Bot className="h-8 w-8 text-white" />
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                  
+                  {/* Description - takes remaining width */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-medium text-muted-foreground mb-1">Description</h3>
+                    <p className="text-sm">
+                      {selectedWriter.description || 'No description provided.'}
+                    </p>
                   </div>
                 </div>
-
-                {/* Description */}
-                <div className="flex-1 space-y-1">
-                  <h3 className="text-sm font-medium">Description</h3>
-                  <div className="prose prose-sm dark:prose-invert p-0">
-                    {selectedWriter.description || 'No description provided.'}
-                  </div>
-                </div>
-              </div>
 
                 {/* Document URL */}
                 {selectedWriter.documentUrl && (

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Bot } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export default function CreateWriterProfileModal({ onSuccess }: { onSuccess: () => void }) {
   const [open, setOpen] = useState(false);
@@ -16,7 +17,6 @@ export default function CreateWriterProfileModal({ onSuccess }: { onSuccess: () 
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    image: '',
     documentUrl: ''
   });
 
@@ -29,17 +29,6 @@ export default function CreateWriterProfileModal({ onSuccess }: { onSuccess: () 
     }));
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // In a real app, you would upload the file to a storage service
-      // and get the URL back. For now, we'll just use the file name.
-      setFormData(prev => ({
-        ...prev,
-        image: file.name
-      }));
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,21 +97,21 @@ export default function CreateWriterProfileModal({ onSuccess }: { onSuccess: () 
           </div>
 
           <div className="space-y-2">
-            <Label>Profile Image</Label>
-            <div className="flex items-center gap-2">
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="cursor-pointer"
-              />
-              {formData.image && (
-                <span className="text-sm text-muted-foreground">{formData.image}</span>
-              )}
+            <Label>AI Profile</Label>
+            <div className="flex items-center space-x-4 p-4 border rounded-lg">
+              <Avatar className="h-16 w-16">
+                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600">
+                  <Bot className="h-8 w-8 text-white" />
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-medium">AI Writer</p>
+                <p className="text-sm text-muted-foreground">Powered by advanced AI</p>
+              </div>
             </div>
           </div>
 
-          <div className="space-y-2">
+<div className="space-y-2">
             <Label htmlFor="documentUrl">Google Doc URL or Upload Document</Label>
             <Input
               id="documentUrl"
