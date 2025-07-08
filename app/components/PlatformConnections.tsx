@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
-import { Monitor, Globe, FileText, Trash2, RefreshCw, Loader2 } from 'lucide-react';
+import { Monitor, Globe, FileText, Trash2, RefreshCw, Loader2, ExternalLink, FileText as GoogleDocIcon, PlusCircle } from 'lucide-react';
 
 interface PlatformConnection {
   _id: string;
@@ -25,7 +25,6 @@ export function PlatformConnections() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedConnection, setSelectedConnection] = useState<PlatformConnection | null>(null);
-
   const fetchConnections = async () => {
     try {
       setLoading(true);
@@ -148,44 +147,45 @@ export function PlatformConnections() {
       </div>
 
       {/* Right Panel - Platform Details */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 p-6">
         {selectedConnection ? (
           <div className="space-y-6">
-            <div className="flex justify-between items-start gap-2">
-              <div>
-                <h2 className="text-2xl font-bold">{selectedConnection.name}</h2>
-                <p className="text-sm text-muted-foreground">
-                  Connected on {formatDate(selectedConnection.createdAt)}
-                </p>
-              </div>
-              <Button 
-                variant="destructive" 
-                size="sm"
-                onClick={() => handleDelete(selectedConnection._id)}
-                className="flex items-center gap-1"
-              >
-                <Trash2 className="h-4 w-4" />
-                Remove
-              </Button>
+            <div>
+              <h2 className="text-2xl font-bold">{selectedConnection.name}</h2>
+              <p className="text-sm text-muted-foreground">
+                Connected on {formatDate(selectedConnection.createdAt)}
+              </p>
             </div>
 
-            <div className="grid gap-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="capitalize">
+                  {selectedConnection.platformType}
+                </Badge>
+              </div>
+
               <div className="space-y-2">
-                <h3 className="text-sm font-medium">Platform Type</h3>
-                <p className="text-sm">{selectedConnection.platformType}</p>
+                <h3 className="text-sm font-medium">Details</h3>
+                <div className="space-y-1">
+                  <p className="text-sm">Platform Type: {selectedConnection.platformType}</p>
+                </div>
               </div>
 
               {selectedConnection.docUrl && (
                 <div className="space-y-2">
-                  <h3 className="text-sm font-medium">Document URL</h3>
-                  <a
-                    href={selectedConnection.docUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-blue-600 hover:underline"
-                  >
-                    {selectedConnection.docUrl}
-                  </a>
+                  <h3 className="text-sm font-medium">Document</h3>
+                  <div className="flex items-center gap-2">
+                    <GoogleDocIcon className="h-4 w-4 text-blue-600" />
+                    <a
+                      href={selectedConnection.docUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline flex items-center gap-1"
+                    >
+                      View Document
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
                 </div>
               )}
 
@@ -196,11 +196,11 @@ export function PlatformConnections() {
                     {selectedConnection.files.map((file, index) => (
                       <div
                         key={index}
-                        className="flex items-center justify-between p-3 border rounded-lg"
+                        className="flex items-center justify-between p-3 border rounded-lg overflow-hidden"
                       >
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">{file.name}</p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-muted-foreground truncate">
                             {formatFileSize(file.size)} • {file.type}
                           </p>
                         </div>
@@ -212,10 +212,43 @@ export function PlatformConnections() {
                   </div>
                 </div>
               )}
+
+              <div className="flex justify-between items-center">
+                <div className="flex space-x-2">
+                  <Button 
+                    variant="destructive" 
+                    size="sm"
+                    className="gap-1"
+                    onClick={() => handleDelete(selectedConnection?._id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete
+                  </Button>
+                </div>
+                <div className="flex space-x-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="gap-1"
+                    onClick={fetchConnections}
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Refresh
+                  </Button>
+                  <Button 
+                    variant="default" 
+                    size="sm"
+                    className="gap-1 bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center"
+                  >
+                    <PlusCircle className="h-4 w-4" />
+                    Train Model
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         ) : (
-          <div className="flex items-center justify-center h-full">
+          <div className="text-center py-8">
             <p className="text-muted-foreground">Select a platform to view details</p>
           </div>
         )}
