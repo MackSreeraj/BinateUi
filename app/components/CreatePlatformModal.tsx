@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,8 +11,13 @@ import { Plus, Upload, FileText, X } from 'lucide-react';
 
 type PlatformType = 'linkedin' | 'twitter' | '';
 
-export function CreatePlatformModal() {
+interface CreatePlatformModalProps {
+  onSuccess?: () => void;
+}
+
+export function CreatePlatformModal({ onSuccess }: CreatePlatformModalProps) {
   const [open, setOpen] = useState(false);
+  const [platformName, setPlatformName] = useState('');
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformType>('');
   const [docUrl, setDocUrl] = useState('');
   const [files, setFiles] = useState<File[]>([]);
@@ -60,20 +66,54 @@ export function CreatePlatformModal() {
     setFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission here
-    console.log({
-      platform: selectedPlatform,
-      docUrl,
-      files: files.map(f => f.name)
-    });
     
-    // Reset form and close modal
-    setSelectedPlatform('');
-    setDocUrl('');
-    setFiles([]);
-    setOpen(false);
+    try {
+      const formData = {
+        name: platformName,
+        platformType: selectedPlatform,
+        docUrl: docUrl || null,
+        files: files.map(f => ({
+          name: f.name,
+          size: f.size,
+          type: f.type
+        })),
+        // You might want to associate this with the current user
+        // userId: currentUserId,
+      };
+
+      const response = await fetch('/api/platforms', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save platform');
+      }
+
+      const result = await response.json();
+      
+      // Show success toast
+      toast.success('Platform added successfully');
+      
+      // Reset form and close modal
+      setPlatformName('');
+      setSelectedPlatform('');
+      setDocUrl('');
+      setFiles([]);
+      setOpen(false);
+      
+      // Refresh platforms list
+      onSuccess?.();
+      
+    } catch (error) {
+      console.error('Error saving platform:', error);
+      toast.error('Failed to connect platform. Please try again.');
+    }
   };
 
   return (
@@ -89,6 +129,16 @@ export function CreatePlatformModal() {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Platform Name</Label>
+              <Input
+                placeholder="Enter a name for this platform connection"
+                value={platformName}
+                onChange={(e) => setPlatformName(e.target.value)}
+                required
+              />
+            </div>
+            
             <div className="space-y-2">
               <Label>Select Platform</Label>
               <Select 
@@ -188,7 +238,7 @@ export function CreatePlatformModal() {
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={!selectedPlatform || (!docUrl && files.length === 0)}>
+            <Button type="submit" disabled={!platformName || !selectedPlatform || (!docUrl && files.length === 0)}>
               Connect Platform
             </Button>
           </div>
