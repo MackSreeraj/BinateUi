@@ -4,6 +4,7 @@ import { MonitorPlay, Search, Grid, List, Filter, Plus, Image as ImageIcon, Uplo
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { CreatePlatformModal } from './CreatePlatformModal';
 
 export default function PlatformProfilesContent() {
   // This will be replaced with actual data
@@ -19,9 +20,7 @@ export default function PlatformProfilesContent() {
           <MonitorPlay className="h-5 w-5" />
           <h1 className="text-2xl font-semibold">Platform Profiles</h1>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" /> Add Platform
-        </Button>
+        <CreatePlatformModal />
       </div>
 
       {/* Search and Filter */}
