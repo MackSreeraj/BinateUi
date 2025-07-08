@@ -96,21 +96,6 @@ export default function CreateWriterProfileModal({ onSuccess }: { onSuccess: () 
             />
           </div>
 
-          <div className="space-y-2">
-            <Label>AI Profile</Label>
-            <div className="flex items-center space-x-4 p-4 border rounded-lg">
-              <Avatar className="h-16 w-16">
-                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600">
-                  <Bot className="h-8 w-8 text-white" />
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-medium">AI Writer</p>
-                <p className="text-sm text-muted-foreground">Powered by advanced AI</p>
-              </div>
-            </div>
-          </div>
-
 <div className="space-y-2">
             <Label htmlFor="documentUrl">Google Doc URL or Upload Document</Label>
             <Input

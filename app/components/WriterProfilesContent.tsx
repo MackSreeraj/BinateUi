@@ -396,24 +396,12 @@ export default function WriterProfilesContent() {
                   </Button>
                 </div>
 
-                {/* Profile Picture and Description */}
-                <div className="w-full flex items-start gap-6 mt-2">
-                  {/* Avatar */}
-                  <div className="rounded-full p-1.5 bg-gradient-to-br from-blue-500 to-purple-600 shrink-0">
-                    <Avatar className="h-16 w-16">
-                      <AvatarFallback className="bg-transparent">
-                        <Bot className="h-8 w-8 text-white" />
-                      </AvatarFallback>
-                    </Avatar>
-                  </div>
-                  
-                  {/* Description - takes remaining width */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-medium text-muted-foreground mb-1">Description</h3>
-                    <p className="text-sm">
-                      {selectedWriter.description || 'No description provided.'}
-                    </p>
-                  </div>
+                {/* Description */}
+                <div className="w-full mt-2">
+                  <h3 className="text-sm font-medium text-muted-foreground mb-1">Description</h3>
+                  <p className="text-sm">
+                    {selectedWriter.description || 'No description provided.'}
+                  </p>
                 </div>
 
                 {/* Document URL */}
@@ -454,8 +442,8 @@ export default function WriterProfilesContent() {
                       </Button>
                       <Button 
                         onClick={handleTrainModel} 
-                        disabled={isTraining || !selectedWriter}
-                        className="h-10 bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap"
+                        disabled={isTraining || !selectedWriter || platformProfiles.length > 0}
+                        className="h-10 bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {isTraining ? (
                           <>
