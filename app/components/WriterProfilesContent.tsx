@@ -176,13 +176,17 @@ export default function WriterProfilesContent() {
               
               if (profileResponse.ok) {
                 const profileData = await profileResponse.json();
+                console.log('Received profile data:', profileData);
                 
                 // If we have valid profile data, we're done
                 if (profileData && !profileData.error) {
+                  console.log('Setting platform profiles with:', [profileData]);
                   setPlatformProfiles([profileData]);
                   setIsTraining(false);
                   toast.success('Training completed and ready!');
                   return;
+                } else {
+                  console.log('No valid profile data received or error present');
                 }
               }
               // If we get here, the profile isn't ready yet

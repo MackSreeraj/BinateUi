@@ -21,7 +21,7 @@ export async function DELETE(
     const db = client.db();
     
     // First, check if the writer exists
-    const existingWriter = await db.collection('writer_profiles').findOne({
+    const existingWriter = await db.collection('writers').findOne({
       _id: new ObjectId(id)
     });
 
@@ -33,7 +33,7 @@ export async function DELETE(
     }
 
     // Delete the writer profile
-    const result = await db.collection('writer_profiles').deleteOne({
+    const result = await db.collection('writers').deleteOne({
       _id: new ObjectId(id)
     });
 

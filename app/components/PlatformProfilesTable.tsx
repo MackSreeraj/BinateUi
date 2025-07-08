@@ -10,17 +10,11 @@ export type ContentType = string | string[] | Record<string, unknown> | null | u
 
 export interface PlatformProfile {
   _id: string;
-  platformSummary: string;
-  contentStructureGuide: string;
-  engagementTechniques: string;
-  visualElements: string;
-  algoConsiderations: string;
-  platformCulture: string;
-  technicalGuidelines: string;
-  doAndDontList: string | string[];
-  exampleTransformations: string | string[];
+  styleProfileSummary: string;
+  fullStyleGuide: string;
+  doAndDontList: string[];
+  exampleTransformations: string[];
   apiReadyInstructions: string;
-  train: boolean;
 }
 
 interface PlatformProfilesTableProps {
@@ -143,6 +137,8 @@ const InfoSection = ({
 };
 
 export function PlatformProfilesTable({ profiles, isLoading }: PlatformProfilesTableProps) {
+  console.log('PlatformProfilesTable - Received profiles:', profiles);
+  
   // Helper to normalize content to array of strings with special handling for Do's & Don'ts
   const normalizeToStringArray = (input: string | string[] | undefined | null, isDosAndDonts = false): string[] => {
     if (!input) return [];
@@ -175,6 +171,7 @@ export function PlatformProfilesTable({ profiles, isLoading }: PlatformProfilesT
   }
 
   if (!profiles || profiles.length === 0) {
+    console.log('No profiles found or empty profiles array');
     return (
       <div className="text-center p-8">
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted/50 mb-4">
@@ -193,47 +190,41 @@ export function PlatformProfilesTable({ profiles, isLoading }: PlatformProfilesT
   }
 
   const profile = profiles[0]; // Since we're showing one profile at a time
+  console.log('Rendering profile:', profile);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Profile ID: {profile._id}</h3>
-        <Badge variant={profile.train ? 'default' : 'outline'}>
-          {profile.train ? 'Trained' : 'Not Trained'}
-        </Badge>
       </div>
       
       <Separator />
       
-      <div className="grid gap-6">
-        <InfoSection title="Platform Summary" content={profile.platformSummary} />
-        <InfoSection title="Content Structure Guide" content={profile.contentStructureGuide} />
-        <InfoSection title="Engagement Techniques" content={profile.engagementTechniques} />
-        <InfoSection title="Visual Elements" content={profile.visualElements} />
-        <InfoSection title="Algorithm Considerations" content={profile.algoConsiderations} />
-        <InfoSection title="Platform Culture" content={profile.platformCulture} />
-        <InfoSection title="Technical Guidelines" content={profile.technicalGuidelines} />
+      <div className="space-y-6">
         <InfoSection 
-          title="Do's & Don'ts" 
-          content={normalizeToStringArray(profile.doAndDontList || '', true).map(item => {
-            // Preserve the checkmark or cross emoji at the start of each item
-            const isDo = item.startsWith('✅');
-            const isDont = item.startsWith('❌');
-            
-            // Ensure there's a space after the emoji for better readability
-            if (isDo || isDont) {
-              const emoji = isDo ? '✅' : '❌';
-              const text = item.slice(1).trim();
-              return `${emoji} ${text}`;
-            }
-            return item;
-          })}
+          title="Style Profile Summary" 
+          content={profile.styleProfileSummary} 
         />
+        
+        <InfoSection 
+          title="Full Style Guide" 
+          content={profile.fullStyleGuide} 
+        />
+        
+        <InfoSection 
+          title="Do & Don't List" 
+          content={Array.isArray(profile.doAndDontList) ? profile.doAndDontList : [profile.doAndDontList]} 
+        />
+        
         <InfoSection 
           title="Example Transformations" 
-          content={normalizeToStringArray(profile.exampleTransformations || '')}
+          content={Array.isArray(profile.exampleTransformations) ? profile.exampleTransformations : [profile.exampleTransformations]}
         />
-        <InfoSection title="API Ready Instructions" content={profile.apiReadyInstructions} />
+        
+        <InfoSection 
+          title="API Ready Instructions" 
+          content={profile.apiReadyInstructions} 
+        />
       </div>
     </div>
   );

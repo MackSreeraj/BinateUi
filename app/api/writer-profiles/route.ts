@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     };
 
     // Insert the new writer profile
-    const result = await db.collection('writer_profiles').insertOne(writer);
+    const result = await db.collection('writers').insertOne(writer);
     
     // Return the created writer profile with its ID
     const createdWriter = {
@@ -49,7 +49,7 @@ export async function GET() {
     const client = await clientPromise;
     const db = client.db();
     
-    const writers = await db.collection('writer_profiles')
+    const writers = await db.collection('writers')
       .find({})
       .sort({ createdAt: -1 })
       .toArray();
