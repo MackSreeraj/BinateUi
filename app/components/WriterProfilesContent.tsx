@@ -321,7 +321,7 @@ export default function WriterProfilesContent() {
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center mr-3 overflow-hidden">
                     {writer.image ? (
                       <img 
-                        src={getImageUrl(writer.image) || ''}
+                        src={writer.image?.startsWith('http') ? writer.image : `/${writer.image.replace(/^\//, '')}`}
                         alt={writer.name}
                         className="w-full h-full object-cover"
                         onError={(e) => {
