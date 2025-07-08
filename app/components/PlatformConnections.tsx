@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
-import { Monitor, Globe, FileText, Trash2, RefreshCw, Loader2, ExternalLink, FileText as GoogleDocIcon, PlusCircle } from 'lucide-react';
+import { Monitor, Globe, FileText, Trash2, RefreshCw, Loader2, ExternalLink, FileText as GoogleDocIcon, PlusCircle, Brain } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface PlatformConnection {
   _id: string;
@@ -22,12 +23,39 @@ interface PlatformConnection {
 
 export function PlatformConnections() {
   const [connections, setConnections] = useState<PlatformConnection[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [selectedConnection, setSelectedConnection] = useState<PlatformConnection | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  const handleTrainModel = async (platformId: string) => {
+    try {
+      const response = await fetch(`/api/platforms/${platformId}/train`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          platformId: platformId,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to trigger training');
+      }
+
+      toast.success('Model training started');
+      // Refresh the page after successful training
+      router.refresh();
+    } catch (error) {
+      toast.error('Failed to start training');
+      console.error('Error triggering training:', error);
+    }
+  };
+
   const fetchConnections = async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       const response = await fetch('/api/platforms');
       
       if (!response.ok) {
@@ -44,7 +72,7 @@ export function PlatformConnections() {
       setError('Failed to load connections');
       toast.error('Failed to load connections');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -90,7 +118,7 @@ export function PlatformConnections() {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center h-32">
         <Loader2 className="h-6 w-6 animate-spin" />
@@ -121,25 +149,19 @@ export function PlatformConnections() {
     <div className="flex flex-1 overflow-hidden bg-background">
       {/* Left Panel - Platform List */}
       <div className="w-64 border-r border-muted/50 overflow-y-auto">
-        <div className="space-y-0.5 p-1">
+        <div className="space-y-1 p-2">
           {connections.map((connection) => (
             <div
               key={connection._id}
-              className={`flex items-center p-3 rounded-lg cursor-pointer ${
-                selectedConnection?._id === connection._id ? 'bg-muted' : 'hover:bg-muted/50'
-              }`}
+              className={`group relative flex items-center space-x-2 rounded-lg p-2.5 text-sm leading-none hover:bg-muted/50 focus-within:bg-muted/50 transition-colors duration-200`}
               onClick={() => setSelectedConnection(connection)}
             >
-              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center mr-3">
-                <div className="text-muted-foreground">
-                  {connection.platformType ? connection.platformType.charAt(0).toUpperCase() : 'P'}
-                </div>
-              </div>
-              <div className="min-w-0">
-                <div className="font-medium truncate">{connection.name}</div>
-                <div className="text-xs text-muted-foreground truncate">
+              <div className="flex-1 min-w-0">
+                <span className="absolute -inset-px rounded-lg" />
+                <span className="font-medium">{connection.name}</span>
+                <span className="text-xs text-muted-foreground">
                   {connection.platformType}
-                </div>
+                </span>
               </div>
             </div>
           ))}
@@ -150,11 +172,24 @@ export function PlatformConnections() {
       <div className="flex-1 p-6">
         {selectedConnection ? (
           <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold">{selectedConnection.name}</h2>
-              <p className="text-sm text-muted-foreground">
-                Connected on {formatDate(selectedConnection.createdAt)}
-              </p>
+            <div className="flex justify-between items-start">
+              <div>
+                <h2 className="text-2xl font-bold">{selectedConnection.name}</h2>
+                <p className="text-sm text-muted-foreground">
+                  Connected on {formatDate(selectedConnection.createdAt)}
+                </p>
+              </div>
+              <div className="flex space-x-2">
+                <Button 
+                  variant="destructive" 
+                  size="sm"
+                  className="gap-1"
+                  onClick={() => handleDelete(selectedConnection?._id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-4">
@@ -164,68 +199,57 @@ export function PlatformConnections() {
                 </Badge>
               </div>
 
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium">Details</h3>
-                <div className="space-y-1">
-                  <p className="text-sm">Platform Type: {selectedConnection.platformType}</p>
-                </div>
-              </div>
-
-              {selectedConnection.docUrl && (
+              <div className="space-y-6">
                 <div className="space-y-2">
-                  <h3 className="text-sm font-medium">Document</h3>
-                  <div className="flex items-center gap-2">
-                    <GoogleDocIcon className="h-4 w-4 text-blue-600" />
-                    <a
-                      href={selectedConnection.docUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline flex items-center gap-1"
-                    >
-                      View Document
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
+                  <h3 className="text-sm font-medium">Details</h3>
+                  <div className="space-y-1">
+                    <p className="text-sm">Platform Type: {selectedConnection.platformType}</p>
                   </div>
                 </div>
-              )}
 
-              {selectedConnection.files && selectedConnection.files.length > 0 && (
-                <div className="space-y-2">
-                  <h3 className="text-sm font-medium">Uploaded Files</h3>
+                {selectedConnection.docUrl && (
                   <div className="space-y-2">
-                    {selectedConnection.files.map((file, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-3 border rounded-lg overflow-hidden"
+                    <h3 className="text-sm font-medium">Document</h3>
+                    <div className="flex items-center gap-2">
+                      <GoogleDocIcon className="h-4 w-4 text-blue-600" />
+                      <a
+                        href={selectedConnection.docUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline flex items-center gap-1"
                       >
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{file.name}</p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {formatFileSize(file.size)} • {file.type}
-                          </p>
-                        </div>
-                        <Button variant="ghost" size="sm">
-                          Download
-                        </Button>
-                      </div>
-                    ))}
+                        View Document
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              <div className="flex justify-between items-center">
-                <div className="flex space-x-2">
-                  <Button 
-                    variant="destructive" 
-                    size="sm"
-                    className="gap-1"
-                    onClick={() => handleDelete(selectedConnection?._id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Delete
-                  </Button>
-                </div>
-                <div className="flex space-x-2">
+                {selectedConnection.files && selectedConnection.files.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium">Uploaded Files</h3>
+                    <div className="space-y-2">
+                      {selectedConnection.files.map((file, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-3 border rounded-lg overflow-hidden"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{file.name}</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {formatFileSize(file.size)} • {file.type}
+                            </p>
+                          </div>
+                          <Button variant="ghost" size="sm">
+                            Download
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-end space-x-2">
                   <Button 
                     variant="outline" 
                     size="sm"
@@ -239,13 +263,15 @@ export function PlatformConnections() {
                     variant="default" 
                     size="sm"
                     className="gap-1 bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center"
+                    onClick={() => handleTrainModel(selectedConnection?._id)}
                   >
-                    <PlusCircle className="h-4 w-4" />
+
                     Train Model
                   </Button>
                 </div>
               </div>
             </div>
+
           </div>
         ) : (
           <div className="text-center py-8">

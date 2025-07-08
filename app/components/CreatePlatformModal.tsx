@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,11 @@ interface CreatePlatformModalProps {
   onSuccess?: () => void;
 }
 
+interface Company {
+  _id: string;
+  name: string;
+}
+
 export function CreatePlatformModal({ onSuccess }: CreatePlatformModalProps) {
   const [open, setOpen] = useState(false);
   const [platformName, setPlatformName] = useState('');
@@ -22,6 +27,8 @@ export function CreatePlatformModal({ onSuccess }: CreatePlatformModalProps) {
   const [docUrl, setDocUrl] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [selectedCompany, setSelectedCompany] = useState<string>('');
 
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -66,8 +73,31 @@ export function CreatePlatformModal({ onSuccess }: CreatePlatformModalProps) {
     setFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  useEffect(() => {
+    fetchCompanies();
+  }, []);
+
+  const fetchCompanies = async () => {
+    try {
+      const response = await fetch('/api/companies');
+      if (!response.ok) {
+        throw new Error('Failed to fetch companies');
+      }
+      const data = await response.json();
+      setCompanies(data);
+    } catch (error) {
+      console.error('Error fetching companies:', error);
+      toast.error('Failed to fetch companies');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!selectedCompany) {
+      toast.error('Please select a company');
+      return;
+    }
     
     try {
       const formData = {
@@ -79,8 +109,7 @@ export function CreatePlatformModal({ onSuccess }: CreatePlatformModalProps) {
           size: f.size,
           type: f.type
         })),
-        // You might want to associate this with the current user
-        // userId: currentUserId,
+        companyId: selectedCompany,
       };
 
       const response = await fetch('/api/platforms', {
@@ -129,41 +158,42 @@ export function CreatePlatformModal({ onSuccess }: CreatePlatformModalProps) {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Platform Name</Label>
-              <Input
-                placeholder="Enter a name for this platform connection"
-                value={platformName}
-                onChange={(e) => setPlatformName(e.target.value)}
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Select Platform</Label>
-              <Select 
-                value={selectedPlatform}
-                onValueChange={(value: PlatformType) => setSelectedPlatform(value)}
-                required
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a platform" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="linkedin">LinkedIn</SelectItem>
-                  <SelectItem value="twitter">Twitter</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="platformName">Platform Name</Label>
+                <Input
+                  id="platformName"
+                  value={platformName}
+                  onChange={(e) => setPlatformName(e.target.value)}
+                  placeholder="Enter platform name"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label>Document URL</Label>
-              <Input
-                type="url"
-                placeholder="Paste document URL (Google Docs, Word, PDF, etc.)"
-                value={docUrl}
-                onChange={(e) => setDocUrl(e.target.value)}
-              />
+              <div>
+                <Label htmlFor="platformType">Platform Type</Label>
+                <Select
+                  value={selectedPlatform}
+                  onValueChange={setSelectedPlatform}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select platform type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="linkedin">LinkedIn</SelectItem>
+                    <SelectItem value="twitter">Twitter</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="docUrl">Document URL (Optional)</Label>
+                <Input
+                  id="docUrl"
+                  value={docUrl}
+                  onChange={(e) => setDocUrl(e.target.value)}
+                  placeholder="Enter document URL"
+                />
+              </div>
               <p className="text-sm text-muted-foreground mt-1">
                 Or upload a file below
               </p>
@@ -231,11 +261,13 @@ export function CreatePlatformModal({ onSuccess }: CreatePlatformModalProps) {
           </div>
 
           <div className="flex justify-end space-x-4">
-            <Button
-              type="button"
-              variant="outline"
+            <Button 
+              variant="destructive" 
+              size="sm"
+              className="gap-1"
               onClick={() => setOpen(false)}
             >
+              <X className="h-4 w-4" />
               Cancel
             </Button>
             <Button type="submit" disabled={!platformName || !selectedPlatform || (!docUrl && files.length === 0)}>
