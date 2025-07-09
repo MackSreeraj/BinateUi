@@ -262,51 +262,53 @@ export default function Dashboard() {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-6">
+        <main className={`${activeNav === 'Trends List' ? 'flex-1 p-6' : 'flex-1 p-6'}`}>
           <CurrentContent />
         </main>
 
-        {/* Right Sidebar */}
-        <aside className="w-80 border-l bg-muted/20 min-h-[calc(100vh-4rem)]">
-          <div className="p-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Welcome to the AI Content Engine Interface</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h4 className="font-medium mb-2 text-green-500">Resources</h4>
-                  <div className="space-y-2">
-                    {resourceLinks.map((link) => {
-                      const Icon = link.icon;
-                      return (
-                        <Button
-                          key={link.title}
-                          variant="ghost"
-                          className="w-full justify-start h-auto p-2 text-xs"
-                        >
-                          <Icon className="mr-2 h-3 w-3" />
-                          {link.title}
-                        </Button>
-                      );
-                    })}
+        {/* Right Sidebar - Hidden for Trends List page */}
+        {activeNav !== 'Trends List' && (
+          <aside className="w-80 border-l bg-muted/20 min-h-[calc(100vh-4rem)]">
+            <div className="p-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Welcome to the AI Content Engine Interface</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <h4 className="font-medium mb-2 text-green-500">Resources</h4>
+                    <div className="space-y-2">
+                      {resourceLinks.map((link) => {
+                        const Icon = link.icon;
+                        return (
+                          <Button
+                            key={link.title}
+                            variant="ghost"
+                            className="w-full justify-start h-auto p-2 text-xs"
+                          >
+                            <Icon className="mr-2 h-3 w-3" />
+                            {link.title}
+                          </Button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
 
-                <Separator />
+                  <Separator />
 
-                <div>
-                  <h4 className="font-medium mb-2 text-sm">Usage Rights & Legal Notice</h4>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    This AI Content Engine interface is proprietary software. All reproduction, 
-                    distribution, or usage rights are governed by the terms of service. 
-                    Unauthorized copying or redistribution is strictly prohibited.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </aside>
+                  <div>
+                    <h4 className="font-medium mb-2 text-sm">Usage Rights & Legal Notice</h4>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      This AI Content Engine interface is proprietary software. All reproduction, 
+                      distribution, or usage rights are governed by the terms of service. 
+                      Unauthorized copying or redistribution is strictly prohibited.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </aside>
+        )}
       </div>
     </div>
   );

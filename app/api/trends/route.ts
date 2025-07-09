@@ -109,7 +109,7 @@ export async function GET() {
       usersData = rawUsers.map(user => {
         // Try to extract the ID in various formats
         const userId = user._id?.toString() || 
-                      (user._id?.$oid ? user._id.$oid : null) || 
+                      (typeof user._id === 'object' && user._id !== null && '$oid' in user._id ? user._id.$oid : null) || 
                       user.id || 
                       Math.random().toString(36).substring(2, 15);
         

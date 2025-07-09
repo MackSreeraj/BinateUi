@@ -28,6 +28,7 @@ interface User {
   _id: string;
   name: string;
   email: string;
+  role?: string;
 }
 
 interface Trend {
@@ -39,6 +40,7 @@ interface Trend {
   workshopUrl?: string;
   pushedTo?: string;
   topics?: string[];
+  status?: string; // Added status field
 }
 
 interface TrendsData {
@@ -91,14 +93,16 @@ export default function TrendsListContent() {
                 name: 'AI Advancements', 
                 volume: 24500, 
                 change: 12,
-                topics: ['AI', 'Technology']
+                topics: ['AI', 'Technology'],
+                status: 'Active'
               },
               { 
                 _id: '2', 
                 name: 'Web3 Updates', 
                 volume: 18900, 
                 change: 8,
-                topics: ['Web3', 'Blockchain']
+                topics: ['Web3', 'Blockchain'],
+                status: 'Pending'
               }
             ],
             users: [
@@ -119,14 +123,16 @@ export default function TrendsListContent() {
               name: 'AI Advancements', 
               volume: 24500, 
               change: 12,
-              topics: ['AI', 'Technology']
+              topics: ['AI', 'Technology'],
+              status: 'Active'
             },
             { 
-              _id: '2', 
-              name: 'Web3 Updates', 
-              volume: 18900, 
-              change: 8,
-              topics: ['Web3', 'Blockchain']
+                _id: '2', 
+                name: 'Web3 Updates', 
+                volume: 18900, 
+                change: 8,
+                topics: ['Web3', 'Blockchain'],
+                status: 'Pending'
             }
           ],
           users: [
@@ -149,9 +155,9 @@ export default function TrendsListContent() {
       console.log('Pushing trend to user:', { trendId, userId });
       
       // Don't proceed if either ID is empty
-      if (!trendId || !userId) {
-        console.error('Missing trendId or userId');
-        setError('Cannot update: Missing trend or user information');
+      if (!trendId) {
+        console.error('Missing trendId');
+        setError('Cannot update: Missing trend information');
         return;
       }
       
@@ -179,7 +185,7 @@ export default function TrendsListContent() {
           const isMatch = 
             trend._id === trendId || 
             trend._id === trendId.toString() || 
-            (trend._id && trend._id.$oid && trend._id.$oid === trendId);
+            (trend._id && typeof trend._id === 'object' && trend._id.$oid && trend._id.$oid === trendId);
           
           return isMatch ? { ...trend, pushedTo: userId } : trend;
         });
@@ -221,139 +227,134 @@ export default function TrendsListContent() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-background">
-      {/* Header with Search */}
-      <div className="flex flex-col space-y-4 p-6 pb-0">
-        <h1 className="text-2xl font-semibold">Trends List</h1>
-        <div className="flex items-center justify-between">
-          <div className="relative w-96">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search trends..."
-              className="w-full rounded-lg pl-9"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <div className="flex space-x-2">
-            <Button variant="outline" size="sm" className="gap-2">
-              <Filter className="h-4 w-4" />
-              Filters
-            </Button>
-            <Button size="sm" className="gap-2">
-              <Plus className="h-4 w-4" />
-              New Trend
-            </Button>
-          </div>
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="relative w-96">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search trends..."
+            className="w-full rounded-lg pl-9"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button size="sm" variant="outline" className="h-8">
+            <Filter className="h-3 w-3 mr-1" />
+            Filter
+          </Button>
+          <Button size="sm" className="h-8">
+            <Plus className="h-3 w-3 mr-1" />
+            Add Trend
+          </Button>
         </div>
       </div>
 
-      {/* Trends Table */}
-      <div className="flex-1 overflow-y-auto p-6 pt-4">
-        {loading ? (
-          <div className="flex items-center justify-center h-64">
-            <p className="text-muted-foreground">Loading trends data...</p>
-          </div>
-        ) : error ? (
-          <div className="flex items-center justify-center h-64">
-            <p className="text-red-500">{error}</p>
-          </div>
-        ) : (
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[300px]">Title</TableHead>
-                  <TableHead className="w-[150px]">Relevance Score</TableHead>
-                  <TableHead className="w-[150px]">Open Workshop</TableHead>
-                  <TableHead className="w-[200px]">Pushed To</TableHead>
-                  <TableHead>Topics</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredTrends.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
-                      No trends found.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredTrends.map((trend, index) => (
-                    <TableRow key={trend._id || index}>
-                      <TableCell className="font-medium">{trend?.name || 'Unnamed Trend'}</TableCell>
-                      <TableCell>
-                        {trend?.relevanceScore ? trend.relevanceScore.toFixed(2) : 
-                         (trend?.volume ? (trend.volume / 1000).toFixed(2) : 'N/A')}
-                      </TableCell>
-                      <TableCell>
-                        {trend?.workshopUrl ? (
-                          <Button variant="outline" size="sm" asChild>
-                            <Link href={trend.workshopUrl} target="_blank">
-                              <ExternalLink className="h-4 w-4 mr-2" />
-                              Open
-                            </Link>
-                          </Button>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">Not available</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm">
-                              {getUserNameById(trend?.pushedTo)}
-                              <ChevronDown className="ml-2 h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-56">
-                            <DropdownMenuLabel>Assign to User</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            {trendsData?.users && trendsData.users.length > 0 ? (
-                              trendsData.users.map((user) => (
-                                <DropdownMenuItem 
-                                  key={user?._id || index}
-                                  onClick={() => handlePushToUser(trend?._id || '', user?._id || '')}
-                                  className="flex flex-col items-start py-2"
-                                >
-                                  <span className="font-medium">{user?.name || 'Unknown User'}</span>
-                                  {user?.email && (
-                                    <span className="text-xs text-muted-foreground">{user.email}</span>
-                                  )}
-                                  {user?.role && (
-                                    <span className="text-xs text-muted-foreground mt-1">{user.role}</span>
-                                  )}
-                                </DropdownMenuItem>
-                              ))
-                            ) : (
-                              <DropdownMenuItem disabled>No users available</DropdownMenuItem>
-                            )}
-                            <DropdownMenuSeparator />
+      {error && <div className="text-red-500 text-sm">{error}</div>}
+
+      <div className="rounded-md border">
+        <Table className="table-fixed">
+          <TableHeader>
+            <TableRow className="bg-muted/50">
+              <TableHead className="py-1 w-1/3">Title</TableHead>
+              <TableHead className="py-1 w-16">Score</TableHead>
+              <TableHead className="py-1 w-24">Workshop</TableHead>
+              <TableHead className="py-1 w-28">Assigned To</TableHead>
+              <TableHead className="py-1 w-20">Status</TableHead>
+              <TableHead className="py-1">Topics</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={5} className="h-16 text-center">
+                  Loading trends...
+                </TableCell>
+              </TableRow>
+            ) : filteredTrends.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="h-16 text-center">
+                  No trends found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredTrends.map((trend, index) => (
+                <TableRow key={trend._id || index} className="h-10">
+                  <TableCell className="font-medium py-0.5 truncate max-w-xs">{trend?.name || 'Unnamed Trend'}</TableCell>
+                  <TableCell className="py-0.5">
+                    {trend?.relevanceScore ? trend.relevanceScore.toFixed(1) : 
+                     (trend?.volume ? (trend.volume / 1000).toFixed(1) : 'N/A')}
+                  </TableCell>
+                  <TableCell className="py-0.5">
+                    {trend?.workshopUrl ? (
+                      <Button variant="ghost" size="sm" asChild className="h-6 px-2">
+                        <Link href={trend.workshopUrl} target="_blank">
+                          <ExternalLink className="h-3 w-3 mr-1" />
+                          Open
+                        </Link>
+                      </Button>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">N/A</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="py-0.5">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-6 px-2 w-full justify-between">
+                          <span className="truncate">{getUserNameById(trend?.pushedTo)}</span>
+                          <ChevronDown className="h-3 w-3 ml-1 flex-shrink-0" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-36">
+                        {trendsData?.users && trendsData.users.length > 0 ? (
+                          trendsData.users.map((user) => (
                             <DropdownMenuItem 
-                              onClick={() => handlePushToUser(trend?._id || '', '')}
-                              className="text-muted-foreground"
+                              key={user?._id || index}
+                              onClick={() => handlePushToUser(trend?._id || '', user?._id || '')}
+                              className="py-0.5"
                             >
-                              Clear Assignment
+                              {user?.name || 'Unknown User'}
                             </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {trend?.topics && trend.topics.length > 0 ? trend.topics.map((topic, index) => (
-                            <Badge key={index} variant="outline">
-                              {topic || 'Unknown'}
-                            </Badge>
-                          )) : <span className="text-muted-foreground text-sm">No topics</span>}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+                          ))
+                        ) : (
+                          <DropdownMenuItem disabled>No users available</DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                          onClick={() => handlePushToUser(trend?._id || '', '')}
+                          className="py-0.5"
+                        >
+                          Unassign
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                  <TableCell className="py-0.5">
+                    <Badge 
+                      variant={trend?.status === 'Active' ? 'default' : 'outline'} 
+                      className={`text-xs py-0 h-5 ${trend?.status === 'Active' ? 'bg-green-500' : trend?.status === 'Pending' ? 'text-amber-500' : 'text-slate-500'}`}
+                    >
+                      {trend?.status || 'Not Set'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="py-0.5">
+                    <div className="inline-flex flex-wrap gap-0.5">
+                      {trend?.topics && trend.topics.length > 0 ? trend.topics.slice(0, 2).map((topic, index) => (
+                        <Badge key={index} variant="outline" className="text-xs py-0 h-4 whitespace-nowrap">
+                          {topic || 'Unknown'}
+                        </Badge>
+                      )) : <span className="text-muted-foreground text-xs">None</span>}
+                      {trend?.topics && trend.topics.length > 2 && (
+                        <Badge variant="outline" className="text-xs py-0 h-4">+{trend.topics.length - 2}</Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );
