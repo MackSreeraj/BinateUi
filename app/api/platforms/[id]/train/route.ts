@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     }
 
     // First try the test endpoint
-    const webhookUrl = new URL('https://n8n.srv775152.hstgr.cloud/webhook/7581af18-09d1-4b08-b7f5-bd70bf32d800');
+    const webhookUrl = new URL('https://n8n.srv775152.hstgr.cloud/webhook/7581af18-09d1-4b08-b7f5-bd70bf32d1200');
     webhookUrl.searchParams.set('platformId', platformId);
     
     try {
@@ -26,8 +26,8 @@ export async function POST(request: Request) {
         
         if (errorData.code === 404 && errorData.message.includes('not registered')) {
           // If test endpoint fails, try the regular endpoint
-          const regularWebhookUrl = new URL('https://n8n.srv775152.hstgr.cloud/webhook/7581af18-09d1-4b08-b7f5-bd70bf32d800');
-          regularWebhookUrl.searchParams.set('companyId', companyId);
+          const regularWebhookUrl = new URL('https://n8n.srv775152.hstgr.cloud/webhook/7581af18-09d1-4b08-b7f5-bd70bf32d1200');
+          regularWebhookUrl.searchParams.set('platformId', platformId);
           
           const regularResponse = await fetch(regularWebhookUrl.toString(), {
             method: 'GET',

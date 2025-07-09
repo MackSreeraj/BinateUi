@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     const trainingId = trainingJob.insertedId.toString();
     
     // Don't await the training workflow, let it run in the background
-    fetch(`https://n8n.srv775152.hstgr.cloud/webhook/7581af18-09d1-4b08-b7f5-bd70bf32d800?companyId=${companyId}&trainingId=${trainingId}`)
+    fetch(`https://n8n.srv775152.hstgr.cloud/webhook/7581af18-09d1-4b08-b7f5-bd70bf32d1200?companyId=${companyId}&trainingId=${trainingId}`)
       .then(async (response) => {
         if (!response.ok) throw new Error('Failed to start training workflow');
         return response.json();

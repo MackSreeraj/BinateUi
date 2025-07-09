@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -15,10 +15,7 @@ interface CreatePlatformModalProps {
   onSuccess?: () => void;
 }
 
-interface Company {
-  _id: string;
-  name: string;
-}
+
 
 export function CreatePlatformModal({ onSuccess }: CreatePlatformModalProps) {
   const [open, setOpen] = useState(false);
@@ -27,8 +24,7 @@ export function CreatePlatformModal({ onSuccess }: CreatePlatformModalProps) {
   const [docUrl, setDocUrl] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [selectedCompany, setSelectedCompany] = useState<string>('');
+
 
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -73,31 +69,10 @@ export function CreatePlatformModal({ onSuccess }: CreatePlatformModalProps) {
     setFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  useEffect(() => {
-    fetchCompanies();
-  }, []);
 
-  const fetchCompanies = async () => {
-    try {
-      const response = await fetch('/api/companies');
-      if (!response.ok) {
-        throw new Error('Failed to fetch companies');
-      }
-      const data = await response.json();
-      setCompanies(data);
-    } catch (error) {
-      console.error('Error fetching companies:', error);
-      toast.error('Failed to fetch companies');
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!selectedCompany) {
-      toast.error('Please select a company');
-      return;
-    }
     
     try {
       const formData = {
@@ -109,7 +84,7 @@ export function CreatePlatformModal({ onSuccess }: CreatePlatformModalProps) {
           size: f.size,
           type: f.type
         })),
-        companyId: selectedCompany,
+
       };
 
       const response = await fetch('/api/platforms', {
