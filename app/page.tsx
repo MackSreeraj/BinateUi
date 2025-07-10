@@ -81,42 +81,50 @@ const contentEngineCards = [
 const resourceLinks = [
   {
     icon: Play,
-    title: 'AI Content Engine Presentation',
+    title: 'Watch Demo: AI Content Engine',
+    url: 'https://thebinate.com/demo',
     external: true
   },
   {
-    icon: Play,
-    title: 'Installation Video',
+    icon: BookOpen,
+    title: 'Documentation & Guides',
+    url: 'https://thebinate.com/docs',
     external: true
   },
   {
     icon: Zap,
-    title: 'AI Content Engine Gamma',
+    title: 'Try Binate AI Beta',
+    url: 'https://thebinate.com/beta',
     external: true
   },
   {
     icon: ExternalLink,
-    title: 'Wind Growth Website',
+    title: 'Visit Binate Website',
+    url: 'https://thebinate.com',
     external: true
   },
   {
     icon: Phone,
-    title: 'Book a Meeting With Us',
+    title: 'Schedule a Discovery Call',
+    url: 'https://thebinate.com/ai_discovery_call/',
     external: true
   },
   {
     icon: FileText,
-    title: 'Free Onboarding Template',
+    title: 'AI Agents: Future of Technology',
+    url: 'https://thebinate.com/are-ai-agents-the-future-of-technology-exploring-trends-and-possibilities/',
     external: true
   },
   {
-    icon: Settings,
-    title: 'Start Using N8N Now',
+    icon: BookOpen,
+    title: 'Latest AI Trends Blog',
+    url: 'https://thebinate.com/blog',
     external: true
   },
   {
-    icon: ExternalLink,
-    title: 'Make.com Link',
+    icon: Zap,
+    title: 'AI Content Case Studies',
+    url: 'https://thebinate.com/case-studies',
     external: true
   },
 ];
@@ -281,14 +289,22 @@ export default function Dashboard() {
                       {resourceLinks.map((link) => {
                         const Icon = link.icon;
                         return (
-                          <Button
-                            key={link.title}
-                            variant="ghost"
-                            className="w-full justify-start h-auto p-2 text-xs"
+                          <a 
+                            key={link.title} 
+                            href={link.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="block"
                           >
-                            <Icon className="mr-2 h-3 w-3" />
-                            {link.title}
-                          </Button>
+                            <Button
+                              variant="ghost"
+                              className="w-full justify-start h-auto p-2 text-xs"
+                            >
+                              <Icon className="mr-2 h-3 w-3" />
+                              {link.title}
+                              {link.external && <ExternalLink className="ml-1 h-2 w-2" />}
+                            </Button>
+                          </a>
                         );
                       })}
                     </div>
@@ -297,11 +313,9 @@ export default function Dashboard() {
                   <Separator />
 
                   <div>
-                    <h4 className="font-medium mb-2 text-sm">Usage Rights & Legal Notice</h4>
+                    <h4 className="font-medium mb-2 text-sm">About Binate AI</h4>
                     <p className="text-xs text-muted-foreground leading-relaxed">
-                      This AI Content Engine interface is proprietary software. All reproduction, 
-                      distribution, or usage rights are governed by the terms of service. 
-                      Unauthorized copying or redistribution is strictly prohibited.
+                      Binate AI helps businesses create engaging content at scale by leveraging the latest in artificial intelligence technology. Our platform streamlines content creation, trend analysis, and audience engagement.                      
                     </p>
                   </div>
                 </CardContent>
