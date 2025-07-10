@@ -3,10 +3,13 @@ const nextConfig = {
   // Enable server-side rendering for API routes
   output: 'standalone',
   
-  // Increase the maximum allowed file size for API routes (default is 1mb)
-  api: {
-    bodyParser: {
-      sizeLimit: '10mb',
+  // Configure API routes
+  serverRuntimeConfig: {
+    // API configuration moved here
+    api: {
+      bodyParser: {
+        sizeLimit: '10mb',
+      },
     },
   },
 
