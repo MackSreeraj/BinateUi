@@ -5,6 +5,17 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ThemeToggle } from './components/ThemeToggle';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { 
@@ -25,7 +36,14 @@ import {
   BookOpen,
   Phone,
   FileText,
-  Zap
+  Zap,
+  Pen,
+  Globe,
+  Search,
+  Bell,
+  HelpCircle,
+  User,
+  LogOut
 } from 'lucide-react';
 
 const navigationItems = [
@@ -37,6 +55,7 @@ const navigationItems = [
   { icon: TrendingUp, label: 'Trends List' },
   { icon: Wrench, label: 'Trend Workshop' },
   { icon: Lightbulb, label: 'Ideas List' },
+  { icon: Lightbulb, label: 'Idea Workshop' },
   { icon: Settings, label: 'Content Pipeline' },
 ];
 
@@ -132,6 +151,7 @@ const resourceLinks = [
 // Import the content components
 import UsersContent from './components/UsersContent';
 import IdeasContent from './components/IdeasContent';
+import IdeaWorkshopContent from './components/IdeaWorkshopContent';
 import CompanyProfilesContent from './components/CompanyProfilesContent';
 import WriterProfilesContent from './components/WriterProfilesContent';
 import PlatformProfilesContent from './components/PlatformProfilesContent';
@@ -223,6 +243,7 @@ export default function Dashboard() {
     'Trends List': () => <TrendsListContent />,
     'Trend Workshop': () => <TrendWorkshopContent />,
     'Ideas': () => <IdeasContent />,
+    'Idea Workshop': () => <IdeaWorkshopContent />,
     'Content List': () => <ContentList />,
     // Add other content components here as needed
   };
@@ -232,21 +253,43 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
-        <div className="flex h-16 items-center justify-center">
-          <div className="relative h-10 w-32">
-            <Image 
-              src="/logo/Binate Logo wide sqr white.png" 
-              alt="Binate Logo" 
-              width={128} 
-              height={40} 
-              className="object-contain"
-              priority
-            />
+      {/* Header - Fixed Position */}
+      <header className="fixed top-0 left-0 right-0 z-50 border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50 shadow-sm">
+        <div className="relative flex h-16 items-center justify-between px-6">
+          {/* Left side - Theme Toggle */}
+          <div>
+            <ThemeToggle />
+          </div>
+          
+          {/* Center - Logo (absolutely positioned) */}
+          <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
+            <div className="relative h-10 w-32">
+              <Image 
+                src="/logo/Binate Logo wide sqr white.png" 
+                alt="Binate Logo" 
+                width={128} 
+                height={40} 
+                className="object-contain dark:opacity-100 light:opacity-80"
+                priority
+              />
+            </div>
+          </div>
+          
+          {/* Right side - Controls */}
+          <div className="flex items-center space-x-2">
+            <Button variant="ghost" size="icon" className="relative">
+              <Bell className="h-5 w-5" />
+              <span className="absolute top-1 right-1 flex h-2 w-2 rounded-full bg-primary"></span>
+            </Button>
+            
+            <Button variant="ghost" size="icon">
+              <HelpCircle className="h-5 w-5" />
+            </Button>
           </div>
         </div>
       </header>
+      {/* Spacer to prevent content from being hidden under fixed header */}
+      <div className="h-16"></div>
 
       <div className="flex">
         {/* Left Sidebar - Fixed position */}
@@ -296,14 +339,14 @@ export default function Dashboard() {
           </div>
         </aside>
 
-        {/* Main Content - With left margin to account for fixed sidebar */}
-        <main className={`flex-1 p-6 ml-64`}>
+        {/* Main Content */}
+        <main className={`flex-1 p-6 ml-64 ${activeNav === 'Home' ? 'mr-80' : ''}`}>
           <CurrentContent />
         </main>
 
-        {/* Right Sidebar - Only shown on Home page */}
+        {/* Right Sidebar - Only shown on Home page - Fixed Position */}
         {activeNav === 'Home' && (
-          <aside className="w-80 border-l bg-muted/20 min-h-[calc(100vh-4rem)]">
+          <aside className="w-80 border-l bg-muted/20 h-[calc(100vh-4rem)] fixed top-16 right-0">
             <div className="p-4">
               <Card>
                 <CardHeader>
