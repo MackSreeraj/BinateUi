@@ -25,7 +25,7 @@ import Link from 'next/link';
 
 // Define types for our data
 interface User {
-  _id: string;
+  _id: string | MongoObjectId;
   name: string;
   email: string;
   role?: string;
