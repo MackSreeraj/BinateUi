@@ -19,14 +19,14 @@ export async function GET() {
       // Normalize the data structure to ensure consistent field names
       trendsData = rawTrends.map(trend => {
         // Extract topics from the Topics field or create from KeyThemes if available
-        let topics = [];
+        let topics: string[] = [];
         if (trend.Topics && typeof trend.Topics === 'string' && trend.Topics.trim()) {
-          topics = trend.Topics.split(',').map(t => t.trim()).filter(t => t);
+          topics = trend.Topics.split(',').map(t => t.trim()).filter(Boolean);
         } else if (trend.KeyThemes && typeof trend.KeyThemes === 'string') {
           // Extract bullet points from KeyThemes
           topics = trend.KeyThemes.split('•')
             .map(t => t.trim().replace(/^\s*•\s*/, ''))
-            .filter(t => t);
+            .filter(Boolean);
         }
         
         return {

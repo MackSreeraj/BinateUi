@@ -31,8 +31,13 @@ interface User {
   role?: string;
 }
 
+// Define a type for MongoDB ObjectId format when serialized to JSON
+interface MongoObjectId {
+  $oid: string;
+}
+
 interface Trend {
-  _id: string;
+  _id: string | MongoObjectId;
   name: string; // Changed from title to name to match database structure
   volume?: number; // Added volume field from database
   change?: number; // Added change field from database
@@ -185,7 +190,7 @@ export default function TrendsListContent() {
           const isMatch = 
             trend._id === trendId || 
             trend._id === trendId.toString() || 
-            (trend._id && typeof trend._id === 'object' && trend._id.$oid && trend._id.$oid === trendId);
+            (typeof trend._id === 'object' && '$oid' in trend._id && trend._id.$oid === trendId);
           
           return isMatch ? { ...trend, pushedTo: userId } : trend;
         });
@@ -203,11 +208,13 @@ export default function TrendsListContent() {
   // Filter trends based on search query
   const filteredTrends = trendsData?.trends?.filter(trend => 
     (trend?.name ? trend.name.toLowerCase().includes(searchQuery.toLowerCase()) : false) ||
-    (trend?.topics && trend.topics.some(topic => topic?.toLowerCase?.().includes(searchQuery.toLowerCase()) || false))
+    (trend?.topics && Array.isArray(trend.topics) && trend.topics.some(topic => 
+      typeof topic === 'string' && topic.toLowerCase().includes(searchQuery.toLowerCase())
+    ))
   ) || [];
 
   // Find user name by ID
-  const getUserNameById = (userId: string | null) => {
+  const getUserNameById = (userId: string | null | undefined) => {
     if (!userId || !trendsData?.users) return 'Unassigned';
     
     // Handle different ID formats (string, ObjectId)
@@ -218,7 +225,7 @@ export default function TrendsListContent() {
       if (u._id === userId) return true;
       
       // Handle MongoDB ObjectId format
-      if (typeof u._id === 'object' && u._id.$oid && u._id.$oid === userId) return true;
+      if (typeof u._id === 'object' && '$oid' in u._id && u._id.$oid === userId) return true;
       
       return false;
     });
@@ -280,7 +287,7 @@ export default function TrendsListContent() {
               </TableRow>
             ) : (
               filteredTrends.map((trend, index) => (
-                <TableRow key={trend._id || index} className="h-10">
+                <TableRow key={typeof trend._id === 'string' ? trend._id : (typeof trend._id === 'object' && '$oid' in trend._id ? trend._id.$oid : index)} className="h-10">
                   <TableCell className="font-medium py-0.5 truncate max-w-xs">{trend?.name || 'Unnamed Trend'}</TableCell>
                   <TableCell className="py-0.5">
                     {trend?.relevanceScore ? trend.relevanceScore.toFixed(1) : 
@@ -310,8 +317,13 @@ export default function TrendsListContent() {
                         {trendsData?.users && trendsData.users.length > 0 ? (
                           trendsData.users.map((user) => (
                             <DropdownMenuItem 
-                              key={user?._id || index}
-                              onClick={() => handlePushToUser(trend?._id || '', user?._id || '')}
+                              key={typeof user._id === 'string' ? user._id : (typeof user._id === 'object' && '$oid' in user._id ? user._id.$oid : `user-${index}`)}
+                              onClick={() => handlePushToUser(
+                                typeof trend._id === 'string' ? trend._id : 
+                                (typeof trend._id === 'object' && '$oid' in trend._id ? trend._id.$oid : ''),
+                                typeof user._id === 'string' ? user._id : 
+                                (typeof user._id === 'object' && '$oid' in user._id ? user._id.$oid : '')
+                              )}
                               className="py-0.5"
                             >
                               {user?.name || 'Unknown User'}
@@ -322,7 +334,11 @@ export default function TrendsListContent() {
                         )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem 
-                          onClick={() => handlePushToUser(trend?._id || '', '')}
+                          onClick={() => handlePushToUser(
+                            typeof trend._id === 'string' ? trend._id : 
+                            (typeof trend._id === 'object' && '$oid' in trend._id ? trend._id.$oid : ''),
+                            ''
+                          )}
                           className="py-0.5"
                         >
                           Unassign
