@@ -242,7 +242,7 @@ export default function Dashboard() {
     'Platform Profiles': () => <PlatformProfilesContent />,
     'Trends List': () => <TrendsListContent />,
     'Trend Workshop': () => <TrendWorkshopContent />,
-    'Ideas': () => <IdeasContent />,
+    'Ideas List': () => <IdeasContent />,
     'Idea Workshop': () => <IdeaWorkshopContent />,
     'Content List': () => <ContentList />,
     // Add other content components here as needed
