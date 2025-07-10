@@ -36,8 +36,7 @@ const navigationItems = [
   { icon: MonitorPlay, label: 'Platform Profiles' },
   { icon: TrendingUp, label: 'Trends List' },
   { icon: Wrench, label: 'Trend Workshop' },
-  { icon: List, label: 'Ideas List' },
-  { icon: Lightbulb, label: 'Idea Workshop' },
+  { icon: Lightbulb, label: 'Ideas List' },
   { icon: Settings, label: 'Content Pipeline' },
 ];
 
@@ -132,6 +131,7 @@ const resourceLinks = [
 
 // Import the content components
 import UsersContent from './components/UsersContent';
+import IdeasContent from './components/IdeasContent';
 import CompanyProfilesContent from './components/CompanyProfilesContent';
 import WriterProfilesContent from './components/WriterProfilesContent';
 import PlatformProfilesContent from './components/PlatformProfilesContent';
@@ -222,6 +222,7 @@ export default function Dashboard() {
     'Platform Profiles': () => <PlatformProfilesContent />,
     'Trends List': () => <TrendsListContent />,
     'Trend Workshop': () => <TrendWorkshopContent />,
+    'Ideas': () => <IdeasContent />,
     'Content List': () => <ContentList />,
     // Add other content components here as needed
   };
