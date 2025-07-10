@@ -13,8 +13,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'AI Content System - Wind Growth',
-  description: 'AI-Enhanced Operating Systems for Fast-Growth Service Businesses',
+  title: 'Binate - AI Content Engine',
+  description: 'AI-Enhanced Content Creation System for Businesses',
 };
 
 export default function RootLayout({
@@ -24,6 +24,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="shortcut icon" href="/favicon/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png" />
+        <link rel="manifest" href="/favicon/site.webmanifest" />
+      </head>
       <body className={`${inter.className} bg-background text-foreground`}>
         <FontErrorBoundary>
           <ThemeProvider

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -233,18 +234,25 @@ export default function Dashboard() {
       {/* Header */}
       <header className="border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
         <div className="flex h-16 items-center justify-center">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-green-500 to-emerald-500 bg-clip-text text-transparent">
-            Binate
-          </h1>
+          <div className="relative h-10 w-32">
+            <Image 
+              src="/logo/Binate Logo wide sqr white.png" 
+              alt="Binate Logo" 
+              width={128} 
+              height={40} 
+              className="object-contain"
+              priority
+            />
+          </div>
         </div>
       </header>
 
       <div className="flex">
-        {/* Left Sidebar */}
-        <aside className="w-64 border-r bg-muted/20 min-h-[calc(100vh-4rem)]">
+        {/* Left Sidebar - Fixed position */}
+        <aside className="w-64 border-r bg-muted/20 h-[calc(100vh-4rem)] flex flex-col justify-between fixed top-16 left-0 overflow-y-auto">
           <div className="p-4">
             <div className="mb-6">
-              <h2 className="text-lg font-semibold text-green-500">AI Content System N8N</h2>
+              <h2 className="text-lg font-semibold text-green-500">Content Engine</h2>
             </div>
             <nav className="space-y-1">
               {navigationItems.map((item) => {
@@ -267,10 +275,28 @@ export default function Dashboard() {
               })}
             </nav>
           </div>
+          
+          {/* User Profile and Settings Section */}
+          <div className="mt-auto border-t border-border p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center mr-2">
+                  <Users className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">John Doe</p>
+                  <p className="text-xs text-muted-foreground">Admin</p>
+                </div>
+              </div>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Settings className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </aside>
 
-        {/* Main Content */}
-        <main className={`flex-1 p-6`}>
+        {/* Main Content - With left margin to account for fixed sidebar */}
+        <main className={`flex-1 p-6 ml-64`}>
           <CurrentContent />
         </main>
 
