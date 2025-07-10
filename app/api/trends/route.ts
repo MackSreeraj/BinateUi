@@ -37,7 +37,10 @@ export async function GET() {
           relevanceScore: trend.RelevanceScore || 0,
           workshopUrl: trend.URL || trend.Source || null,
           pushedTo: trend.PushedTo || null,
-          topics: topics
+          topics: topics,
+          discoveryDate: trend.DiscoveryDate || trend.Date || new Date().toISOString(),
+          source: trend.Source || trend.Origin || null,
+          status: trend.Status || 'New'
         };
       });
       

@@ -1,17 +1,43 @@
 'use client';
 
-import { useState } from 'react';
-import { ChevronDown, ChevronUp, Plus, Check, Users } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ChevronDown, ChevronUp, Plus, Check, Users, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
 
-// Mock data
-const ideas = [
-  { id: 1, title: 'test' },
-  { id: 2, title: 'Record...' },
-];
+// Define types for our data
+interface MongoObjectId {
+  $oid: string;
+}
+
+interface Trend {
+  _id: string | MongoObjectId;
+  name: string;
+  volume?: number;
+  change?: number;
+  relevanceScore?: number;
+  workshopUrl?: string;
+  pushedTo?: string;
+  topics?: string[];
+  status?: string;
+  discoveryDate?: string;
+  source?: string;
+}
+
+interface User {
+  _id: string | MongoObjectId;
+  name: string;
+  email: string;
+  role?: string;
+}
+
+interface TrendsData {
+  trends: Trend[];
+  users: User[];
+}
 
 const statusOptions = [
   { value: 'new', label: 'New' },
@@ -20,60 +46,125 @@ const statusOptions = [
 ];
 
 export default function TrendWorkshopContent() {
-  const [selectedIdea, setSelectedIdea] = useState(ideas[0]);
-  const [isIdeaDropdownOpen, setIsIdeaDropdownOpen] = useState(false);
+  const [trendsData, setTrendsData] = useState<TrendsData | null>(null);
+  const [selectedTrend, setSelectedTrend] = useState<Trend | null>(null);
+  const [isTrendDropdownOpen, setIsTrendDropdownOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState(statusOptions[0]);
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const [isUserSelectorOpen, setIsUserSelectorOpen] = useState(false);
-  const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Fetch trends data from the API
+  useEffect(() => {
+    const fetchTrends = async () => {
+      try {
+        setLoading(true);
+        
+        const response = await fetch('/api/trends', {
+          method: 'GET',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch trends data: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setTrendsData(data);
+        
+        // Set the first trend as selected by default
+        if (data.trends && data.trends.length > 0) {
+          setSelectedTrend(data.trends[0]);
+        }
+      } catch (err) {
+        console.error('Error fetching trends:', err);
+        setError('Failed to load trends. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Mock users
-  const users = [
-    { id: 1, name: 'John Doe', email: 'john@example.com' },
-    { id: 2, name: 'Jane Smith', email: 'jane@example.com' },
-    { id: 3, name: 'Bob Johnson', email: 'bob@example.com' },
-  ];
+    fetchTrends();
+  }, []);
 
-  const toggleUserSelection = (userId: number) => {
+  const toggleUserSelection = (userId: string) => {
     setSelectedUsers(prev => 
       prev.includes(userId)
         ? prev.filter(id => id !== userId)
         : [...prev, userId]
     );
   };
+  
+  // Helper function to get ID string from either string or MongoObjectId
+  const getIdString = (id: string | MongoObjectId | undefined): string => {
+    if (!id) return '';
+    if (typeof id === 'string') return id;
+    if (typeof id === 'object' && '$oid' in id) return id.$oid;
+    return '';
+  };
+  
+  // Format date string
+  const formatDate = (dateString: string | undefined): string => {
+    if (!dateString) return '—';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      });
+    } catch (e) {
+      return dateString;
+    }
+  };
 
   return (
     <div className="flex flex-col h-full p-6">
-      {/* Idea Selection Dropdown */}
-      <div className="relative mb-6 w-64">
-        <button
-          className="w-full flex items-center justify-between p-2 border rounded-md bg-card text-card-foreground hover:bg-accent/50"
-          onClick={() => setIsIdeaDropdownOpen(!isIdeaDropdownOpen)}
-        >
-          <span>{selectedIdea?.title}</span>
-          {isIdeaDropdownOpen ? (
-            <ChevronUp className="h-4 w-4" />
-          ) : (
-            <ChevronDown className="h-4 w-4" />
-          )}
-        </button>
-        {isIdeaDropdownOpen && (
-          <div className="absolute z-10 mt-1 w-full bg-card border rounded-md shadow-lg">
-            {ideas.map(idea => (
-              <div
-                key={idea.id}
-                className="p-2 hover:bg-accent/50 cursor-pointer"
-                onClick={() => {
-                  setSelectedIdea(idea);
-                  setIsIdeaDropdownOpen(false);
-                }}
-              >
-                {idea.title}
+      {loading ? (
+        <div className="flex items-center justify-center p-8">
+          <p>Loading trends data...</p>
+        </div>
+      ) : error ? (
+        <div className="text-red-500 p-4 border rounded-md">{error}</div>
+      ) : (
+        <>
+          {/* Trend Selection Dropdown */}
+          <div className="relative mb-6 w-64">
+            <button
+              className="w-full flex items-center justify-between p-2 border rounded-md bg-card text-card-foreground hover:bg-accent/50"
+              onClick={() => setIsTrendDropdownOpen(!isTrendDropdownOpen)}
+            >
+              <span>{selectedTrend?.name || 'Select a trend'}</span>
+              {isTrendDropdownOpen ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </button>
+            {isTrendDropdownOpen && trendsData?.trends && (
+              <div className="absolute z-10 mt-1 w-full bg-card border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                {trendsData.trends.map(trend => (
+                  <div
+                    key={getIdString(trend._id)}
+                    className="p-2 hover:bg-accent/50 cursor-pointer"
+                    onClick={() => {
+                      setSelectedTrend(trend);
+                      setIsTrendDropdownOpen(false);
+                    }}
+                  >
+                    {trend.name}
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
-        )}
-      </div>
+        </>
+      )}
 
       <div className="space-y-6">
         {/* Section 1: Basic Metadata */}
@@ -117,23 +208,42 @@ export default function TrendWorkshopContent() {
             </div>
             <div>
               <label className="text-sm text-muted-foreground">Relevance Score</label>
-              <div className="mt-1 p-2">—</div>
+              <div className="mt-1 p-2">{selectedTrend?.relevanceScore || '—'}</div>
             </div>
             <div>
               <label className="text-sm text-muted-foreground">Discovery Date</label>
-              <div className="mt-1 p-2">—</div>
+              <div className="mt-1 p-2">{formatDate(selectedTrend?.discoveryDate)}</div>
             </div>
             <div>
               <label className="text-sm text-muted-foreground">URL</label>
-              <div className="mt-1 p-2">—</div>
+              <div className="mt-1 p-2">
+                {selectedTrend?.workshopUrl ? (
+                  <Button variant="ghost" size="sm" asChild className="h-6 px-2 -ml-2">
+                    <Link href={selectedTrend.workshopUrl} target="_blank">
+                      <ExternalLink className="h-3 w-3 mr-1" />
+                      Open URL
+                    </Link>
+                  </Button>
+                ) : '—'}
+              </div>
             </div>
             <div>
               <label className="text-sm text-muted-foreground">Topics</label>
-              <div className="mt-1 p-2">—</div>
+              <div className="mt-1 p-2">
+                {selectedTrend?.topics && selectedTrend.topics.length > 0 ? (
+                  <div className="flex flex-wrap gap-1">
+                    {selectedTrend.topics.map((topic, index) => (
+                      <Badge key={index} variant="outline" className="text-xs py-0 h-5">
+                        {topic}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : '—'}
+              </div>
             </div>
             <div>
               <label className="text-sm text-muted-foreground">Source</label>
-              <div className="mt-1 p-2">—</div>
+              <div className="mt-1 p-2">{selectedTrend?.source || '—'}</div>
             </div>
           </div>
         </div>
@@ -145,7 +255,7 @@ export default function TrendWorkshopContent() {
             <div className="space-y-4">
               <div>
                 <label className="text-sm text-muted-foreground">Views</label>
-                <div className="mt-1 p-2">—</div>
+                <div className="mt-1 p-2">{selectedTrend?.volume?.toLocaleString() || '—'}</div>
               </div>
               <div>
                 <label className="text-sm text-muted-foreground">Likes</label>
@@ -214,19 +324,19 @@ export default function TrendWorkshopContent() {
 
             {isUserSelectorOpen && (
               <div className="border rounded-md p-2 mb-4 max-h-60 overflow-y-auto bg-background">
-                {users.map(user => (
+                {trendsData?.users && trendsData.users.map(user => (
                   <div
-                    key={user.id}
+                    key={getIdString(user._id)}
                     className={`p-2 rounded-md cursor-pointer flex items-center justify-between ${
-                      selectedUsers.includes(user.id) ? 'bg-blue-900/20' : 'hover:bg-accent/50'
+                      selectedUsers.includes(getIdString(user._id)) ? 'bg-blue-900/20' : 'hover:bg-accent/50'
                     }`}
-                    onClick={() => toggleUserSelection(user.id)}
+                    onClick={() => toggleUserSelection(getIdString(user._id))}
                   >
                     <div>
                       <div className="font-medium">{user.name}</div>
                       <div className="text-xs text-muted-foreground">{user.email}</div>
                     </div>
-                    {selectedUsers.includes(user.id) && (
+                    {selectedUsers.includes(getIdString(user._id)) && (
                       <Check className="h-4 w-4 text-blue-500" />
                     )}
                   </div>
