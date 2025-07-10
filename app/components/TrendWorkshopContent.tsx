@@ -25,6 +25,11 @@ interface Trend {
   status?: string;
   discoveryDate?: string;
   source?: string;
+  // Social stats
+  likes?: number | null;
+  comments?: number | null;
+  shares?: number | null;
+  summary?: string | null;
 }
 
 interface User {
@@ -259,21 +264,21 @@ export default function TrendWorkshopContent() {
               </div>
               <div>
                 <label className="text-sm text-muted-foreground">Likes</label>
-                <div className="mt-1 p-2">—</div>
+                <div className="mt-1 p-2">{selectedTrend?.likes?.toLocaleString() || '—'}</div>
               </div>
               <div>
                 <label className="text-sm text-muted-foreground">Comments</label>
-                <div className="mt-1 p-2">—</div>
+                <div className="mt-1 p-2">{selectedTrend?.comments?.toLocaleString() || '—'}</div>
               </div>
             </div>
             <div className="space-y-4">
               <div>
                 <label className="text-sm text-muted-foreground">Summary</label>
-                <div className="mt-1 p-2">—</div>
+                <div className="mt-1 p-2">{selectedTrend?.summary || '—'}</div>
               </div>
               <div>
                 <label className="text-sm text-muted-foreground">Shares</label>
-                <div className="mt-1 p-2">—</div>
+                <div className="mt-1 p-2">{selectedTrend?.shares?.toLocaleString() || '—'}</div>
               </div>
             </div>
           </div>

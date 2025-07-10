@@ -40,7 +40,12 @@ export async function GET() {
           topics: topics,
           discoveryDate: trend.DiscoveryDate || trend.Date || new Date().toISOString(),
           source: trend.Source || trend.Origin || null,
-          status: trend.Status || 'New'
+          status: trend.Status || 'New',
+          // Social stats
+          likes: trend.Likes ? parseInt(trend.Likes) : null,
+          comments: trend.Comments ? parseInt(trend.Comments) : null,
+          shares: trend.Shares ? parseInt(trend.Shares) : null,
+          summary: trend.Summary || null
         };
       });
       

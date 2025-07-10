@@ -262,12 +262,12 @@ export default function Dashboard() {
         </aside>
 
         {/* Main Content */}
-        <main className={`${activeNav === 'Trends List' ? 'flex-1 p-6' : 'flex-1 p-6'}`}>
+        <main className={`flex-1 p-6`}>
           <CurrentContent />
         </main>
 
-        {/* Right Sidebar - Hidden for Trends List page */}
-        {activeNav !== 'Trends List' && (
+        {/* Right Sidebar - Only shown on Home page */}
+        {activeNav === 'Home' && (
           <aside className="w-80 border-l bg-muted/20 min-h-[calc(100vh-4rem)]">
             <div className="p-4">
               <Card>
