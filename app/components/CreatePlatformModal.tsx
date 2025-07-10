@@ -148,7 +148,7 @@ export function CreatePlatformModal({ onSuccess }: CreatePlatformModalProps) {
                 <Label htmlFor="platformType">Platform Type</Label>
                 <Select
                   value={selectedPlatform}
-                  onValueChange={setSelectedPlatform}
+                  onValueChange={(value) => setSelectedPlatform(value as PlatformType)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select platform type" />
