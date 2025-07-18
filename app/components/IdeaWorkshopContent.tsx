@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -15,52 +15,158 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Check, X, AlertTriangle, ChevronDown, Plus } from 'lucide-react';
+import { Check, X, AlertTriangle, ChevronDown, Plus, Loader2, Sparkles } from 'lucide-react';
 
-interface Tag {
-  id: string;
+interface Company {
+  _id: string;
   name: string;
+}
+
+interface User {
+  _id: string;
+  username: string;
+  imageUrl?: string;
+}
+
+interface Writer {
+  _id: string;
+  name: string;
+}
+
+interface Platform {
+  _id: string;
+  name: string;
+}
+
+interface Idea {
+  _id: string;
+  content: string;
+  userId?: string;
+  attachmentPath?: string;
+  createdAt: string;
 }
 
 const IdeaWorkshopContent = () => {
   const [ideaKeyword, setIdeaKeyword] = useState('hotels');
-  const [companyTags, setCompanyTags] = useState<Tag[]>([{ id: '1', name: 'Nvidia' }]);
-  const [writerTags, setWriterTags] = useState<Tag[]>([{ id: '1', name: 'test' }]);
-  const [platformTags, setPlatformTags] = useState<Tag[]>([{ id: '1', name: 'LinkedIn' }]);
-  const [status, setStatus] = useState('Posted');
-  const [newTagText, setNewTagText] = useState('');
+  const [status, setStatus] = useState('Draft');
+  const [isGenerating, setIsGenerating] = useState(false);
+  
+  // Selected values
+  const [selectedCompany, setSelectedCompany] = useState<string>('');
+  const [selectedUser, setSelectedUser] = useState<string>('');
+  const [selectedWriter, setSelectedWriter] = useState<string>('');
+  const [selectedPlatform, setSelectedPlatform] = useState<string>('');
+  const [selectedIdea, setSelectedIdea] = useState<string>('');
+  
+  // Data from API
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [writers, setWriters] = useState<Writer[]>([]);
+  const [platforms, setPlatforms] = useState<Platform[]>([]);
+  const [ideas, setIdeas] = useState<Idea[]>([]);
+  
+  // Loading states
+  const [isLoading, setIsLoading] = useState({
+    companies: true,
+    users: true,
+    writers: true,
+    platforms: true,
+    ideas: true
+  });
 
-  const addTag = (tagType: string, tagName: string) => {
-    if (!tagName.trim()) return;
+  // Fetch data from API
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      try {
+        const response = await fetch('/api/companies');
+        if (!response.ok) throw new Error('Failed to fetch companies');
+        const data = await response.json();
+        setCompanies(data);
+      } catch (error) {
+        console.error('Error fetching companies:', error);
+      } finally {
+        setIsLoading(prev => ({ ...prev, companies: false }));
+      }
+    };
+
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch('/api/users');
+        if (!response.ok) throw new Error('Failed to fetch users');
+        const data = await response.json();
+        setUsers(data);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      } finally {
+        setIsLoading(prev => ({ ...prev, users: false }));
+      }
+    };
+
+    const fetchWriters = async () => {
+      try {
+        const response = await fetch('/api/writer-profiles');
+        if (!response.ok) throw new Error('Failed to fetch writers');
+        const data = await response.json();
+        setWriters(data);
+      } catch (error) {
+        console.error('Error fetching writers:', error);
+      } finally {
+        setIsLoading(prev => ({ ...prev, writers: false }));
+      }
+    };
+
+    const fetchPlatforms = async () => {
+      try {
+        const response = await fetch('/api/platforms');
+        if (!response.ok) throw new Error('Failed to fetch platforms');
+        const data = await response.json();
+        setPlatforms(data);
+      } catch (error) {
+        console.error('Error fetching platforms:', error);
+      } finally {
+        setIsLoading(prev => ({ ...prev, platforms: false }));
+      }
+    };
     
-    const newTag = { id: Date.now().toString(), name: tagName.trim() };
-    
-    switch (tagType) {
-      case 'company':
-        setCompanyTags([...companyTags, newTag]);
-        break;
-      case 'writer':
-        setWriterTags([...writerTags, newTag]);
-        break;
-      case 'platform':
-        setPlatformTags([...platformTags, newTag]);
-        break;
+    const fetchIdeas = async () => {
+      try {
+        const response = await fetch('/api/ideas');
+        if (!response.ok) throw new Error('Failed to fetch ideas');
+        const data = await response.json();
+        setIdeas(data);
+      } catch (error) {
+        console.error('Error fetching ideas:', error);
+      } finally {
+        setIsLoading(prev => ({ ...prev, ideas: false }));
+      }
+    };
+
+    fetchCompanies();
+    fetchUsers();
+    fetchWriters();
+    fetchPlatforms();
+    fetchIdeas();
+  }, []);
+  
+  const generateContent = async () => {
+    if (!selectedCompany || !selectedWriter || !selectedPlatform || !selectedIdea) {
+      alert('Please select company, writer, platform and idea before generating content');
+      return;
     }
     
-    setNewTagText('');
-  };
-
-  const removeTag = (tagType: string, tagId: string) => {
-    switch (tagType) {
-      case 'company':
-        setCompanyTags(companyTags.filter(tag => tag.id !== tagId));
-        break;
-      case 'writer':
-        setWriterTags(writerTags.filter(tag => tag.id !== tagId));
-        break;
-      case 'platform':
-        setPlatformTags(platformTags.filter(tag => tag.id !== tagId));
-        break;
+    setIsGenerating(true);
+    
+    try {
+      // Simulate content generation (replace with actual API call)
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Success message
+      alert('Content generated successfully!');
+    } catch (error) {
+      console.error('Error generating content:', error);
+      alert('Failed to generate content. Please try again.');
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -97,118 +203,108 @@ const IdeaWorkshopContent = () => {
       <Card className="shadow-sm border-gray-200">
         <CardContent className="p-5 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Idea Input */}
+            {/* Idea Dropdown */}
             <div className="space-y-2">
               <Label htmlFor="idea" className="text-sm font-medium">
                 Idea
               </Label>
-              <Input 
-                id="idea" 
-                value={ideaKeyword} 
-                onChange={(e) => setIdeaKeyword(e.target.value)}
-              />
+              <Select value={selectedIdea} onValueChange={setSelectedIdea}>
+                <SelectTrigger id="idea" className="w-full">
+                  {isLoading.ideas ? (
+                    <div className="flex items-center">
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <span>Loading...</span>
+                    </div>
+                  ) : (
+                    <SelectValue placeholder="Select idea" />
+                  )}
+                </SelectTrigger>
+                <SelectContent>
+                  {ideas.map((idea) => (
+                    <SelectItem key={idea._id} value={idea._id}>
+                      {idea.content.length > 30 ? `${idea.content.substring(0, 30)}...` : idea.content}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Company Tags */}
+            {/* Company Dropdown */}
             <div className="space-y-2">
               <Label htmlFor="company" className="text-sm font-medium">
                 Company
               </Label>
-              <div className="flex flex-wrap gap-2 p-2 border rounded-md min-h-[40px]">
-                {companyTags.map(tag => (
-                  <Badge 
-                    key={tag.id} 
-                    variant="secondary"
-                    className="px-2 py-1 flex items-center gap-1"
-                  >
-                    {tag.name}
-                    <X 
-                      className="h-3 w-3 cursor-pointer" 
-                      onClick={() => removeTag('company', tag.id)} 
-                    />
-                  </Badge>
-                ))}
-                <Input
-                  placeholder="Add company..."
-                  className="border-0 p-0 h-6 flex-grow min-w-[100px]"
-                  value={newTagText}
-                  onChange={(e) => setNewTagText(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      addTag('company', newTagText);
-                      e.preventDefault();
-                    }
-                  }}
-                />
-              </div>
+              <Select value={selectedCompany} onValueChange={setSelectedCompany}>
+                <SelectTrigger id="company" className="w-full">
+                  {isLoading.companies ? (
+                    <div className="flex items-center">
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <span>Loading...</span>
+                    </div>
+                  ) : (
+                    <SelectValue placeholder="Select company" />
+                  )}
+                </SelectTrigger>
+                <SelectContent>
+                  {companies.map((company) => (
+                    <SelectItem key={company._id} value={company._id}>
+                      {company.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Writer Tags */}
+            {/* Writer Dropdown */}
             <div className="space-y-2">
               <Label htmlFor="writer" className="text-sm font-medium">
                 Writer
               </Label>
-              <div className="flex flex-wrap gap-2 p-2 border rounded-md min-h-[40px]">
-                {writerTags.map(tag => (
-                  <Badge 
-                    key={tag.id} 
-                    variant="secondary"
-                    className="px-2 py-1 flex items-center gap-1"
-                  >
-                    {tag.name}
-                    <X 
-                      className="h-3 w-3 cursor-pointer" 
-                      onClick={() => removeTag('writer', tag.id)} 
-                    />
-                  </Badge>
-                ))}
-                <Input
-                  placeholder="Add writer..."
-                  className="border-0 p-0 h-6 flex-grow min-w-[100px]"
-                  value={newTagText}
-                  onChange={(e) => setNewTagText(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      addTag('writer', newTagText);
-                      e.preventDefault();
-                    }
-                  }}
-                />
-              </div>
+              <Select value={selectedWriter} onValueChange={setSelectedWriter}>
+                <SelectTrigger id="writer" className="w-full">
+                  {isLoading.writers ? (
+                    <div className="flex items-center">
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <span>Loading...</span>
+                    </div>
+                  ) : (
+                    <SelectValue placeholder="Select writer" />
+                  )}
+                </SelectTrigger>
+                <SelectContent>
+                  {writers.map((writer) => (
+                    <SelectItem key={writer._id} value={writer._id}>
+                      {writer.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Platform Tags */}
+            {/* Platform Dropdown */}
             <div className="space-y-2">
               <Label htmlFor="platform" className="text-sm font-medium">
                 Platform
               </Label>
-              <div className="flex flex-wrap gap-2 p-2 border rounded-md min-h-[40px]">
-                {platformTags.map(tag => (
-                  <Badge 
-                    key={tag.id} 
-                    variant="secondary"
-                    className="px-2 py-1 flex items-center gap-1"
-                  >
-                    {tag.name}
-                    <X 
-                      className="h-3 w-3 cursor-pointer" 
-                      onClick={() => removeTag('platform', tag.id)} 
-                    />
-                  </Badge>
-                ))}
-                <Input
-                  placeholder="Add platform..."
-                  className="border-0 p-0 h-6 flex-grow min-w-[100px]"
-                  value={newTagText}
-                  onChange={(e) => setNewTagText(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      addTag('platform', newTagText);
-                      e.preventDefault();
-                    }
-                  }}
-                />
-              </div>
+              <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
+                <SelectTrigger id="platform" className="w-full">
+                  {isLoading.platforms ? (
+                    <div className="flex items-center">
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <span>Loading...</span>
+                    </div>
+                  ) : (
+                    <SelectValue placeholder="Select platform" />
+                  )}
+                </SelectTrigger>
+                <SelectContent>
+                  {platforms.map((platform) => (
+                    <SelectItem key={platform._id} value={platform._id}>
+                      {platform.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Status Dropdown */}
@@ -216,33 +312,70 @@ const IdeaWorkshopContent = () => {
               <Label htmlFor="status" className="text-sm font-medium">
                 Status
               </Label>
-              <Select defaultValue={status} onValueChange={setStatus}>
-                <SelectTrigger id="status" className="bg-green-50">
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger 
+                  id="status" 
+                  style={{
+                    backgroundColor: status === 'Draft' ? '#374151' : 
+                                    status === 'In Review' ? '#1e40af' : 
+                                    status === 'Posted' ? '#065f46' : 
+                                    status === 'Archived' ? '#991b1b' : '#1f2937',
+                    color: 'white'
+                  }}
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Draft">Draft</SelectItem>
-                  <SelectItem value="In Review">In Review</SelectItem>
-                  <SelectItem value="Posted">Posted</SelectItem>
-                  <SelectItem value="Archived">Archived</SelectItem>
+                  <SelectItem value="Draft" className="hover:bg-gray-700 data-[highlighted]:bg-gray-700 data-[highlighted]:text-white">Draft</SelectItem>
+                  <SelectItem value="In Review" className="hover:bg-blue-700 data-[highlighted]:bg-blue-700 data-[highlighted]:text-white">In Review</SelectItem>
+                  <SelectItem value="Posted" className="hover:bg-green-700 data-[highlighted]:bg-green-700 data-[highlighted]:text-white">Posted</SelectItem>
+                  <SelectItem value="Archived" className="hover:bg-red-700 data-[highlighted]:bg-red-700 data-[highlighted]:text-white">Archived</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            {/* User Field */}
+            {/* User Dropdown */}
             <div className="space-y-2">
               <Label htmlFor="user" className="text-sm font-medium">
                 User
               </Label>
-              <div className="h-10 flex items-center px-3 border rounded-md">
-                <span className="text-muted-foreground">–</span>
-              </div>
+              <Select value={selectedUser} onValueChange={setSelectedUser}>
+                <SelectTrigger id="user" className="w-full">
+                  {isLoading.users ? (
+                    <div className="flex items-center">
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <span>Loading...</span>
+                    </div>
+                  ) : (
+                    <SelectValue placeholder="Select user" />
+                  )}
+                </SelectTrigger>
+                <SelectContent>
+                  {users.map((user) => (
+                    <SelectItem key={user._id} value={user._id}>
+                      {user.username}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Generated Button */}
-            <div className="flex items-end">
-              <Button className="bg-green-500 hover:bg-green-600 text-white w-full h-10">
-                <Check className="mr-2 h-4 w-4" /> Generated
+            {/* Generate Content Button - Centered */}
+            <div className="flex items-end justify-center col-span-1 md:col-span-2 lg:col-span-3 mt-4">
+              <Button 
+                className="bg-purple-500 hover:bg-purple-600 text-white h-10 px-8"
+                onClick={generateContent}
+                disabled={isGenerating || !selectedCompany || !selectedWriter || !selectedPlatform || !selectedIdea}
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-4 w-4" /> Generate Content
+                  </>
+                )}
               </Button>
             </div>
           </div>
@@ -306,7 +439,37 @@ const IdeaWorkshopContent = () => {
               
               <div className="flex items-center">
                 <span className="text-sm text-muted-foreground w-40">Content Idea:</span>
-                <Badge variant="outline">{ideaKeyword}</Badge>
+                <Badge variant="outline">
+                  {ideas.find(i => i._id === selectedIdea)?.content || '–'}
+                </Badge>
+              </div>
+              
+              <div className="flex items-center">
+                <span className="text-sm text-muted-foreground w-40">Company:</span>
+                <Badge variant="outline">
+                  {companies.find(c => c._id === selectedCompany)?.name || '–'}
+                </Badge>
+              </div>
+              
+              <div className="flex items-center">
+                <span className="text-sm text-muted-foreground w-40">Writer:</span>
+                <Badge variant="outline">
+                  {writers.find(w => w._id === selectedWriter)?.name || '–'}
+                </Badge>
+              </div>
+              
+              <div className="flex items-center">
+                <span className="text-sm text-muted-foreground w-40">Platform:</span>
+                <Badge variant="outline">
+                  {platforms.find(p => p._id === selectedPlatform)?.name || '–'}
+                </Badge>
+              </div>
+              
+              <div className="flex items-center">
+                <span className="text-sm text-muted-foreground w-40">User:</span>
+                <Badge variant="outline">
+                  {users.find(u => u._id === selectedUser)?.username || '–'}
+                </Badge>
               </div>
               
               <div className="flex items-center">
