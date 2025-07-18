@@ -37,6 +37,7 @@ export async function GET() {
           relevanceScore: trend.RelevanceScore || 0,
           workshopUrl: trend.URL || trend.Source || null,
           pushedTo: trend.PushedTo || null,
+          assignmentCompleted: trend.assignmentCompleted || false,
           topics: topics,
           discoveryDate: trend.DiscoveryDate || trend.Date || new Date().toISOString(),
           source: trend.Source || trend.Origin || null,
@@ -61,6 +62,8 @@ export async function GET() {
           change: 12,
           relevanceScore: 9.8,
           workshopUrl: 'https://example.com/workshop/ai-healthcare',
+          pushedTo: null,
+          assignmentCompleted: false,
           topics: ['AI', 'Technology', 'Machine Learning']
         },
         { 
@@ -174,6 +177,8 @@ export async function GET() {
           change: 12,
           relevanceScore: 9.8,
           workshopUrl: 'https://example.com/workshop/ai-healthcare',
+          pushedTo: null,
+          assignmentCompleted: false,
           topics: ['AI', 'Technology', 'Machine Learning']
         },
         { 
@@ -198,13 +203,19 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { trendId, userId } = await request.json();
+    const { trendId, userId, action = 'assign' } = await request.json();
     
-    console.log('POST request received to update trend:', { trendId, userId });
+    console.log('POST request received to update trend:', { trendId, userId, action });
     
-    if (!trendId || !userId) {
-      console.error('Missing required fields:', { trendId, userId });
-      return NextResponse.json({ error: 'Missing trendId or userId' }, { status: 400 });
+    if (!trendId) {
+      console.error('Missing required field: trendId');
+      return NextResponse.json({ error: 'Missing trendId' }, { status: 400 });
+    }
+    
+    // For assign action, userId is required
+    if (action === 'assign' && !userId && userId !== '') {
+      console.error('Missing required field: userId for assign action');
+      return NextResponse.json({ error: 'Missing userId for assign action' }, { status: 400 });
     }
     
     console.log('Connecting to MongoDB...');
@@ -230,9 +241,23 @@ export async function POST(request: Request) {
         query = { _id: trendId };
       }
       
+      let updateData = {};
+      let actionMessage = '';
+      
+      // Handle different actions
+      if (action === 'assign') {
+        updateData = { pushedTo: userId, assignmentCompleted: false };
+        actionMessage = userId ? 'Trend successfully assigned to user' : 'Trend successfully unassigned';
+      } else if (action === 'complete') {
+        updateData = { assignmentCompleted: true };
+        actionMessage = 'Trend assignment successfully completed';
+      } else {
+        return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+      }
+      
       const result = await db.collection("trends").updateOne(
         query,
-        { $set: { pushedTo: userId } }
+        { $set: updateData }
       );
       
       console.log('Update result:', result);
@@ -244,9 +269,10 @@ export async function POST(request: Request) {
       
       return NextResponse.json({ 
         success: true, 
-        message: 'Trend successfully updated',
+        message: actionMessage,
         trendId,
-        userId
+        userId,
+        action
       }, { status: 200 });
     } catch (dbError) {
       console.error('Database error during update:', dbError);
