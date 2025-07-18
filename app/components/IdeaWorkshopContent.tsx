@@ -42,7 +42,14 @@ interface Idea {
   _id: string;
   content: string;
   userId?: string;
-  attachmentPath?: string;
+  trendId?: string;
+  specificitiesDraft?: string;
+  specificitiesForImages?: string;
+  writer?: string;
+  platform?: string;
+  drafts?: string;
+  company?: string;
+  status?: string;
   createdAt: string;
 }
 
@@ -57,6 +64,10 @@ const IdeaWorkshopContent = () => {
   const [selectedWriter, setSelectedWriter] = useState<string>('');
   const [selectedPlatform, setSelectedPlatform] = useState<string>('');
   const [selectedIdea, setSelectedIdea] = useState<string>('');
+  
+  // Form values
+  const [specificitiesDraft, setSpecificitiesDraft] = useState<string>('');
+  const [specificitiesForImages, setSpecificitiesForImages] = useState<string>('');
   
   // Data from API
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -130,12 +141,12 @@ const IdeaWorkshopContent = () => {
     
     const fetchIdeas = async () => {
       try {
-        const response = await fetch('/api/ideas');
-        if (!response.ok) throw new Error('Failed to fetch ideas');
+        const response = await fetch('/api/content-ideas');
+        if (!response.ok) throw new Error('Failed to fetch content ideas');
         const data = await response.json();
         setIdeas(data);
       } catch (error) {
-        console.error('Error fetching ideas:', error);
+        console.error('Error fetching content ideas:', error);
       } finally {
         setIsLoading(prev => ({ ...prev, ideas: false }));
       }
@@ -148,6 +159,25 @@ const IdeaWorkshopContent = () => {
     fetchIdeas();
   }, []);
   
+  // Handle idea selection and populate form fields
+  useEffect(() => {
+    if (selectedIdea) {
+      const selectedIdeaData = ideas.find(idea => idea._id === selectedIdea);
+      if (selectedIdeaData) {
+        // Set form values from selected idea
+        setSpecificitiesDraft(selectedIdeaData.specificitiesDraft || '');
+        setSpecificitiesForImages(selectedIdeaData.specificitiesForImages || '');
+        
+        // Set dropdown values if they exist in the idea
+        if (selectedIdeaData.company) setSelectedCompany(selectedIdeaData.company);
+        if (selectedIdeaData.writer) setSelectedWriter(selectedIdeaData.writer);
+        if (selectedIdeaData.platform) setSelectedPlatform(selectedIdeaData.platform);
+        if (selectedIdeaData.status) setStatus(selectedIdeaData.status);
+        if (selectedIdeaData.userId) setSelectedUser(selectedIdeaData.userId);
+      }
+    }
+  }, [selectedIdea, ideas]);
+
   const generateContent = async () => {
     if (!selectedCompany || !selectedWriter || !selectedPlatform || !selectedIdea) {
       alert('Please select company, writer, platform and idea before generating content');
@@ -157,11 +187,77 @@ const IdeaWorkshopContent = () => {
     setIsGenerating(true);
     
     try {
-      // Simulate content generation (replace with actual API call)
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Get the selected idea details
+      const selectedIdeaData = ideas.find(idea => idea._id === selectedIdea);
+      
+      if (!selectedIdeaData) {
+        throw new Error('Selected idea not found');
+      }
+      
+      // Prepare the webhook payload as query parameters
+      const webhookParams = new URLSearchParams({
+        contentIdeaId: selectedIdea,
+        content: selectedIdeaData.content,
+        companyId: selectedCompany,
+        writerId: selectedWriter,
+        platformId: selectedPlatform,
+        userId: selectedUser || '',
+        status: status,
+        specificitiesDraft: specificitiesDraft || '',
+        specificitiesForImages: specificitiesForImages || '',
+        timestamp: new Date().toISOString()
+      });
+      
+      // External n8n webhook URL with query parameters
+      const webhookUrl = `https://n8n.srv775152.hstgr.cloud/webhook/555252a2-14d0-4fd8-b570-c70034b3c800?${webhookParams.toString()}`;
+      
+      console.log('Triggering external webhook:', webhookUrl);
+      
+      // Call the external webhook with GET method
+      const response = await fetch(webhookUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to trigger external webhook');
+      }
+      
+      // Also log the generation in our internal system
+      const internalResponse = await fetch('/api/webhook/content-generation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contentIdeaId: selectedIdea,
+          content: selectedIdeaData.content,
+          companyId: selectedCompany,
+          writerId: selectedWriter,
+          platformId: selectedPlatform,
+          userId: selectedUser || '',
+          status: status,
+          specificitiesDraft: specificitiesDraft,
+          specificitiesForImages: specificitiesForImages,
+          timestamp: new Date().toISOString()
+        }),
+      });
+      
+      const result = await response.json().catch(() => ({}));
+      console.log('External webhook response:', result);
+      
+      // Refetch content ideas to update the list
+      const ideasResponse = await fetch('/api/content-ideas');
+      if (ideasResponse.ok) {
+        const updatedIdeas = await ideasResponse.json();
+        setIdeas(updatedIdeas);
+        console.log('Content ideas refreshed after generation');
+      }
       
       // Success message
-      alert('Content generated successfully!');
+      alert('Content generation initiated successfully!');
     } catch (error) {
       console.error('Error generating content:', error);
       alert('Failed to generate content. Please try again.');
@@ -206,7 +302,7 @@ const IdeaWorkshopContent = () => {
             {/* Idea Dropdown */}
             <div className="space-y-2">
               <Label htmlFor="idea" className="text-sm font-medium">
-                Idea
+                Content Idea
               </Label>
               <Select value={selectedIdea} onValueChange={setSelectedIdea}>
                 <SelectTrigger id="idea" className="w-full">
@@ -216,15 +312,21 @@ const IdeaWorkshopContent = () => {
                       <span>Loading...</span>
                     </div>
                   ) : (
-                    <SelectValue placeholder="Select idea" />
+                    <SelectValue placeholder="Select content idea" />
                   )}
                 </SelectTrigger>
-                <SelectContent>
-                  {ideas.map((idea) => (
-                    <SelectItem key={idea._id} value={idea._id}>
-                      {idea.content.length > 30 ? `${idea.content.substring(0, 30)}...` : idea.content}
-                    </SelectItem>
-                  ))}
+                <SelectContent className="max-h-[300px]">
+                  {ideas.length === 0 && !isLoading.ideas ? (
+                    <div className="p-2 text-center text-sm text-muted-foreground">
+                      No content ideas found
+                    </div>
+                  ) : (
+                    ideas.map((idea) => (
+                      <SelectItem key={idea._id} value={idea._id}>
+                        {idea.content.length > 50 ? `${idea.content.substring(0, 50)}...` : idea.content}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -389,6 +491,8 @@ const IdeaWorkshopContent = () => {
           <Textarea 
             placeholder="Enter specificities draft here..." 
             className="min-h-[150px]"
+            value={specificitiesDraft}
+            onChange={(e) => setSpecificitiesDraft(e.target.value)}
           />
         </div>
         <div className="space-y-4">
@@ -396,6 +500,8 @@ const IdeaWorkshopContent = () => {
           <Textarea 
             placeholder="Enter specificities for images here..." 
             className="min-h-[150px]"
+            value={specificitiesForImages}
+            onChange={(e) => setSpecificitiesForImages(e.target.value)}
           />
         </div>
       </div>
