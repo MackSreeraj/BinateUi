@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import ReactMarkdown from 'react-markdown';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -72,10 +73,18 @@ interface Idea {
   createdAt: string;
 }
 
+interface Draft {
+  _id: string;
+  content: string;
+  trendId: string;
+  createdAt: string;
+}
+
 const IdeaWorkshopContent = () => {
   const [selectedIdeaTitle, setSelectedIdeaTitle] = useState<string>('');
   const [status, setStatus] = useState('Draft');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isFetchingDrafts, setIsFetchingDrafts] = useState(false);
   
   // Selected values
   const [selectedCompany, setSelectedCompany] = useState<string>('');
@@ -84,6 +93,9 @@ const IdeaWorkshopContent = () => {
   const [selectedPlatform, setSelectedPlatform] = useState<string>('');
   const [selectedIdea, setSelectedIdea] = useState<string>('');
   const [selectedTrend, setSelectedTrend] = useState<string>('');
+  
+  // Drafts from the database
+  const [drafts, setDrafts] = useState<Draft[]>([]);
   
   // Form values and demo data
   const demoSpecificitiesDraft = "Target audience: Marketing professionals aged 30-45\nTone: Professional yet conversational\nKey points to cover:\n- The impact of AI on content creation workflows\n- How automation can save up to 15 hours per week\n- Case studies from enterprise companies\n- Integration with existing marketing tools\n\nCall to action: Schedule a personalized demo";
@@ -111,7 +123,8 @@ const IdeaWorkshopContent = () => {
     writers: true,
     platforms: true,
     ideas: true,
-    trends: true
+    trends: true,
+    drafts: false
   });
 
   // Fetch data from API
@@ -224,6 +237,62 @@ const IdeaWorkshopContent = () => {
     }
   }, [selectedIdea, ideas]);
 
+  // Fetch drafts when trend is selected
+  const fetchDraftsForTrend = async (trendId: string) => {
+    if (!trendId) return;
+    
+    console.log(`🔍 Fetching drafts for trend ID: ${trendId}`);
+    setIsLoading(prev => ({ ...prev, drafts: true }));
+    setIsFetchingDrafts(true);
+    
+    try {
+      const apiUrl = `/api/drafts?trendId=${trendId}`;
+      console.log(`📡 Making API request to: ${apiUrl}`);
+      
+      const response = await fetch(apiUrl);
+      console.log(`📥 API response status: ${response.status}`);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`❌ API error response: ${errorText}`);
+        throw new Error(`Failed to fetch drafts: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log(`📊 Received drafts data:`, data);
+      
+      setDrafts(data.drafts || []);
+      console.log(`📋 Number of drafts found: ${data.drafts?.length || 0}`);
+      
+      // If drafts are found, update the draft content with the most recent draft
+      if (data.drafts && data.drafts.length > 0) {
+        // Sort drafts by creation date (newest first)
+        const sortedDrafts = [...data.drafts].sort((a, b) => 
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        
+        console.log(`✅ Setting draft content from most recent draft:`, sortedDrafts[0]);
+        // Set the draft content to the most recent draft
+        setDraftContent(sortedDrafts[0].content || '');
+      } else {
+        console.log(`ℹ️ No drafts found for this trend, using demo content`);
+      }
+    } catch (error) {
+      console.error('❌ Error fetching drafts:', error);
+    } finally {
+      setIsLoading(prev => ({ ...prev, drafts: false }));
+      setIsFetchingDrafts(false);
+      console.log(`🏁 Draft fetching process completed`);
+    }
+  };
+  
+  // Fetch drafts when trend is selected
+  useEffect(() => {
+    if (selectedTrend) {
+      fetchDraftsForTrend(selectedTrend);
+    }
+  }, [selectedTrend]);
+
   const generateContent = async () => {
     if (!selectedCompany || !selectedWriter || !selectedPlatform || !selectedTrend) {
       alert('Please select company, writer, platform and trend before generating content');
@@ -326,6 +395,10 @@ const IdeaWorkshopContent = () => {
       
       // Success message
       alert('Content generation initiated successfully!');
+      
+      console.log(`🔄 Fetching drafts after content generation for trend: ${selectedTrend}`);
+      // Fetch drafts for the selected trend after generation
+      await fetchDraftsForTrend(selectedTrend);
     } catch (error) {
       console.error('Error generating content:', error);
       alert('Failed to generate content. Please try again.');
@@ -394,9 +467,12 @@ const IdeaWorkshopContent = () => {
                 Trend
               </Label>
               <Select value={selectedTrend} onValueChange={(value) => {
+                console.log(`🔄 Trend selected: ${value}`);
                 setSelectedTrend(value);
                 // Also update selectedIdea for backward compatibility with existing code
                 setSelectedIdea(value);
+                // Fetch drafts for the selected trend
+                fetchDraftsForTrend(value);
               }}>
                 <SelectTrigger id="trend" className="w-full">
                   {isLoading.trends ? (
@@ -610,11 +686,23 @@ const IdeaWorkshopContent = () => {
         <CardHeader className="bg-black pb-2 border-b border-gray-800">
           <CardTitle className="text-base font-medium flex items-center gap-2 text-white">
             <span className="text-emerald-400">✨</span> Specificities of Draft
+            {isFetchingDrafts && <Loader2 className="ml-2 h-4 w-4 animate-spin text-emerald-400" />}
           </CardTitle>
         </CardHeader>
         <CardContent className="bg-black">
-          <div className="p-4 whitespace-pre-wrap text-gray-200 leading-relaxed">
-            {draftContent || demoDraftContent}
+          <div className="p-4 text-gray-200 leading-relaxed">
+            {isLoading.drafts ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-6 w-6 animate-spin text-emerald-400 mr-2" />
+                <span>Loading drafts...</span>
+              </div>
+            ) : (
+              <div className="prose prose-invert prose-headings:text-emerald-400 prose-a:text-blue-400 prose-strong:text-white prose-em:text-yellow-200 max-w-none">
+                <ReactMarkdown>
+                  {draftContent || demoDraftContent}
+                </ReactMarkdown>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -648,55 +736,113 @@ const IdeaWorkshopContent = () => {
 
       {/* Drafts Section */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Drafts</CardTitle>
+          {isLoading.drafts && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
         </CardHeader>
         <CardContent>
-          <div className="border rounded-md p-4">
-            <div className="flex flex-col space-y-3">
-              <div className="font-medium">hotels</div>
-              
-              <div className="flex items-center">
-                <span className="text-sm text-muted-foreground w-40">Content Idea:</span>
-                <Badge variant="outline">
-                  {ideas.find(i => i._id === selectedIdea)?.content || '–'}
-                </Badge>
-              </div>
-              
-              <div className="flex items-center">
-                <span className="text-sm text-muted-foreground w-40">Company:</span>
-                <Badge variant="outline">
-                  {companies.find(c => c._id === selectedCompany)?.name || '–'}
-                </Badge>
-              </div>
-              
-              <div className="flex items-center">
-                <span className="text-sm text-muted-foreground w-40">Writer:</span>
-                <Badge variant="outline">
-                  {writers.find(w => w._id === selectedWriter)?.name || '–'}
-                </Badge>
-              </div>
-              
-              <div className="flex items-center">
-                <span className="text-sm text-muted-foreground w-40">Platform:</span>
-                <Badge variant="outline">
-                  {platforms.find(p => p._id === selectedPlatform)?.name || '–'}
-                </Badge>
-              </div>
-              
-              <div className="flex items-center">
-                <span className="text-sm text-muted-foreground w-40">User:</span>
-                <Badge variant="outline">
-                  {users.find(u => u._id === selectedUser)?.username || '–'}
-                </Badge>
-              </div>
-              
-              <div className="flex items-center">
-                <span className="text-sm text-muted-foreground w-40">Is In Content Pipeline:</span>
-                <X className="h-4 w-4 text-red-500" />
+          {drafts.length > 0 ? (
+            <div className="space-y-4">
+              {drafts.map((draft, index) => (
+                <div key={draft._id} className="border rounded-md p-4 hover:border-purple-400 transition-colors cursor-pointer" onClick={() => setDraftContent(draft.content)}>
+                  <div className="flex flex-col space-y-3">
+                    <div className="font-medium flex items-center justify-between">
+                      <span>Draft {index + 1}</span>
+                      <Badge variant={index === 0 ? "default" : "outline"} className={index === 0 ? "bg-purple-500" : ""}>
+                        {index === 0 ? "Latest" : new Date(draft.createdAt).toLocaleDateString()}
+                      </Badge>
+                    </div>
+                    
+                    <div className="flex items-center">
+                      <span className="text-sm text-muted-foreground w-40">Content Idea:</span>
+                      <Badge variant="outline">
+                        {ideas.find(i => i._id === selectedIdea)?.content || '–'}
+                      </Badge>
+                    </div>
+                    
+                    <div className="flex items-center">
+                      <span className="text-sm text-muted-foreground w-40">Company:</span>
+                      <Badge variant="outline">
+                        {companies.find(c => c._id === selectedCompany)?.name || '–'}
+                      </Badge>
+                    </div>
+                    
+                    <div className="flex items-center">
+                      <span className="text-sm text-muted-foreground w-40">Writer:</span>
+                      <Badge variant="outline">
+                        {writers.find(w => w._id === selectedWriter)?.name || '–'}
+                      </Badge>
+                    </div>
+                    
+                    <div className="flex items-center">
+                      <span className="text-sm text-muted-foreground w-40">Platform:</span>
+                      <Badge variant="outline">
+                        {platforms.find(p => p._id === selectedPlatform)?.name || '–'}
+                      </Badge>
+                    </div>
+                    
+                    <div className="flex items-center">
+                      <span className="text-sm text-muted-foreground w-40">User:</span>
+                      <Badge variant="outline">
+                        {users.find(u => u._id === selectedUser)?.username || '–'}
+                      </Badge>
+                    </div>
+                    
+                    <div className="flex items-center">
+                      <span className="text-sm text-muted-foreground w-40">Is In Content Pipeline:</span>
+                      <X className="h-4 w-4 text-red-500" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="border rounded-md p-4">
+              <div className="flex flex-col space-y-3">
+                <div className="font-medium">{trends.find(t => t._id === selectedTrend)?.name || 'No trend selected'}</div>
+                
+                <div className="flex items-center">
+                  <span className="text-sm text-muted-foreground w-40">Content Idea:</span>
+                  <Badge variant="outline">
+                    {ideas.find(i => i._id === selectedIdea)?.content || '–'}
+                  </Badge>
+                </div>
+                
+                <div className="flex items-center">
+                  <span className="text-sm text-muted-foreground w-40">Company:</span>
+                  <Badge variant="outline">
+                    {companies.find(c => c._id === selectedCompany)?.name || '–'}
+                  </Badge>
+                </div>
+                
+                <div className="flex items-center">
+                  <span className="text-sm text-muted-foreground w-40">Writer:</span>
+                  <Badge variant="outline">
+                    {writers.find(w => w._id === selectedWriter)?.name || '–'}
+                  </Badge>
+                </div>
+                
+                <div className="flex items-center">
+                  <span className="text-sm text-muted-foreground w-40">Platform:</span>
+                  <Badge variant="outline">
+                    {platforms.find(p => p._id === selectedPlatform)?.name || '–'}
+                  </Badge>
+                </div>
+                
+                <div className="flex items-center">
+                  <span className="text-sm text-muted-foreground w-40">User:</span>
+                  <Badge variant="outline">
+                    {users.find(u => u._id === selectedUser)?.username || '–'}
+                  </Badge>
+                </div>
+                
+                <div className="flex items-center">
+                  <span className="text-sm text-muted-foreground w-40">Is In Content Pipeline:</span>
+                  <X className="h-4 w-4 text-red-500" />
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
 
