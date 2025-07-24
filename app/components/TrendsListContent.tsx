@@ -433,7 +433,63 @@ export default function TrendsListContent() {
                     case 'pending': return 'bg-amber-100 text-amber-800 border-amber-300';
                     case 'completed': return 'bg-blue-100 text-blue-800 border-blue-300';
                     case 'new': return 'bg-purple-100 text-purple-800 border-purple-300';
+                    case 'archived': return 'bg-gray-100 text-gray-700 border-gray-300';
+                    case 'discarded': return 'bg-red-100 text-red-800 border-red-300';
+                    case 'approved': return 'bg-emerald-100 text-emerald-800 border-emerald-300';
                     default: return 'bg-gray-100 text-gray-800 border-gray-300';
+                  }
+                };
+                
+                // Handle status change
+                const handleStatusChange = async (trendId: string, newStatus: string) => {
+                  try {
+                    console.log('Updating status for trend:', trendId, 'to', newStatus);
+                    
+                    // Optimistically update UI first for better user experience
+                    setTrendsData(prev => {
+                      if (!prev) return prev;
+                      
+                      return {
+                        ...prev,
+                        trends: prev.trends.map(t => {
+                          if (normalizeId(t._id) === trendId) {
+                            return { ...t, status: newStatus };
+                          }
+                          return t;
+                        })
+                      };
+                    });
+                    
+                    // Determine if this is mock data (short IDs like '1', '2') or real data
+                    const action = trendId.length <= 2 ? 'updateStatusInMemory' : 'updateStatus';
+                    
+                    const response = await fetch('/api/trends', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                        trendId,
+                        action,
+                        status: newStatus
+                      }),
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                      throw new Error(data.error || data.details || `Failed to update status: ${response.status}`);
+                    }
+                    
+                    console.log('Status updated successfully:', data);
+                    
+                  } catch (error: unknown) {
+                    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                    console.error('Error updating status:', errorMessage);
+                    setError(`Failed to update status: ${errorMessage}`);
+                    
+                    // Revert the optimistic update if there was an error
+                    fetchTrends();
                   }
                 };
                 
@@ -449,12 +505,70 @@ export default function TrendsListContent() {
                       </div>
                     </TableCell>
                     <TableCell className="py-2">
-                      <Badge 
-                        variant="outline" 
-                        className={`px-3 py-1 ${getStatusColor(trend?.status)}`}
-                      >
-                        {trend?.status || 'Not Set'}
-                      </Badge>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className={`h-8 px-3 ${getStatusColor(trend?.status)} hover:bg-opacity-80 transition-colors`}
+                          >
+                            <span className="mr-1">{trend?.status || 'Not Set'}</span>
+                            <ChevronDown className="h-3 w-3" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-36">
+                          <DropdownMenuItem 
+                            className="text-green-700 hover:bg-green-50"
+                            onClick={() => handleStatusChange(normalizeId(trend._id), 'Active')}
+                          >
+                            <span className="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+                            Active
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="text-amber-700 hover:bg-amber-50"
+                            onClick={() => handleStatusChange(normalizeId(trend._id), 'Pending')}
+                          >
+                            <span className="w-2 h-2 rounded-full bg-amber-500 mr-2"></span>
+                            Pending
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="text-purple-700 hover:bg-purple-50"
+                            onClick={() => handleStatusChange(normalizeId(trend._id), 'New')}
+                          >
+                            <span className="w-2 h-2 rounded-full bg-purple-500 mr-2"></span>
+                            New
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="text-blue-700 hover:bg-blue-50"
+                            onClick={() => handleStatusChange(normalizeId(trend._id), 'Completed')}
+                          >
+                            <span className="w-2 h-2 rounded-full bg-blue-500 mr-2"></span>
+                            Completed
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            className="text-emerald-700 hover:bg-emerald-50"
+                            onClick={() => handleStatusChange(normalizeId(trend._id), 'Approved')}
+                          >
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 mr-2"></span>
+                            Approved
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="text-gray-700 hover:bg-gray-50"
+                            onClick={() => handleStatusChange(normalizeId(trend._id), 'Archived')}
+                          >
+                            <span className="w-2 h-2 rounded-full bg-gray-500 mr-2"></span>
+                            Archived
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="text-red-700 hover:bg-red-50"
+                            onClick={() => handleStatusChange(normalizeId(trend._id), 'Discarded')}
+                          >
+                            <span className="w-2 h-2 rounded-full bg-red-500 mr-2"></span>
+                            Discarded
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 );

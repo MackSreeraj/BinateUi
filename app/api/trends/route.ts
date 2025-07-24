@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import clientPromise from '@/lib/mongodb';
+import { ObjectId } from 'mongodb';
 
 export async function GET() {
   try {
@@ -186,19 +187,24 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { trendId, userId, action = 'assign' } = await request.json();
+    const { trendId, userId, action = 'assign', status } = await request.json();
     
-    console.log('POST request received to update trend:', { trendId, userId, action });
+    console.log('POST request received to update trend:', { trendId, userId, action, status });
     
     if (!trendId) {
       console.error('Missing required field: trendId');
       return NextResponse.json({ error: 'Missing trendId' }, { status: 400 });
     }
     
-    // For assign action, userId is required
+    // Validate required fields based on action
     if (action === 'assign' && !userId && userId !== '') {
       console.error('Missing required field: userId for assign action');
       return NextResponse.json({ error: 'Missing userId for assign action' }, { status: 400 });
+    }
+    
+    if (action === 'updateStatus' && !status) {
+      console.error('Missing required field: status for updateStatus action');
+      return NextResponse.json({ error: 'Missing status for updateStatus action' }, { status: 400 });
     }
     
     console.log('Connecting to MongoDB...');
@@ -234,6 +240,115 @@ export async function POST(request: Request) {
       } else if (action === 'complete') {
         updateData = { assignmentCompleted: true };
         actionMessage = 'Trend assignment successfully completed';
+      } else if (action === 'updateStatus') {
+        console.log('Updating status for trend:', trendId, 'to', status);
+        
+        // For mock data, just update the state on the client side
+        if (trendId.length <= 2) { // Mock data has short IDs like '1', '2', etc.
+          return NextResponse.json({ 
+            success: true, 
+            message: 'Mock trend status updated successfully',
+            status: status
+          });
+        }
+        
+        // Try different ID formats for the query
+        let updatedSuccessfully = false;
+        let updateMessage = '';
+        
+        // Try to update in trend_list collection first (using both string ID and ObjectId)
+        try {
+          // Try with ObjectId if it's valid
+          if (ObjectId.isValid(trendId)) {
+            const objIdResult = await db.collection('trend_list').updateOne(
+              { _id: new ObjectId(trendId) },
+              { $set: { Status: status } }
+            );
+            
+            console.log('trend_list update with ObjectId result:', objIdResult);
+            
+            if (objIdResult.matchedCount > 0) {
+              updatedSuccessfully = true;
+              updateMessage = 'Trend status updated successfully in trend_list';
+            }
+          }
+          
+          // If not updated yet, try with string ID
+          if (!updatedSuccessfully) {
+            const stringIdResult = await db.collection('trend_list').updateOne(
+              { _id: trendId },
+              { $set: { Status: status } }
+            );
+            
+            console.log('trend_list update with string ID result:', stringIdResult);
+            
+            if (stringIdResult.matchedCount > 0) {
+              updatedSuccessfully = true;
+              updateMessage = 'Trend status updated successfully in trend_list';
+            }
+          }
+        } catch (err) {
+          console.error('Error updating trend_list:', err);
+        }
+        
+        // If not updated yet, try the trends collection
+        if (!updatedSuccessfully) {
+          try {
+            // Try with ObjectId if it's valid
+            if (ObjectId.isValid(trendId)) {
+              const objIdResult = await db.collection('trends').updateOne(
+                { _id: new ObjectId(trendId) },
+                { $set: { status: status } }
+              );
+              
+              console.log('trends update with ObjectId result:', objIdResult);
+              
+              if (objIdResult.matchedCount > 0) {
+                updatedSuccessfully = true;
+                updateMessage = 'Trend status updated successfully in trends collection';
+              }
+            }
+            
+            // If not updated yet, try with string ID
+            if (!updatedSuccessfully) {
+              const stringIdResult = await db.collection('trends').updateOne(
+                { _id: trendId },
+                { $set: { status: status } }
+              );
+              
+              console.log('trends update with string ID result:', stringIdResult);
+              
+              if (stringIdResult.matchedCount > 0) {
+                updatedSuccessfully = true;
+                updateMessage = 'Trend status updated successfully in trends collection';
+              }
+            }
+          } catch (err) {
+            console.error('Error updating trends collection:', err);
+          }
+        }
+        
+        if (updatedSuccessfully) {
+          return NextResponse.json({ 
+            success: true, 
+            message: updateMessage,
+            status: status
+          });
+        } else {
+          // If we get here, we couldn't find the trend in either collection
+          return NextResponse.json({ 
+            error: 'Trend not found in database', 
+            details: `Could not find trend with ID: ${trendId}` 
+          }, { status: 404 });
+        }
+      } else if (action === 'updateStatusInMemory') {
+        // This is a special action just for updating the mock data in memory
+        // No database update needed, just return success
+        return NextResponse.json({ 
+          success: true, 
+          message: 'Status updated in memory',
+          status: status
+        });
       } else {
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
       }
