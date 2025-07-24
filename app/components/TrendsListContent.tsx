@@ -106,7 +106,7 @@ export default function TrendsListContent() {
             trends: [
               { 
                 _id: '1', 
-                name: 'AI Advancements', 
+                Title: 'AI Advancements', 
                 volume: 24500, 
                 change: 12,
                 topics: ['AI', 'Technology'],
@@ -114,7 +114,7 @@ export default function TrendsListContent() {
               },
               { 
                 _id: '2', 
-                name: 'Web3 Updates', 
+                Title: 'Web3 Updates', 
                 volume: 18900, 
                 change: 8,
                 topics: ['Web3', 'Blockchain'],
@@ -136,7 +136,7 @@ export default function TrendsListContent() {
           trends: [
             { 
               _id: '1', 
-              name: 'AI Advancements', 
+              Title: 'AI Advancements', 
               volume: 24500, 
               change: 12,
               topics: ['AI', 'Technology'],
@@ -144,7 +144,7 @@ export default function TrendsListContent() {
             },
             { 
                 _id: '2', 
-                name: 'Web3 Updates', 
+                Title: 'Web3 Updates', 
                 volume: 18900, 
                 change: 8,
                 topics: ['Web3', 'Blockchain'],
@@ -205,7 +205,7 @@ export default function TrendsListContent() {
           const isMatch = normalizeId(trend._id) === trendId;
           
           if (isMatch) {
-            console.log(`Updating trend ${trend.name} in local state: pushedTo = ${userId || 'null'}`);
+            console.log(`Updating trend ${trend.Title || trend.name || 'Unnamed'} in local state: pushedTo = ${userId || 'null'}`);
             return { ...trend, pushedTo: userId || undefined, assignmentCompleted: false };
           }
           return trend;
