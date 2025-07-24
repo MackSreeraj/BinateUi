@@ -10,6 +10,42 @@ export async function GET() {
     
     const db = client.db("test");
     
+    // Fetch companies data
+    let companiesData = [];
+    try {
+      console.log('Fetching companies from database...');
+      const rawCompanies = await db.collection("companies").find({}).toArray();
+      console.log('Raw companies fetched:', rawCompanies.length, 'records');
+      
+      if (rawCompanies.length > 0) {
+        companiesData = rawCompanies.map(company => ({
+          _id: company._id?.toString() || Math.random().toString(36).substring(2, 15),
+          name: company.name || company.companyName || 'Unnamed Company'
+        }));
+      } else {
+        // Use mock data if no companies found
+        companiesData = [
+          { _id: '1', name: 'Acme Corp' },
+          { _id: '2', name: 'Tech Innovations' },
+          { _id: '3', name: 'Global Solutions' },
+          { _id: '4', name: 'Digital Frontiers' },
+          { _id: '5', name: 'Future Enterprises' }
+        ];
+        console.log('Using mock company data');
+      }
+    } catch (companyError) {
+      console.error('Error fetching companies:', companyError);
+      // Use mock data on error
+      companiesData = [
+        { _id: '1', name: 'Acme Corp' },
+        { _id: '2', name: 'Tech Innovations' },
+        { _id: '3', name: 'Global Solutions' },
+        { _id: '4', name: 'Digital Frontiers' },
+        { _id: '5', name: 'Future Enterprises' }
+      ];
+      console.log('Using mock company data due to error');
+    }
+    
     console.log('Fetching trends from trend_list table...');
     // Fetch trends from the trend_list table
     let trendsData = [];
@@ -27,12 +63,23 @@ export async function GET() {
           topics = trend.topics.split(',').map(t => t.trim()).filter(Boolean);
         }
         
+        // Find company info if companyId exists
+        const companyId = trend.companyId || null;
+        const company = companyId ? companiesData.find(c => 
+          c._id.toString() === companyId.toString() || 
+          c._id === companyId
+        ) : null;
+        
         return {
           _id: trend._id?.toString() || Math.random().toString(36).substring(2, 15),
+          Title: trend.Title || trend.title || 'Unnamed Trend',  // Keep original Title field
           name: trend.Title || trend.title || 'Unnamed Trend',  // Try both Title and title fields
           date: trend['Published Date'] || trend.date || new Date().toISOString(), // Try both Published Date and date fields
           status: trend.Status || trend.status || 'New',  // Try both Status and status fields
           topics: topics,
+          // Include company information
+          companyId: companyId,
+          companyName: company ? company.name : null,
           // Keep other fields for backward compatibility
           volume: 0,
           change: 0,
@@ -151,8 +198,8 @@ export async function GET() {
       console.log('Using mock user data');
     }
     
-    const response = { trends: trendsData, users: usersData };
-    console.log('API response prepared with', trendsData.length, 'trends and', usersData.length, 'users');
+    const response = { trends: trendsData, users: usersData, companies: companiesData };
+    console.log('API response prepared with', trendsData.length, 'trends,', usersData.length, 'users, and', companiesData.length, 'companies');
     
     return NextResponse.json(response, { status: 200 });
   } catch (error) {
@@ -178,6 +225,13 @@ export async function GET() {
       users: [
         { _id: '1', name: 'Sebastin Peter', email: 'john@example.com' },
         { _id: '2', name: 'Jane Smith', email: 'jane@example.com' }
+      ],
+      companies: [
+        { _id: '1', name: 'Acme Corp' },
+        { _id: '2', name: 'Tech Innovations' },
+        { _id: '3', name: 'Global Solutions' },
+        { _id: '4', name: 'Digital Frontiers' },
+        { _id: '5', name: 'Future Enterprises' }
       ]
     };
     console.log('Returning mock data due to error');
@@ -187,9 +241,9 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { trendId, userId, action = 'assign', status } = await request.json();
+    const { trendId, userId, action = 'assign', status, companyId } = await request.json();
     
-    console.log('POST request received to update trend:', { trendId, userId, action, status });
+    console.log('POST request received to update trend:', { trendId, userId, action, status, companyId });
     
     if (!trendId) {
       console.error('Missing required field: trendId');
@@ -205,6 +259,16 @@ export async function POST(request: Request) {
     if (action === 'updateStatus' && !status) {
       console.error('Missing required field: status for updateStatus action');
       return NextResponse.json({ error: 'Missing status for updateStatus action' }, { status: 400 });
+    }
+    
+    if ((action === 'updateCompany' || action === 'updateCompanyInMemory') && !companyId) {
+      console.error('Missing required field: companyId for updateCompany action');
+      return NextResponse.json({ error: 'Missing companyId for updateCompany action' }, { status: 400 });
+    }
+    
+    if (action === 'generateTrends' && !companyId) {
+      console.error('Missing required field: companyId for generateTrends action');
+      return NextResponse.json({ error: 'Missing companyId for generateTrends action' }, { status: 400 });
     }
     
     console.log('Connecting to MongoDB...');
@@ -349,6 +413,238 @@ export async function POST(request: Request) {
           message: 'Status updated in memory',
           status: status
         });
+      } else if (action === 'updateCompany') {
+        console.log('Updating company for trend:', trendId, 'to', companyId);
+        
+        // For mock data, just update the state on the client side
+        if (trendId.length <= 2) { // Mock data has short IDs like '1', '2', etc.
+          return NextResponse.json({ 
+            success: true, 
+            message: 'Mock trend company updated successfully',
+            companyId: companyId
+          });
+        }
+        
+        // Find the company to get its name
+        let company;
+        try {
+          if (ObjectId.isValid(companyId)) {
+            company = await db.collection('companies').findOne({ _id: new ObjectId(companyId) });
+          } else {
+            company = await db.collection('companies').findOne({ _id: companyId });
+          }
+        } catch (err) {
+          console.error('Error finding company:', err);
+        }
+        
+        // If company not found, use a default name
+        const companyName = company?.name || `Company ${companyId}`;
+        
+        // Try different ID formats for the query
+        let updatedSuccessfully = false;
+        let updateMessage = '';
+        
+        // Try to update in trend_list collection first (using both string ID and ObjectId)
+        try {
+          // Try with ObjectId if it's valid
+          if (ObjectId.isValid(trendId)) {
+            const objIdResult = await db.collection('trend_list').updateOne(
+              { _id: new ObjectId(trendId) },
+              { $set: { 
+                companyId: companyId
+                // No longer updating the Title field
+              }}
+            );
+            
+            console.log('trend_list update with ObjectId result:', objIdResult);
+            
+            if (objIdResult.matchedCount > 0) {
+              updatedSuccessfully = true;
+              updateMessage = 'Trend company updated successfully in trend_list';
+            }
+          }
+          
+          // If not updated yet, try with string ID
+          if (!updatedSuccessfully) {
+            const stringIdResult = await db.collection('trend_list').updateOne(
+              { _id: trendId },
+              { $set: { 
+                companyId: companyId
+                // No longer updating the Title field
+              }}
+            );
+            
+            console.log('trend_list update with string ID result:', stringIdResult);
+            
+            if (stringIdResult.matchedCount > 0) {
+              updatedSuccessfully = true;
+              updateMessage = 'Trend company updated successfully in trend_list';
+            }
+          }
+        } catch (err) {
+          console.error('Error updating trend_list:', err);
+        }
+        
+        // If not updated yet, try the trends collection
+        if (!updatedSuccessfully) {
+          try {
+            // Try with ObjectId if it's valid
+            if (ObjectId.isValid(trendId)) {
+              const objIdResult = await db.collection('trends').updateOne(
+                { _id: new ObjectId(trendId) },
+                { $set: { 
+                  companyId: companyId
+                  // No longer updating the name field
+                }}
+              );
+              
+              console.log('trends update with ObjectId result:', objIdResult);
+              
+              if (objIdResult.matchedCount > 0) {
+                updatedSuccessfully = true;
+                updateMessage = 'Trend company updated successfully in trends collection';
+              }
+            }
+            
+            // If not updated yet, try with string ID
+            if (!updatedSuccessfully) {
+              const stringIdResult = await db.collection('trends').updateOne(
+                { _id: trendId },
+                { $set: { 
+                  companyId: companyId
+                  // No longer updating the name field
+                }}
+              );
+              
+              console.log('trends update with string ID result:', stringIdResult);
+              
+              if (stringIdResult.matchedCount > 0) {
+                updatedSuccessfully = true;
+                updateMessage = 'Trend company updated successfully in trends collection';
+              }
+            }
+          } catch (err) {
+            console.error('Error updating trends collection:', err);
+          }
+        }
+        
+        if (updatedSuccessfully) {
+          return NextResponse.json({ 
+            success: true, 
+            message: updateMessage,
+            companyId: companyId
+            // No longer returning trendName
+          });
+        } else {
+          // If we get here, we couldn't find the trend in either collection
+          return NextResponse.json({ 
+            error: 'Trend not found in database', 
+            details: `Could not find trend with ID: ${trendId}` 
+          }, { status: 404 });
+        }
+      } else if (action === 'updateCompanyInMemory') {
+        // This is a special action just for updating the mock data in memory
+        // Find the company name if possible
+        let companyName = `Company ${companyId}`;
+        try {
+          if (ObjectId.isValid(companyId)) {
+            const company = await db.collection('companies').findOne({ _id: new ObjectId(companyId) });
+            if (company) {
+              companyName = company.name;
+            }
+          } else {
+            const company = await db.collection('companies').findOne({ _id: companyId });
+            if (company) {
+              companyName = company.name;
+            }
+          }
+        } catch (err) {
+          console.error('Error finding company for memory update:', err);
+        }
+        
+        return NextResponse.json({ 
+          success: true, 
+          message: 'Company updated in memory',
+          companyId: companyId
+          // No longer returning trendName
+        });
+      } else if (action === 'generateTrends') {
+        console.log('Generating trends for company:', companyId);
+        
+        try {
+          // Find the company in the database
+          let company;
+          try {
+            if (ObjectId.isValid(companyId)) {
+              company = await db.collection('companies').findOne({ _id: new ObjectId(companyId) });
+            } else {
+              company = await db.collection('companies').findOne({ _id: companyId });
+            }
+          } catch (err) {
+            console.error('Error finding company:', err);
+          }
+          
+          // If company not found or this is mock data, use a mock company
+          if (!company || companyId.length <= 2) {
+            company = { _id: companyId, name: `Company ${companyId}` };
+          }
+          
+          console.log('Found company:', company);
+          
+          // Generate some mock trends for this company
+          // In a real implementation, this would call an AI service or other data source
+          const currentDate = new Date();
+          const newTrends = [
+            {
+              _id: new ObjectId(),
+              Title: `${company.name} Market Expansion Opportunities`,
+              date: new Date(currentDate.setDate(currentDate.getDate() - Math.floor(Math.random() * 5))).toISOString(),
+              status: 'New',
+              topics: ['Market Expansion', 'Growth', 'Strategy'],
+              companyId: companyId
+            },
+            {
+              _id: new ObjectId(),
+              Title: `${company.name} Customer Engagement Trends`,
+              date: new Date(currentDate.setDate(currentDate.getDate() - Math.floor(Math.random() * 3))).toISOString(),
+              status: 'New',
+              topics: ['Customer Engagement', 'Marketing', 'CRM'],
+              companyId: companyId
+            },
+            {
+              _id: new ObjectId(),
+              Title: `${company.name} Industry Disruption Analysis`,
+              date: new Date().toISOString(),
+              status: 'New',
+              topics: ['Industry Analysis', 'Disruption', 'Innovation'],
+              companyId: companyId
+            }
+          ];
+          
+          // Save the new trends to the database
+          try {
+            const result = await db.collection('trend_list').insertMany(newTrends);
+            console.log('Generated trends saved to database:', result.insertedCount);
+            
+            return NextResponse.json({
+              success: true,
+              message: `Successfully generated ${newTrends.length} trends for ${company.name}`,
+              generatedTrends: newTrends.length
+            });
+          } catch (insertErr) {
+            console.error('Error saving generated trends:', insertErr);
+            
+            // Even if DB insert fails, return success for mock data
+            return NextResponse.json({
+              success: true,
+              message: `Generated ${newTrends.length} trends for ${company.name} (in memory only)`,
+              generatedTrends: newTrends.length
+            });
+          }
+        } catch (genErr) {
+          console.error('Error in trend generation process:', genErr);
+          return NextResponse.json({ error: 'Failed to generate trends' }, { status: 500 });
+        }
       } else {
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
       }

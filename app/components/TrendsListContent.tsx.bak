@@ -65,7 +65,6 @@ interface Trend {
   createdAt?: string;
   updatedAt?: string;
   companyId?: string;
-  companyName?: string; // Added company name field
   volume?: number;
   change?: number;
   relevanceScore?: number;
@@ -97,7 +96,6 @@ export default function TrendsListContent() {
   const [filterByCompany, setFilterByCompany] = useState<string>('');
   const [companies, setCompanies] = useState<Company[]>([]);
   const [generatingForCompany, setGeneratingForCompany] = useState<string | null>(null);
-  const [updatingCompanyForTrend, setUpdatingCompanyForTrend] = useState<string | null>(null);
 
   // Fetch trends data from the API
   const fetchTrends = async () => {
@@ -542,14 +540,45 @@ export default function TrendsListContent() {
             />
           </div>
           
-          {/* Company dropdown removed as requested */}
+          <div className="w-56">
+            <Select 
+              value={filterByCompany} 
+              onValueChange={setFilterByCompany}
+            >
+              <SelectTrigger className="w-full h-9">
+                <div className="flex items-center">
+                  <Building2 className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <SelectValue placeholder="All Companies" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All Companies</SelectItem>
+                {companies.map((company) => (
+                  <SelectItem key={normalizeId(company._id)} value={normalizeId(company._id)}>
+                    {company.name}
+                    {generatingForCompany === normalizeId(company._id) && (
+                      <span className="ml-2 inline-block animate-spin rounded-full h-3 w-3 border-b-2 border-primary"></span>
+                    )}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <div className="flex items-center space-x-2">
           <Button size="sm" variant="outline" className="h-8">
             <Filter className="h-3 w-3 mr-1" />
             Filter
           </Button>
-          {/* Find Trends button removed as requested */}
+          <Button 
+            size="sm" 
+            variant="outline"
+            className="h-8 bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200"
+            onClick={() => setFindTrendDialogOpen(true)}
+          >
+            <Sparkles className="h-3 w-3 mr-1" />
+            Find Trends
+          </Button>
           <Button size="sm" className="h-8">
             <Plus className="h-3 w-3 mr-1" />
             Add Trend
@@ -563,16 +592,15 @@ export default function TrendsListContent() {
         <Table className="table-fixed">
           <TableHeader>
             <TableRow className="bg-muted/50">
-              <TableHead className="py-1 w-1/6">Status</TableHead>
+              <TableHead className="py-1 w-1/4">Status</TableHead>
               <TableHead className="py-1 w-1/2">Title</TableHead>
-              <TableHead className="py-1 w-1/6">Date</TableHead>
-              <TableHead className="py-1 w-1/6">Company</TableHead>
+              <TableHead className="py-1 w-1/4">Date</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={4} className="h-16 text-center">
+                <TableCell colSpan={3} className="h-16 text-center">
                   <div className="flex flex-col items-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2"></div>
                     <p>Loading trends...</p>
@@ -581,7 +609,7 @@ export default function TrendsListContent() {
               </TableRow>
             ) : filteredTrends.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="h-16 text-center">
+                <TableCell colSpan={3} className="h-16 text-center">
                   <p className="mb-2">No trends found.</p>
                   <Button size="sm" className="mx-auto">
                     <Plus className="h-3 w-3 mr-1" />
@@ -664,74 +692,6 @@ export default function TrendsListContent() {
                     fetchTrends();
                   }
                 };
-
-                // Handle company change
-                const handleCompanyChange = async (trendId: string, companyId: string) => {
-                  try {
-                    console.log('Updating company for trend:', trendId, 'to', companyId);
-                    
-                    // Set the updating state for this trend
-                    setUpdatingCompanyForTrend(trendId);
-                    
-                    // Find the company name for the toast message
-                    const selectedCompany = companies.find(c => normalizeId(c._id) === companyId);
-                    const companyName = selectedCompany?.name || `Company ${companyId}`;
-                    
-                    // Show toast message that we're generating trend details
-                    toast.info(`Generating trend details for ${companyName}...`, {
-                      duration: 5000,
-                    });
-                    
-                    // Optimistically update UI first for better user experience
-                    setTrendsData(prev => {
-                      if (!prev) return prev;
-                      
-                      return {
-                        ...prev,
-                        trends: prev.trends.map(t => {
-                          if (normalizeId(t._id) === trendId) {
-                            return { ...t, companyId };
-                          }
-                          return t;
-                        })
-                      };
-                    });
-                    
-                    // Determine if this is mock data (short IDs like '1', '2') or real data
-                    const action = trendId.length <= 2 ? 'updateCompanyInMemory' : 'updateCompany';
-                    
-                    const response = await fetch('/api/trends', {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                      },
-                      body: JSON.stringify({
-                        trendId,
-                        action,
-                        companyId
-                      }),
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (!response.ok) {
-                      throw new Error(data.error || data.details || `Failed to update company: ${response.status}`);
-                    }
-                    
-                    console.log('Company updated successfully:', data);
-                    
-                  } catch (error: unknown) {
-                    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-                    console.error('Error updating company:', errorMessage);
-                    setError(`Failed to update company: ${errorMessage}`);
-                    
-                    // Revert the optimistic update if there was an error
-                    fetchTrends();
-                  } finally {
-                    // Clear the updating state
-                    setUpdatingCompanyForTrend(null);
-                  }
-                };
                 
                 return (
                   <TableRow key={normalizeId(trend._id) || `trend-${index}`} className="h-14 hover:bg-muted/30 transition-colors">
@@ -800,13 +760,15 @@ export default function TrendsListContent() {
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
-                      {/* Spinner moved to company dropdown */}
+                      {trend.companyId && generatingForCompany === normalizeId(trend.companyId) && (
+                        <span className="ml-2 inline-block animate-spin rounded-full h-3 w-3 border-b-2 border-primary"></span>
+                      )}
                     </TableCell>
                     <TableCell className="font-medium py-2 truncate max-w-xs">
                       <div className="line-clamp-2">{trend?.Title || trend?.name || 'Unnamed Trend'}</div>
                       {trend.companyId && (
                         <div className="text-xs text-muted-foreground mt-1">
-                          {trend.companyName || companies.find(c => normalizeId(c._id) === normalizeId(trend.companyId))?.name || 'Unknown Company'}
+                          {companies.find(c => normalizeId(c._id) === normalizeId(trend.companyId))?.name || 'Unknown Company'}
                         </div>
                       )}
                     </TableCell>
@@ -816,54 +778,75 @@ export default function TrendsListContent() {
                         <span>{formattedDate}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="py-2">
-                      <div className="flex items-center space-x-2">
-                        <div className="flex items-center">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="h-8 px-3 bg-blue-50 text-blue-800 border-blue-300 hover:bg-opacity-80 transition-colors"
-                              >
-                                <span className="mr-1">
-                                  {trend.companyName || companies.find(c => normalizeId(c._id) === normalizeId(trend.companyId))?.name || 'Select Company'}
-                                </span>
-                                <ChevronDown className="h-3 w-3" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56">
-                              {companies.map((company) => (
-                                <DropdownMenuItem 
-                                  key={normalizeId(company._id)}
-                                  className="hover:bg-blue-50"
-                                  onClick={() => handleCompanyChange(normalizeId(trend._id), normalizeId(company._id))}
-                                >
-                                  <Building2 className="h-3 w-3 mr-2 text-muted-foreground" />
-                                  {company.name}
-                                  {normalizeId(company._id) === normalizeId(trend.companyId) && (
-                                    <Check className="h-3 w-3 ml-auto" />
-                                  )}
-                                </DropdownMenuItem>
-                              ))}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                          {updatingCompanyForTrend === normalizeId(trend._id) && (
-                            <span className="ml-2 inline-block animate-spin rounded-full h-3 w-3 border-b-2 border-primary"></span>
-                          )}
-                        </div>
-                        {/* Spinner already added above */}
-                      </div>
-                    </TableCell>
                   </TableRow>
                 );
-              })
-            )}
+              })}
             </TableBody>
           </Table>
         </div>
+      )}
       
-      {/* Find Trends Dialog removed as requested */}
+      {/* Find Trends Dialog */}
+      <Dialog open={findTrendDialogOpen} onOpenChange={setFindTrendDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Generate Trend List</DialogTitle>
+            <DialogDescription>
+              Select a company to generate trends for. This will analyze relevant data and create a list of trends specific to the selected company.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex flex-col gap-4 py-4">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="company-select" className="text-sm font-medium">
+                Select Company
+              </label>
+              <Select 
+                value={selectedCompany} 
+                onValueChange={setSelectedCompany}
+              >
+                <SelectTrigger id="company-select" className="w-full">
+                  <SelectValue placeholder="Select a company" />
+                </SelectTrigger>
+                <SelectContent>
+                  {companies.map((company) => (
+                    <SelectItem key={normalizeId(company._id)} value={normalizeId(company._id)}>
+                      {company.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <DialogFooter className="sm:justify-between">
+            <Button 
+              variant="outline" 
+              onClick={() => setFindTrendDialogOpen(false)}
+              disabled={isGeneratingTrends}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleGenerateTrends}
+              disabled={!selectedCompany || isGeneratingTrends}
+              className="relative"
+            >
+              {isGeneratingTrends ? (
+                <>
+                  <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white absolute left-3"></span>
+                  <span className="ml-5">Generating...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Generate Trends
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
