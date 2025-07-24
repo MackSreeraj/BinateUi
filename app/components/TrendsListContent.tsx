@@ -122,8 +122,8 @@ export default function TrendsListContent() {
               }
             ],
             users: [
-              { _id: '1', name: 'John Doe', email: 'john@example.com' },
-              { _id: '2', name: 'Jane Smith', email: 'jane@example.com' }
+              { _id: '1', name: 'Sebastin Peter', email: 'sebastin@example.com' },
+              { _id: '2', name: 'Jane Jacob', email: 'jane@example.com' }
             ]
           });
         } else {
@@ -152,8 +152,8 @@ export default function TrendsListContent() {
             }
           ],
           users: [
-            { _id: '1', name: 'John Doe', email: 'john@example.com' },
-            { _id: '2', name: 'Jane Smith', email: 'jane@example.com' }
+            { _id: '1', name: 'Sebastin Peter', email: 'sebastin@example.com' },
+            { _id: '2', name: 'Jane Jacob', email: 'jane@example.com' }
           ]
         });
         setError(null); // Clear error since we're using fallback data

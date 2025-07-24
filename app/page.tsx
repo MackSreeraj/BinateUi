@@ -170,7 +170,7 @@ export default function Dashboard() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [activeNav, setActiveNav] = useState('Home');
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  // Settings now use a dedicated page instead of a dialog
 
   // Update active nav based on URL
   useEffect(() => {
@@ -330,11 +330,11 @@ export default function Dashboard() {
                   <Users className="h-4 w-4 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium">John Doe</p>
+                  <p className="text-sm font-medium">Sebastin Peter</p>
                   <p className="text-xs text-muted-foreground">Admin</p>
                 </div>
               </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSettingsOpen(true)}>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => router.push('/settings')}>
                 <Settings className="h-4 w-4" />
               </Button>
             </div>
@@ -346,8 +346,7 @@ export default function Dashboard() {
           <CurrentContent />
         </main>
 
-        {/* Settings Dialog */}
-        <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+        {/* Settings Dialog - Now using dedicated settings page instead */}
         
         {/* Right Sidebar - Only shown on Home page - Fixed Position */}
         {activeNav === 'Home' && (

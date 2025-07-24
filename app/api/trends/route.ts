@@ -141,8 +141,8 @@ export async function GET() {
       console.error('Error fetching users:', userError);
       // If no users, use mock data with more variety
       usersData = [
-        { _id: '1', name: 'John Doe', email: 'john@example.com', role: 'Content Manager' },
-        { _id: '2', name: 'Jane Smith', email: 'jane@example.com', role: 'Marketing Lead' },
+        { _id: '1', name: 'Sebastin Peter', email: 'john@example.com', role: 'Content Manager' },
+        { _id: '2', name: 'Jane Jacob', email: 'jane@example.com', role: 'Marketing Lead' },
         { _id: '3', name: 'Alex Johnson', email: 'alex@example.com', role: 'SEO Specialist' },
         { _id: '4', name: 'Sarah Williams', email: 'sarah@example.com', role: 'Content Writer' },
         { _id: '5', name: 'Michael Brown', email: 'michael@example.com', role: 'Social Media Manager' },
@@ -176,7 +176,7 @@ export async function GET() {
         }
       ],
       users: [
-        { _id: '1', name: 'John Doe', email: 'john@example.com' },
+        { _id: '1', name: 'Sebastin Peter', email: 'john@example.com' },
         { _id: '2', name: 'Jane Smith', email: 'jane@example.com' }
       ]
     };
