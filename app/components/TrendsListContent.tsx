@@ -38,7 +38,8 @@ interface MongoObjectId {
 
 interface Trend {
   _id: string | MongoObjectId;
-  Title: string;
+  Title?: string;
+  name?: string; // Add name property for backward compatibility
   date?: string;
   status?: string;
   topics?: string[];
@@ -94,7 +95,7 @@ export default function TrendsListContent() {
       if (data?.trends) {
         console.log('DEBUG - Trends pushedTo fields:');
         data.trends.forEach((trend: Trend, index: number) => {
-          console.log(`Trend ${index} (${trend.name}): pushedTo = ${trend.pushedTo || 'null'}, assignmentCompleted = ${trend.assignmentCompleted}`);
+          console.log(`Trend ${index} (${trend.Title || trend.name || 'Unnamed'}): pushedTo = ${trend.pushedTo || 'null'}, assignmentCompleted = ${trend.assignmentCompleted}`);
         });
       }
         
@@ -496,7 +497,7 @@ export default function TrendsListContent() {
                 return (
                   <TableRow key={normalizeId(trend._id) || `trend-${index}`} className="h-14 hover:bg-muted/30 transition-colors">
                     <TableCell className="font-medium py-2 truncate max-w-xs">
-                      <div className="line-clamp-2">{trend?.name || 'Unnamed Trend'}</div>
+                      <div className="line-clamp-2">{trend?.Title || trend?.name || 'Unnamed Trend'}</div>
                     </TableCell>
                     <TableCell className="py-2">
                       <div className="flex items-center">
