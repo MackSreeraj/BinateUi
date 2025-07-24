@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Filter, Plus, ExternalLink, ChevronDown, Check } from 'lucide-react';
+import { Search, Filter, Plus, ExternalLink, ChevronDown, Check, Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -38,15 +38,17 @@ interface MongoObjectId {
 
 interface Trend {
   _id: string | MongoObjectId;
-  name: string; // Changed from title to name to match database structure
-  volume?: number; // Added volume field from database
-  change?: number; // Added change field from database
+  Title: string;
+  date?: string;
+  status?: string;
+  topics?: string[];
+  // Keep these for backward compatibility
+  volume?: number;
+  change?: number;
   relevanceScore?: number;
   workshopUrl?: string;
   pushedTo?: string;
-  assignmentCompleted?: boolean; // Track if assignment is completed
-  topics?: string[];
-  status?: string; // Added status field
+  assignmentCompleted?: boolean;
 }
 
 interface TrendsData {
@@ -390,145 +392,75 @@ export default function TrendsListContent() {
         <Table className="table-fixed">
           <TableHeader>
             <TableRow className="bg-muted/50">
-              <TableHead className="py-1 w-1/3">Title</TableHead>
-              <TableHead className="py-1 w-16">Score</TableHead>
-              <TableHead className="py-1 w-24">Workshop</TableHead>
-              <TableHead className="py-1 w-28">Assigned To</TableHead>
-              <TableHead className="py-1 w-20">Status</TableHead>
-              <TableHead className="py-1">Topics</TableHead>
+              <TableHead className="py-1 w-1/2">Title</TableHead>
+              <TableHead className="py-1 w-1/4">Date</TableHead>
+              <TableHead className="py-1 w-1/4">Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={5} className="h-16 text-center">
-                  Loading trends...
+                <TableCell colSpan={3} className="h-16 text-center">
+                  <div className="flex flex-col items-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2"></div>
+                    <p>Loading trends...</p>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : filteredTrends.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="h-16 text-center">
-                  No trends found.
+                <TableCell colSpan={3} className="h-16 text-center">
+                  <p className="mb-2">No trends found.</p>
+                  <Button size="sm" className="mx-auto">
+                    <Plus className="h-3 w-3 mr-1" />
+                    Add New Trend
+                  </Button>
                 </TableCell>
               </TableRow>
             ) : (
-              filteredTrends.map((trend: Trend, index: number) => (
-                <TableRow key={normalizeId(trend._id) || `trend-${index}`} className="h-10">
-                  <TableCell className="font-medium py-0.5 truncate max-w-xs">{trend?.name || 'Unnamed Trend'}</TableCell>
-                  <TableCell className="py-0.5">
-                    {trend?.relevanceScore ? trend.relevanceScore.toFixed(1) : 
-                     (trend?.volume ? (trend.volume / 1000).toFixed(1) : 'N/A')}
-                  </TableCell>
-                  <TableCell className="py-0.5">
-                    {trend?.workshopUrl ? (
-                      <Button variant="ghost" size="sm" asChild className="h-6 px-2">
-                        <Link href={trend.workshopUrl} target="_blank">
-                          <ExternalLink className="h-3 w-3 mr-1" />
-                          Open
-                        </Link>
-                      </Button>
-                    ) : (
-                      <span className="text-muted-foreground text-xs">N/A</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="py-0.5">
-                    <div className="flex flex-col gap-1">
-                      {/* Show dropdown if no user is assigned, otherwise show static display */}
-                      {!trend?.pushedTo ? (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="h-6 px-2 w-full justify-between">
-                              <span className="truncate">Assign User</span>
-                              <ChevronDown className="h-3 w-3 ml-1 flex-shrink-0" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-36">
-                            {trendsData?.users && trendsData.users.length > 0 ? (
-                              trendsData.users.map((user) => {
-                                const userId = normalizeId(user._id);
-                                const trendId = normalizeId(trend._id);
-                                
-                                return (
-                                  <DropdownMenuItem
-                                    key={userId}
-                                    onClick={() => handlePushToUser(
-                                      trendId,
-                                      userId
-                                    )}
-                                  >
-                                    <span className="truncate">{user.name}</span>
-                                  </DropdownMenuItem>
-                                );
-                              })
-                            ) : (
-                              <DropdownMenuItem disabled>No users available</DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      ) : (
-                        <div className="flex items-center justify-between bg-muted rounded-md px-2 py-1 h-6 text-sm">
-                          <span className="truncate font-medium">{getUserNameById(trend.pushedTo)}</span>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-4 w-4 p-0 ml-1" 
-                            onClick={() => handlePushToUser(normalizeId(trend._id), '')}
-                          >
-                            <span className="sr-only">Unassign</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x">
-                              <path d="M18 6 6 18"/>
-                              <path d="m6 6 12 12"/>
-                            </svg>
-                          </Button>
-                        </div>
-                      )}
-                    
-                    {/* When user is assigned but not completed, show the complete button */}
-                    {trend?.pushedTo && !trend?.assignmentCompleted && (
-                      <Button 
-                        size="sm" 
-                        variant="default" 
-                        className="h-6 px-2 bg-green-600 hover:bg-green-700 text-white mt-1"
-                        onClick={() => handleCompleteAssignment(
-                          normalizeId(trend._id)
-                        )}
+              filteredTrends.map((trend: Trend, index: number) => {
+                // Format the date nicely if it exists
+                const formattedDate = trend?.date ? new Date(trend.date).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric'
+                }) : 'No date';
+                
+                // Determine status color
+                const getStatusColor = (status: string | undefined) => {
+                  switch(status?.toLowerCase()) {
+                    case 'active': return 'bg-green-100 text-green-800 border-green-300';
+                    case 'pending': return 'bg-amber-100 text-amber-800 border-amber-300';
+                    case 'completed': return 'bg-blue-100 text-blue-800 border-blue-300';
+                    case 'new': return 'bg-purple-100 text-purple-800 border-purple-300';
+                    default: return 'bg-gray-100 text-gray-800 border-gray-300';
+                  }
+                };
+                
+                return (
+                  <TableRow key={normalizeId(trend._id) || `trend-${index}`} className="h-14 hover:bg-muted/30 transition-colors">
+                    <TableCell className="font-medium py-2 truncate max-w-xs">
+                      <div className="line-clamp-2">{trend?.name || 'Unnamed Trend'}</div>
+                    </TableCell>
+                    <TableCell className="py-2">
+                      <div className="flex items-center">
+                        <CalendarIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <span>{formattedDate}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-2">
+                      <Badge 
+                        variant="outline" 
+                        className={`px-3 py-1 ${getStatusColor(trend?.status)}`}
                       >
-                        Complete
-                      </Button>
-                    )}
-                    
-                    {/* When assignment is completed, show completed status */}
-                    {trend?.assignmentCompleted && trend?.pushedTo && (
-                      <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300 text-xs py-1 px-2 h-6 text-center mt-1">
-                        Completed
+                        {trend?.status || 'Not Set'}
                       </Badge>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell className="py-0.5">
-                  <Badge 
-                    variant={trend?.status === 'Active' ? 'default' : 'outline'} 
-                    className={`text-xs py-0 h-5 ${trend?.status === 'Active' ? 'bg-green-500' : trend?.status === 'Pending' ? 'text-amber-500' : 'text-slate-500'}`}
-                  >
-                    {trend?.status || 'Not Set'}
-                  </Badge>
-                </TableCell>
-                <TableCell className="py-0.5">
-                  <div className="inline-flex flex-wrap gap-0.5">
-                    {trend?.topics && trend.topics.length > 0 ? trend.topics.slice(0, 2).map((topic: string, index: number) => (
-                      <Badge key={index} variant="outline" className="text-xs py-0 h-4 whitespace-nowrap">
-                        {topic || 'Unknown'}
-                      </Badge>
-                    )) : <span className="text-muted-foreground text-xs">None</span>}
-                    {trend?.topics && trend.topics.length > 2 && (
-                      <Badge variant="outline" className="text-xs py-0 h-4">+{trend.topics.length - 2}</Badge>
-                    )}
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))
-          )}
-        </TableBody>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
       </Table>
       </div>
     </div>

@@ -9,88 +9,77 @@ export async function GET() {
     
     const db = client.db("test");
     
-    console.log('Fetching trends from database...');
-    // Fetch trends from the database
+    console.log('Fetching trends from trend_list table...');
+    // Fetch trends from the trend_list table
     let trendsData = [];
     try {
-      const rawTrends = await db.collection("trends").find({}).toArray();
-      console.log('Raw trends fetched:', rawTrends.length, 'records');
+      const rawTrends = await db.collection("trend_list").find({}).toArray();
+      console.log('Raw trends fetched from trend_list:', rawTrends.length, 'records');
       
       // Normalize the data structure to ensure consistent field names
       trendsData = rawTrends.map(trend => {
-        // Extract topics from the Topics field or create from KeyThemes if available
+        // Extract topics if available
         let topics: string[] = [];
-        if (trend.Topics && typeof trend.Topics === 'string' && trend.Topics.trim()) {
-          topics = trend.Topics.split(',').map(t => t.trim()).filter(Boolean);
-        } else if (trend.KeyThemes && typeof trend.KeyThemes === 'string') {
-          // Extract bullet points from KeyThemes
-          topics = trend.KeyThemes.split('•')
-            .map(t => t.trim().replace(/^\s*•\s*/, ''))
-            .filter(Boolean);
+        if (trend.topics && Array.isArray(trend.topics)) {
+          topics = trend.topics;
+        } else if (trend.topics && typeof trend.topics === 'string' && trend.topics.trim()) {
+          topics = trend.topics.split(',').map(t => t.trim()).filter(Boolean);
         }
         
         return {
           _id: trend._id?.toString() || Math.random().toString(36).substring(2, 15),
-          name: trend.Title || trend.name || 'Unnamed Trend',
-          volume: trend.Views ? parseInt(trend.Views) : 0,
-          change: 0, // Default change value
-          relevanceScore: trend.RelevanceScore || 0,
-          workshopUrl: trend.URL || trend.Source || null,
-          pushedTo: trend.PushedTo || null,
-          assignmentCompleted: trend.assignmentCompleted || false,
+          name: trend.Title || trend.title || 'Unnamed Trend',  // Try both Title and title fields
+          date: trend['Published Date'] || trend.date || new Date().toISOString(), // Try both Published Date and date fields
+          status: trend.Status || trend.status || 'New',  // Try both Status and status fields
           topics: topics,
-          discoveryDate: trend.DiscoveryDate || trend.Date || new Date().toISOString(),
-          source: trend.Source || trend.Origin || null,
-          status: trend.Status || 'New',
-          // Social stats
-          likes: trend.Likes ? parseInt(trend.Likes) : null,
-          comments: trend.Comments ? parseInt(trend.Comments) : null,
-          shares: trend.Shares ? parseInt(trend.Shares) : null,
-          summary: trend.Summary || null
+          // Keep other fields for backward compatibility
+          volume: 0,
+          change: 0,
+          relevanceScore: 0,
+          workshopUrl: null,
+          pushedTo: null,
+          assignmentCompleted: false,
+          discoveryDate: trend.date || new Date().toISOString(),
+          source: null,
+          likes: null,
+          comments: null,
+          shares: null,
+          summary: null
         };
       });
       
-      console.log('Normalized trends:', trendsData.length, 'records');
+      console.log('Normalized trends from trend_list:', trendsData.length, 'records');
     } catch (trendError) {
       console.error('Error fetching trends:', trendError);
       // If no trends, use mock data
       trendsData = [
         { 
-          _id: '1', 
-          name: 'AI Advancements', 
-          volume: 24500, 
-          change: 12,
-          relevanceScore: 9.8,
-          workshopUrl: 'https://example.com/workshop/ai-healthcare',
-          pushedTo: null,
-          assignmentCompleted: false,
-          topics: ['AI', 'Technology', 'Machine Learning']
+          _id: '6881e25e1463a98149739a5e', 
+          name: 'Tesla profits pulled down by falling EV sales and regulatory credits', 
+          date: 'Wed, 23 Jul 2025 20:40:00 +0000',
+          status: 'New',
+          topics: ['Tesla', 'EV', 'Business']
         },
         { 
-          _id: '2', 
-          name: 'Web3 Updates', 
-          volume: 18900, 
-          change: 8,
-          relevanceScore: 8.7,
-          workshopUrl: 'https://example.com/workshop/web3',
-          topics: ['Web3', 'Blockchain', 'Cryptocurrency']
+          _id: '6881e25e1463a98149739a5f', 
+          name: 'AI Content Generation Strategies for 2025', 
+          date: 'Tue, 22 Jul 2025 15:30:00 +0000',
+          status: 'Active',
+          topics: ['AI', 'Content', 'Marketing']
         },
         {
-          _id: '3',
-          name: 'Sustainable Energy Solutions',
-          volume: 32000,
-          change: -5,
-          relevanceScore: 9.2,
-          topics: ['Energy', 'Sustainability', 'Climate']
+          _id: '6881e25e1463a98149739a60',
+          name: 'Social Media Trends Reshaping Digital Marketing',
+          date: 'Mon, 21 Jul 2025 09:45:00 +0000',
+          status: 'Pending',
+          topics: ['Social Media', 'Marketing', 'Digital']
         },
         {
-          _id: '4',
-          name: 'Remote Work Technologies',
-          volume: 15000,
-          change: 22,
-          relevanceScore: 7.9,
-          workshopUrl: 'https://example.com/workshop/remote-work',
-          topics: ['Remote Work', 'Productivity', 'Technology']
+          _id: '6881e25e1463a98149739a61',
+          name: 'Sustainable Content Marketing Practices',
+          date: 'Sun, 20 Jul 2025 12:20:00 +0000',
+          status: 'Completed',
+          topics: ['Sustainability', 'Content', 'Marketing']
         }
       ];
       console.log('Using mock trend data');
@@ -171,24 +160,18 @@ export async function GET() {
     const mockData = {
       trends: [
         { 
-          _id: '1', 
-          name: 'AI Advancements', 
-          volume: 24500, 
-          change: 12,
-          relevanceScore: 9.8,
-          workshopUrl: 'https://example.com/workshop/ai-healthcare',
-          pushedTo: null,
-          assignmentCompleted: false,
-          topics: ['AI', 'Technology', 'Machine Learning']
+          _id: '6881e25e1463a98149739a5e', 
+          name: 'Tesla profits pulled down by falling EV sales and regulatory credits', 
+          date: 'Wed, 23 Jul 2025 20:40:00 +0000',
+          status: 'New',
+          topics: ['Tesla', 'EV', 'Business']
         },
         { 
-          _id: '2', 
-          name: 'Web3 Updates', 
-          volume: 18900, 
-          change: 8,
-          relevanceScore: 8.7,
-          workshopUrl: 'https://example.com/workshop/web3',
-          topics: ['Web3', 'Blockchain', 'Cryptocurrency']
+          _id: '6881e25e1463a98149739a5f', 
+          name: 'AI Content Generation Strategies for 2025', 
+          date: 'Tue, 22 Jul 2025 15:30:00 +0000',
+          status: 'Active',
+          topics: ['AI', 'Content', 'Marketing']
         }
       ],
       users: [

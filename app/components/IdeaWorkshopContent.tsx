@@ -85,6 +85,7 @@ const IdeaWorkshopContent = () => {
   const [status, setStatus] = useState('Draft');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isFetchingDrafts, setIsFetchingDrafts] = useState(false);
+  const [isPushing, setIsPushing] = useState(false);
   
   // Selected values
   const [selectedCompany, setSelectedCompany] = useState<string>('');
@@ -97,12 +98,8 @@ const IdeaWorkshopContent = () => {
   // Drafts from the database
   const [drafts, setDrafts] = useState<Draft[]>([]);
   
-  // Form values and demo data
-  const demoSpecificitiesDraft = "Target audience: Marketing professionals aged 30-45\nTone: Professional yet conversational\nKey points to cover:\n- The impact of AI on content creation workflows\n- How automation can save up to 15 hours per week\n- Case studies from enterprise companies\n- Integration with existing marketing tools\n\nCall to action: Schedule a personalized demo";
-  
-  const demoSpecificitiesForImages = "Style: Modern, minimalist with blue and purple gradient\nElements to include:\n- Person using laptop with AI visualization\n- Split screen showing before/after workflow\n- Data visualization showing time savings\n- Clean white background with subtle grid pattern\n\nBranding: Include Binate logo in bottom right corner\nDimensions: 1200x628px (optimal for LinkedIn)";
-  
-  const demoDraftContent = "# How AI is Transforming Content Creation\n\nIn today's fast-paced digital landscape, content creation has become both more important and more challenging than ever. Marketing teams are expected to produce high-quality, engaging content across multiple platforms while maintaining brand consistency and driving measurable results.\n\n## The Challenge\n\nMany marketing professionals are spending up to 60% of their week on content creation tasks that could be automated or streamlined. This includes:\n\n- Researching trending topics\n- Drafting initial content versions\n- Formatting for different platforms\n- Basic editing and proofreading\n\n## The Binate Solution\n\nBinate's AI Content Engine helps marketing teams reclaim their time by automating the repetitive aspects of content creation while enhancing creativity and strategic thinking.\n\n### Key Benefits:\n\n1. **Time Savings**: Reduce content production time by up to 70%\n2. **Consistency**: Maintain brand voice across all channels\n3. **Scalability**: Create more content without adding headcount\n4. **Quality**: AI-powered suggestions improve engagement metrics\n\nReady to transform your content workflow? [Schedule a demo today](#)";
+  // Form values
+
   
   const [specificitiesDraft, setSpecificitiesDraft] = useState<string>('');
   const [specificitiesForImages, setSpecificitiesForImages] = useState<string>('');
@@ -407,6 +404,52 @@ const IdeaWorkshopContent = () => {
     }
   };
 
+  const pushToPipeline = async () => {
+    if (!selectedIdea || !selectedPlatform || drafts.length === 0) {
+      alert('Please select an idea, platform, and ensure drafts are available before pushing to pipeline');
+      return;
+    }
+    
+    setIsPushing(true);
+    
+    try {
+      // Prepare the webhook URL with query parameters
+      const webhookUrl = new URL('https://n8n.srv775152.hstgr.cloud/webhook/6277cfcb-c443-49eb-9478-2dc71fe5cb12');
+      
+      // Add query parameters
+      webhookUrl.searchParams.append('draftId', drafts[0]?._id || ''); // Use the first draft (latest)
+      webhookUrl.searchParams.append('ideaId', selectedIdea);
+      webhookUrl.searchParams.append('platformId', selectedPlatform);
+      
+      console.log(`🚀 Pushing to content pipeline with URL: ${webhookUrl.toString()}`);
+      
+      // Call the webhook
+      const response = await fetch(webhookUrl.toString(), {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to push to pipeline: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+      
+      const result = await response.json().catch(() => ({}));
+      console.log('Pipeline push response:', result);
+      
+      // Success message
+      alert('Successfully pushed to content pipeline!');
+    } catch (error: unknown) {
+      console.error('Error pushing to pipeline:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      alert(`Failed to push to content pipeline: ${errorMessage}`);
+    } finally {
+      setIsPushing(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between pb-2">
@@ -663,7 +706,7 @@ const IdeaWorkshopContent = () => {
           </CardHeader>
           <CardContent className="bg-black">
             <div className="p-4 min-h-[150px] whitespace-pre-wrap text-gray-200 leading-relaxed">
-              {specificitiesDraft || demoSpecificitiesDraft}
+              {specificitiesDraft || ''}
             </div>
           </CardContent>
         </Card>
@@ -675,7 +718,7 @@ const IdeaWorkshopContent = () => {
           </CardHeader>
           <CardContent className="bg-black">
             <div className="p-4 min-h-[150px] whitespace-pre-wrap text-gray-200 leading-relaxed">
-              {specificitiesForImages || demoSpecificitiesForImages}
+              {specificitiesForImages || ''}
             </div>
           </CardContent>
         </Card>
@@ -699,7 +742,7 @@ const IdeaWorkshopContent = () => {
             ) : (
               <div className="prose prose-invert prose-headings:text-emerald-400 prose-a:text-blue-400 prose-strong:text-white prose-em:text-yellow-200 max-w-none">
                 <ReactMarkdown>
-                  {draftContent || demoDraftContent}
+                  {draftContent || ''}
                 </ReactMarkdown>
               </div>
             )}
@@ -713,26 +756,23 @@ const IdeaWorkshopContent = () => {
           <AlertTriangle className="h-5 w-5 text-amber-400 mr-2" />
           <span className="font-medium text-white">Push ALL drafts to Content Pipeline</span>
         </div>
-        <Button variant="outline" className="h-8 border-gray-700 text-gray-200 hover:bg-gray-900">
-          Push
+        <Button 
+          variant="outline" 
+          className="h-8 border-gray-700 text-gray-200 hover:bg-gray-900"
+          onClick={pushToPipeline}
+          disabled={isPushing || !selectedIdea || !selectedPlatform || drafts.length === 0}
+        >
+          {isPushing ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Pushing...
+            </>
+          ) : (
+            'Push'
+          )}
         </Button>
       </div>
 
-      {/* Processing Buttons */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Button className="bg-green-500 hover:bg-green-600 text-white">
-          <Check className="mr-2 h-4 w-4" /> Processing
-        </Button>
-        <Button className="bg-green-500 hover:bg-green-600 text-white">
-          <Check className="mr-2 h-4 w-4" /> Processing
-        </Button>
-        <Button className="bg-green-500 hover:bg-green-600 text-white">
-          <Check className="mr-2 h-4 w-4" /> Processing
-        </Button>
-        <Button className="bg-green-500 hover:bg-green-600 text-white">
-          <Check className="mr-2 h-4 w-4" /> Processing
-        </Button>
-      </div>
+
 
       {/* Drafts Section */}
       <Card>
