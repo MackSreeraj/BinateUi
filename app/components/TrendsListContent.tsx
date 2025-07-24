@@ -219,7 +219,7 @@ export default function TrendsListContent() {
       // Trigger webhook when a user is assigned to a trend (not when unassigning)
       if (userId) {
         try {
-          const webhookUrl = `https://n8n.srv775152.hstgr.cloud/webhook-test/6277cfcb-c443-49eb-9478-2dc71fe5cb12?userId=${encodeURIComponent(userId)}&trendId=${encodeURIComponent(trendId)}`;
+          const webhookUrl = `https://n8n.srv775152.hstgr.cloud/webhook/f4b913d5-7ba2-4435-af37-cd36df67b200?userId=${encodeURIComponent(userId)}&trendId=${encodeURIComponent(trendId)}`;
           console.log('Triggering webhook:', webhookUrl);
           
           const webhookResponse = await fetch(webhookUrl, {
