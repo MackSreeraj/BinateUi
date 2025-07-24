@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     webhookParams.append('timestamp', new Date().toISOString());
     
     // External n8n webhook URL with query parameters
-    const webhookUrl = `https://n8n.srv775152.hstgr.cloud/webhook-test/555252a2-14d0-4fd8-b570-c70034b3c800?${webhookParams.toString()}`;
+    const webhookUrl = `https://n8n.srv775152.hstgr.cloud/webhook/555252a2-14d0-4fd8-b570-c70034b3c800?${webhookParams.toString()}`;
     
     console.log('[N8N-PROXY] Forwarding request to:', webhookUrl);
     

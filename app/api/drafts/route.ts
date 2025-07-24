@@ -41,10 +41,10 @@ export async function GET(request: NextRequest) {
     
     // STEP 1: Get all trends to find the one with matching ID
     console.log('Fetching all trends to find the matching one...');
-    const trends: Trend[] = await db
+    const trends = await db
       .collection('trends')
       .find({})
-      .toArray();
+      .toArray() as unknown as Trend[];
       
     console.log(`Found ${trends.length} total trends`);
     
@@ -82,11 +82,11 @@ export async function GET(request: NextRequest) {
     
     // STEP 4: Fetch all drafts to find matches
     console.log('Fetching all drafts...');
-    const allDrafts: Draft[] = await db
+    const allDrafts = await db
       .collection('drafts')
       .find({})
       .sort({ DiscoveryDate: -1 })
-      .toArray();
+      .toArray() as unknown as Draft[];
       
     console.log(`Found ${allDrafts.length} total drafts`);
     
