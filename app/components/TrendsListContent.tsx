@@ -682,6 +682,27 @@ export default function TrendsListContent() {
                       duration: 5000,
                     });
                     
+                    // Call the webhook with company ID and trend ID
+                    try {
+                      const webhookUrl = `https://n8n.srv775152.hstgr.cloud/webhook/9fca0628-b48f-44ce-89d1-d5f4851d92un?companyId=${encodeURIComponent(companyId)}&trendId=${encodeURIComponent(trendId)}`;
+                      console.log('Calling webhook:', webhookUrl);
+                      
+                      // Use fetch to call the webhook (non-blocking)
+                      fetch(webhookUrl, {
+                        method: 'GET',
+                        headers: {
+                          'Cache-Control': 'no-cache'
+                        }
+                      }).then(response => {
+                        console.log('Webhook response status:', response.status);
+                      }).catch(webhookErr => {
+                        console.error('Error calling webhook:', webhookErr);
+                      });
+                    } catch (webhookErr) {
+                      // Log but don't fail the whole operation if webhook setup fails
+                      console.error('Error setting up webhook call:', webhookErr);
+                    }
+                    
                     // Optimistically update UI first for better user experience
                     setTrendsData(prev => {
                       if (!prev) return prev;
