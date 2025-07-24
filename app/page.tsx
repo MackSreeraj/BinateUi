@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { SettingsDialog } from './components/SettingsDialog';
 import { 
   Home, 
   Users, 
@@ -169,6 +170,7 @@ export default function Dashboard() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [activeNav, setActiveNav] = useState('Home');
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Update active nav based on URL
   useEffect(() => {
@@ -332,7 +334,7 @@ export default function Dashboard() {
                   <p className="text-xs text-muted-foreground">Admin</p>
                 </div>
               </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSettingsOpen(true)}>
                 <Settings className="h-4 w-4" />
               </Button>
             </div>
@@ -344,6 +346,9 @@ export default function Dashboard() {
           <CurrentContent />
         </main>
 
+        {/* Settings Dialog */}
+        <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+        
         {/* Right Sidebar - Only shown on Home page - Fixed Position */}
         {activeNav === 'Home' && (
           <aside className="w-80 border-l bg-muted/20 h-[calc(100vh-4rem)] fixed top-16 right-0">
