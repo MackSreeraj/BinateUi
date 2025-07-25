@@ -37,69 +37,25 @@ interface Idea {
   createdAt: string;
 }
 
-interface FilterState {
-  idea: {
-    condition: 'contains' | 'equals' | 'startsWith' | 'endsWith';
-    value: string;
-  };
-  users: string[];
-}
+
 
 const IdeasContent = () => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   
-  const [filters, setFilters] = useState<FilterState>({
-    idea: {
-      condition: 'contains',
-      value: '',
-    },
-    users: ['Deleted user', 'Deleted user'],
-  });
+
 
   const [showResults, setShowResults] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const handleResetFilters = () => {
-    setFilters({
-      idea: {
-        condition: 'contains',
-        value: '',
-      },
-      users: [],
-    });
-    setShowResults(false);
-  };
 
-  const handleIdeaConditionChange = (value: 'contains' | 'equals' | 'startsWith' | 'endsWith') => {
-    setFilters({
-      ...filters,
-      idea: {
-        ...filters.idea,
-        condition: value,
-      },
-    });
-  };
 
-  const handleIdeaValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFilters({
-      ...filters,
-      idea: {
-        ...filters.idea,
-        value: e.target.value,
-      },
-    });
-  };
 
-  const handleRemoveUser = (userId: string) => {
-    setFilters({
-      ...filters,
-      users: filters.users.filter(id => id !== userId),
-    });
-  };
+
+
   
   // Fetch ideas when component mounts
   useEffect(() => {
@@ -164,77 +120,7 @@ const IdeasContent = () => {
         </div>
       </div>
 
-      {/* Filters Card */}
-      <Card className="shadow-sm">
-        <CardContent className="p-4">
-          <div className="space-y-4">
-            <div className="flex flex-col md:flex-row justify-between gap-4">
-              <div className="flex-1 space-y-2">
-                <Label htmlFor="idea-filter" className="text-sm font-medium">
-                  Idea
-                </Label>
-                <div className="flex gap-2">
-                  <Select 
-                    value={filters.idea.condition}
-                    onValueChange={(value: any) => handleIdeaConditionChange(value)}
-                  >
-                    <SelectTrigger className="w-[140px]">
-                      <SelectValue placeholder="Condition" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="contains">Contains</SelectItem>
-                      <SelectItem value="equals">Equals</SelectItem>
-                      <SelectItem value="startsWith">Starts with</SelectItem>
-                      <SelectItem value="endsWith">Ends with</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    id="idea-filter"
-                    value={filters.idea.value}
-                    onChange={handleIdeaValueChange}
-                    placeholder="Filter by idea content..."
-                    className="flex-1"
-                  />
-                </div>
-              </div>
 
-              <div className="flex-1 space-y-2">
-                <Label className="text-sm font-medium">User</Label>
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs text-muted-foreground">has any of</span>
-                  </div>
-                  <div className="flex flex-wrap gap-2 min-h-[38px] p-2 border rounded-md">
-                    {filters.users.map((user, index) => (
-                      <Badge 
-                        key={index} 
-                        variant="secondary"
-                        className="px-2 py-1 flex items-center gap-1"
-                      >
-                        {user}
-                        <X 
-                          className="h-3 w-3 cursor-pointer" 
-                          onClick={() => handleRemoveUser(user)} 
-                        />
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-end">
-                <Button 
-                  variant="outline" 
-                  onClick={handleResetFilters}
-                  className="whitespace-nowrap"
-                >
-                  Reset
-                </Button>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Ideas List or Empty State */}
       {isLoading ? (
