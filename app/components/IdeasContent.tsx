@@ -26,7 +26,14 @@ interface Idea {
   _id: string;
   content: string;
   userId: string | null;
-  attachmentPath: string | null;
+  trendId: string | null;
+  specificitiesDraft: string | null;
+  specificitiesForImages: string | null;
+  writer: string | null;
+  platform: string | null;
+  drafts: string | null;
+  company: string | null;
+  status: string;
   createdAt: string;
 }
 
@@ -102,15 +109,21 @@ const IdeasContent = () => {
   const fetchIdeas = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/ideas');
+      const response = await fetch('/api/content-ideas', {
+        method: 'GET',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
       if (!response.ok) {
-        throw new Error('Failed to fetch ideas');
+        throw new Error('Failed to fetch content ideas');
       }
       const data = await response.json();
       setIdeas(data);
       setShowResults(data.length > 0);
     } catch (error) {
-      console.error('Error fetching ideas:', error);
+      console.error('Error fetching content ideas:', error);
     } finally {
       setIsLoading(false);
     }
@@ -143,10 +156,10 @@ const IdeasContent = () => {
       <div className="flex items-center justify-between pb-2">
         <div>
           <h1 className="text-2xl font-semibold flex items-center gap-2">
-            <span>💡</span> Ideas
+            <span>💡</span> Content Ideas
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Filter and manage content ideas for your campaigns
+            Filter and manage content ideas generated from trends
           </p>
         </div>
       </div>
@@ -232,7 +245,7 @@ const IdeasContent = () => {
       ) : showResults && ideas.length > 0 ? (
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-medium">Ideas ({ideas.length})</h3>
+            <h3 className="text-lg font-medium">Content Ideas ({ideas.length})</h3>
             <Button className="gap-2" onClick={handleOpenModal}>
               <Plus className="h-4 w-4" /> Add content
             </Button>
@@ -242,19 +255,14 @@ const IdeasContent = () => {
               <Card key={idea._id} className="overflow-hidden hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
                   <div className="flex flex-col gap-2">
-                    <p className="text-sm">{idea.content}</p>
-                    <div className="flex items-center justify-between mt-2">
+                    <div className="flex justify-between">
                       <div className="flex items-center gap-2">
-                        {idea.attachmentPath && (
+                        <Badge className={`${idea.status === 'Draft' ? 'bg-purple-100 text-purple-800' : idea.status === 'In Progress' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
+                          {idea.status || 'Draft'}
+                        </Badge>
+                        {idea.platform && (
                           <Badge variant="outline" className="flex items-center gap-1">
-                            <Paperclip className="h-3 w-3" />
-                            Attachment
-                          </Badge>
-                        )}
-                        {idea.userId && (
-                          <Badge variant="secondary" className="flex items-center gap-1">
-                            <User className="h-3 w-3" />
-                            Assigned
+                            {idea.platform}
                           </Badge>
                         )}
                       </div>
@@ -262,13 +270,30 @@ const IdeasContent = () => {
                         {new Date(idea.createdAt).toLocaleDateString()}
                       </span>
                     </div>
+                    <p className="text-sm mt-2">{idea.content}</p>
+                    <div className="flex items-center justify-between mt-3">
+                      <div className="flex items-center gap-2">
+                        {idea.trendId && (
+                          <Badge variant="outline" className="flex items-center gap-1">
+                            <Paperclip className="h-3 w-3" />
+                            From Trend
+                          </Badge>
+                        )}
+                        {idea.userId && (
+                          <Badge variant="secondary" className="flex items-center gap-1">
+                            <User className="h-3 w-3" />
+                            {idea.writer || 'Assigned'}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
                     <div className="flex justify-end mt-2">
                       <Button 
                         size="sm" 
-                        className="bg-blue-500 hover:bg-blue-600 text-white"
+                        className="bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100"
                         onClick={() => handleNavClick('Idea Workshop', idea._id)}
                       >
-                        <Wrench className="h-3 w-3 mr-1" /> Workshop
+                        <Wrench className="h-3 w-3 mr-1" /> Open Workshop
                       </Button>
                     </div>
                   </div>
