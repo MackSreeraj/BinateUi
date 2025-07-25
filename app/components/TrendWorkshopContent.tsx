@@ -80,12 +80,14 @@ export default function TrendWorkshopContent() {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   
   // Fetch trends data from the API
   useEffect(() => {
     const fetchTrends = async () => {
       try {
         setLoading(true);
+        setError(null); // Clear any previous errors
         
         const response = await fetch('/api/trends', {
           method: 'GET',
@@ -100,6 +102,11 @@ export default function TrendWorkshopContent() {
         }
         
         const data = await response.json();
+        
+        if (!data || !data.trends || data.trends.length === 0) {
+          throw new Error('No trend data available');
+        }
+        
         setTrendsData(data);
         
         // Set the first trend as selected by default
@@ -115,7 +122,7 @@ export default function TrendWorkshopContent() {
     };
 
     fetchTrends();
-  }, []);
+  }, [retryCount]); // Add retryCount as dependency to allow manual retries
 
   const toggleUserSelection = (userId: string) => {
     setSelectedUsers(prev => 
@@ -148,6 +155,24 @@ export default function TrendWorkshopContent() {
       return dateString;
     }
   };
+  
+  // Get status color based on status value - dark mode compatible
+  const getStatusColor = (status: string | undefined): string => {
+    if (!status) return 'bg-gray-800 text-gray-300 hover:bg-gray-700';
+    
+    switch(status.toLowerCase()) {
+      case 'active':
+        return 'bg-green-900 text-green-300 hover:bg-green-800';
+      case 'new':
+        return 'bg-blue-900 text-blue-300 hover:bg-blue-800';
+      case 'pending':
+        return 'bg-yellow-900 text-yellow-300 hover:bg-yellow-800';
+      case 'completed':
+        return 'bg-purple-900 text-purple-300 hover:bg-purple-800';
+      default:
+        return 'bg-gray-800 text-gray-300 hover:bg-gray-700';
+    }
+  };
 
   return (
     <div className="flex flex-col h-full p-6">
@@ -156,7 +181,16 @@ export default function TrendWorkshopContent() {
           <p>Loading trends data...</p>
         </div>
       ) : error ? (
-        <div className="text-red-500 p-4 border rounded-md">{error}</div>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <div className="text-red-600 mb-4">{error}</div>
+          <Button 
+            onClick={() => setRetryCount(prev => prev + 1)} 
+            variant="outline" 
+            className="hover:bg-red-100"
+          >
+            Retry Loading Trends
+          </Button>
+        </div>
       ) : (
         <>
           {/* Trend Selection Dropdown */}
@@ -204,18 +238,21 @@ export default function TrendWorkshopContent() {
         <div className="space-y-6">
           {/* Trend Title Display */}
           <div className="bg-card border p-6 rounded-lg shadow-sm">
-            <h1 className="text-2xl font-bold mb-2">{selectedTrend.Title || selectedTrend.name}</h1>
+            <h1 className="text-2xl font-bold mb-2 text-primary">{selectedTrend.Title || selectedTrend.name}</h1>
             {selectedTrend.companyName && (
-              <div className="text-sm text-muted-foreground mb-4">Company: {selectedTrend.companyName}</div>
+              <div className="text-sm text-primary mb-4 flex items-center">
+                <Users className="h-4 w-4 mr-1" /> 
+                {selectedTrend.companyName}
+              </div>
             )}
           </div>
 
           {/* Section 1: Basic Metadata */}
           <div className="bg-card border p-6 rounded-lg shadow-sm">
-            <h2 className="text-xl font-semibold mb-4">Basic Information</h2>
+            <h2 className="text-xl font-semibold mb-4 text-primary border-b pb-2">Basic Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Status</label>
+                <label className="text-sm font-medium text-primary">Status</label>
                 <div className="relative">
                   <button
                     className="w-full flex items-center justify-between p-2 border rounded-md bg-card hover:bg-accent/50"
@@ -250,16 +287,16 @@ export default function TrendWorkshopContent() {
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Relevance Score</label>
-                <div className="p-2 border rounded-md">{selectedTrend.relevanceScore || '—'}</div>
+                <label className="text-sm font-medium text-primary">Relevance Score</label>
+                <div className="p-2 border rounded-md bg-card text-primary">{selectedTrend.relevanceScore || '—'}</div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Discovery Date</label>
-                <div className="p-2 border rounded-md">{formatDate(selectedTrend.discoveryDate || selectedTrend.date)}</div>
+                <label className="text-sm font-medium text-primary">Discovery Date</label>
+                <div className="p-2 border rounded-md bg-card text-primary">{formatDate(selectedTrend.discoveryDate || selectedTrend.date)}</div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">URL</label>
-                <div className="p-2 border rounded-md">
+                <label className="text-sm font-medium text-primary">URL</label>
+                <div className="p-2 border rounded-md bg-card text-primary">
                   {selectedTrend.workshopUrl ? (
                     <Button variant="ghost" size="sm" asChild className="h-6 px-2 -ml-2">
                       <Link href={selectedTrend.workshopUrl} target="_blank">
@@ -271,8 +308,8 @@ export default function TrendWorkshopContent() {
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Topics</label>
-                <div className="p-2 border rounded-md min-h-[40px]">
+                <label className="text-sm font-medium text-primary">Topics</label>
+                <div className="p-2 border rounded-md min-h-[40px] bg-card text-primary">
                   {(() => {
                     const topicsData = selectedTrend.topics || selectedTrend.Topics;
                     if (!topicsData) return '—';
@@ -281,7 +318,7 @@ export default function TrendWorkshopContent() {
                       return (
                         <div className="flex flex-wrap gap-1">
                           {topicsData.map((topic: string, index: number) => (
-                            <Badge key={index} variant="outline" className="text-xs py-0 h-5">
+                            <Badge variant="outline" className="text-xs py-0 h-5 bg-card text-primary">
                               {topic}
                             </Badge>
                           ))}
@@ -291,7 +328,7 @@ export default function TrendWorkshopContent() {
                       return (
                         <div className="flex flex-wrap gap-1">
                           {topicsData.split(',').map((topic: string, index: number) => (
-                            <Badge key={index} variant="outline" className="text-xs py-0 h-5">
+                            <Badge variant="outline" className="text-xs py-0 h-5 bg-card text-primary">
                               {topic.trim()}
                             </Badge>
                           ))}
@@ -303,148 +340,115 @@ export default function TrendWorkshopContent() {
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Source</label>
-                <div className="p-2 border rounded-md">{selectedTrend.source || '—'}</div>
+                <label className="text-sm font-medium text-primary">Source</label>
+                <div className="p-2 border rounded-md bg-card text-primary">{selectedTrend.source || '—'}</div>
               </div>
             </div>
           </div>
 
-          {/* Section 1: Trend Metadata */}
+          {/* Section 4: User Selection */}
           <div className="bg-card border rounded-lg p-6 shadow-sm">
-            <h2 className="text-xl font-semibold mb-4">Trend Metadata</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">ID</label>
-                  <div className="p-2 border rounded-md text-xs font-mono">{getIdString(selectedTrend._id) || '—'}</div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">Status</label>
-                  <div className="p-2 border rounded-md">{selectedTrend.status || '—'}</div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">Relevance Score</label>
-                  <div className="p-2 border rounded-md">{selectedTrend.relevanceScore || selectedTrend["Relevance Score"] || '—'}</div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">Discovery Date</label>
-                  <div className="p-2 border rounded-md">{selectedTrend.date ? formatDate(selectedTrend.date) : '—'}</div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">URL</label>
-                  <div className="p-2 border rounded-md">
-                    {selectedTrend.url ? (
-                      <a href={selectedTrend.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                        {selectedTrend.url}
-                      </a>
-                    ) : (
-                      '—'
-                    )}
-                  </div>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">Topics</label>
-                  <div className="p-2 border rounded-md">
-                    {(selectedTrend.topics || selectedTrend.Topics) ? (
-                      <div className="flex flex-wrap gap-1">
-                        {(() => {
-                          const topicsData = selectedTrend.topics || selectedTrend.Topics;
-                          if (Array.isArray(topicsData)) {
-                            return topicsData.map((topic: string, index: number) => (
-                              <span key={index} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                                {topic.trim()}
-                              </span>
-                            ));
-                          } else if (typeof topicsData === 'string') {
-                            if (!topicsData.trim()) return null;
-                            return topicsData.split(',').map((topic: string, index: number) => (
-                              <span key={index} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                                {topic.trim()}
-                              </span>
-                            ));
-                          }
-                          return null;
-                        })()} 
-                      </div>
-                    ) : (
-                      '—'
-                    )}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">Source</label>
-                  <div className="p-2 border rounded-md">{selectedTrend.source || '—'}</div>
-                </div>
-                {selectedTrend.companyName && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">Company</label>
-                    <div className="p-2 border rounded-md">{selectedTrend.companyName}</div>
-                  </div>
-                )}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">Content</label>
-                  <div className="p-2 border rounded-md max-h-24 overflow-y-auto">{selectedTrend.content || selectedTrend.Content || '—'}</div>
+            <h2 className="text-xl font-semibold mb-4 text-primary border-b pb-2">User Selection for Idea Generation</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-primary">Status</label>
+                <div className="relative">
+                  <button
+                    className="w-full flex items-center justify-between p-2 border rounded-md bg-card hover:bg-accent/50"
+                    onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+                  >
+                    <Badge className="bg-purple-900/30 text-purple-300 hover:bg-purple-800/50">
+                      {selectedTrend.status || selectedStatus.label}
+                    </Badge>
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
+                  {isStatusDropdownOpen && (
+                    <div className="absolute z-10 mt-1 w-full bg-card border rounded-md shadow-lg">
+                      {statusOptions.map(status => (
+                        <div
+                          key={status.value}
+                          className="p-2 hover:bg-accent/50 cursor-pointer flex items-center justify-between"
+                          onClick={() => {
+                            setSelectedStatus(status);
+                            setIsStatusDropdownOpen(false);
+                          }}
+                        >
+                          <Badge className="bg-purple-900/30 text-purple-300 hover:bg-purple-800/50">
+                            {status.label}
+                          </Badge>
+                          {selectedStatus.value === status.value && (
+                            <Check className="h-4 w-4 text-green-500" />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Section 2: Social Stats Summary */}
+          {/* Section 3: Social Stats */}
           <div className="bg-card border rounded-lg p-6 shadow-sm">
-            <h2 className="text-xl font-semibold mb-4">Social Stats Summary</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">Views</label>
-                  <div className="p-2 border rounded-md">{selectedTrend.volume?.toLocaleString() || '—'}</div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">Likes</label>
-                  <div className="p-2 border rounded-md">{selectedTrend.likes?.toLocaleString() || '—'}</div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">Comments</label>
-                  <div className="p-2 border rounded-md">{selectedTrend.comments?.toLocaleString() || '—'}</div>
+            <h2 className="text-xl font-semibold mb-4 text-primary border-b pb-2">Social Stats</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-primary">Likes</label>
+                <div className="p-3 bg-card border rounded-md flex items-center justify-center">
+                  <span className="text-lg font-bold text-blue-400">{selectedTrend.likes || '0'}</span>
                 </div>
               </div>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">Summary</label>
-                  <div className="p-2 border rounded-md min-h-[100px]">{selectedTrend.summary || '—'}</div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-primary">Comments</label>
+                <div className="p-3 bg-card border rounded-md flex items-center justify-center">
+                  <span className="text-lg font-bold text-green-400">{selectedTrend.comments || '0'}</span>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">Shares</label>
-                  <div className="p-2 border rounded-md">{selectedTrend.shares?.toLocaleString() || '—'}</div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-primary">Shares</label>
+                <div className="p-3 bg-card border rounded-md flex items-center justify-center">
+                  <span className="text-lg font-bold text-purple-400">{selectedTrend.shares || '0'}</span>
                 </div>
               </div>
             </div>
           </div>
-          
+
+          {/* Section 2: Content */}
+          <div className="bg-card border rounded-lg p-6 shadow-sm">
+            <h2 className="text-xl font-semibold mb-4 text-primary border-b pb-2">Content</h2>
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-primary">Content</label>
+                <div className="p-5 border rounded-md bg-card whitespace-pre-wrap text-primary leading-relaxed">
+                  {selectedTrend.content || selectedTrend.Content || '—'}
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Section 3: Additional Trend Details */}
           <div className="bg-card border rounded-lg p-6 shadow-sm">
-            <h2 className="text-xl font-semibold mb-4">Additional Trend Details</h2>
-            <div className="grid grid-cols-1 gap-4">
+            <h2 className="text-xl font-semibold mb-4 text-primary border-b pb-2">Additional Trend Details</h2>
+            <div className="grid grid-cols-1 gap-6">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Notes</label>
-                <div className="p-2 border rounded-md min-h-[80px]">{selectedTrend.notes || selectedTrend.Notes || '—'}</div>
+                <label className="text-sm font-semibold text-primary">Notes</label>
+                <div className="p-5 border rounded-md bg-card whitespace-pre-wrap text-primary leading-relaxed min-h-[80px]">{selectedTrend.notes || selectedTrend.Notes || '—'}</div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Suggestions to leverage this content for marketing</label>
-                <div className="p-2 border rounded-md min-h-[80px]">{selectedTrend.suggestions || selectedTrend["Suggestions to leverage this content for marketing"] || '—'}</div>
+                <label className="text-sm font-semibold text-primary">Suggestions for Marketing</label>
+                <div className="p-5 border rounded-md bg-card whitespace-pre-wrap text-primary leading-relaxed min-h-[80px]">{selectedTrend.suggestions || selectedTrend["Suggestions to leverage this content for marketing"] || '—'}</div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Score Explanation</label>
-                <div className="p-2 border rounded-md min-h-[80px]">{selectedTrend.scoreExplanation || selectedTrend["Score Explanation"] || '—'}</div>
+                <label className="text-sm font-semibold text-primary">Score Explanation</label>
+                <div className="p-5 border rounded-md bg-card whitespace-pre-wrap text-primary leading-relaxed min-h-[80px]">{selectedTrend.scoreExplanation || selectedTrend["Score Explanation"] || '—'}</div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Target Pain Points</label>
-                <div className="p-2 border rounded-md min-h-[80px]">{selectedTrend.targetPainPoints || selectedTrend["Target pain points"] || '—'}</div>
+                <label className="text-sm font-semibold text-primary">Target Pain Points</label>
+                <div className="p-5 border rounded-md bg-card whitespace-pre-wrap text-primary leading-relaxed min-h-[80px]">{selectedTrend.targetPainPoints || selectedTrend["Target pain points"] || '—'}</div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Key Themes</label>
-                <div className="p-2 border rounded-md min-h-[80px]">
+                <label className="text-sm font-semibold text-primary">Key Themes</label>
+                <div className="p-5 border rounded-md bg-card whitespace-pre-wrap text-primary leading-relaxed min-h-[80px]">
                   {selectedTrend.keyThemes || selectedTrend["Key Themes"] ? (
                     <div className="whitespace-pre-line">{selectedTrend.keyThemes || selectedTrend["Key Themes"]}</div>
                   ) : '—'}
@@ -456,27 +460,27 @@ export default function TrendWorkshopContent() {
           {/* Section 3: User Selection */}
           <div className="flex flex-col md:flex-row gap-6">
             <div className="flex-1 bg-card border rounded-lg p-6 shadow-sm">
-              <h2 className="text-xl font-semibold mb-3">Idea Generation</h2>
-              <p className="text-base mb-4">
-                Select one or many users to the right to generate an Idea for them. 👉
+              <h2 className="text-xl font-semibold mb-4 text-primary border-b pb-2">Idea Generation</h2>
+              <p className="text-base mb-4 text-primary">
+                Select users to generate content ideas for this trend.
               </p>
               
               {/* Additional Idea Fields - Left Side */}
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium">Score Explanation</label>
+                  <label className="text-sm font-medium text-primary">Score Explanation</label>
                   <Textarea className="mt-1" rows={3} placeholder="Enter score explanation..." />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Suggestions to leverage this content for marketing</label>
+                  <label className="text-sm font-medium text-primary">Suggestions to leverage this content for marketing</label>
                   <Textarea className="mt-1" rows={3} placeholder="Enter suggestions..." />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Notes</label>
+                  <label className="text-sm font-medium text-primary">Notes</label>
                   <Textarea className="mt-1" rows={3} placeholder="Enter notes..." />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Content</label>
+                  <label className="text-sm font-medium text-primary">Content</label>
                   <Textarea className="mt-1" rows={4} placeholder="Enter content..." />
                 </div>
               </div>
@@ -521,7 +525,7 @@ export default function TrendWorkshopContent() {
               {/* Right Side Fields */}
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium">Pushed To</label>
+                  <label className="text-sm font-medium text-primary">Pushed To</label>
                   <div className="mt-1 flex items-center">
                     <select className="w-full p-2 border rounded-md">
                       <option>Select platform...</option>
@@ -535,15 +539,15 @@ export default function TrendWorkshopContent() {
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Content Ideas</label>
+                  <label className="text-sm font-medium text-primary">Content Ideas</label>
                   <Textarea className="mt-1" rows={3} placeholder="Enter content ideas..." />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Target Pain Points</label>
+                  <label className="text-sm font-medium text-primary">Target Pain Points</label>
                   <Textarea className="mt-1" rows={3} placeholder="Enter pain points..." />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Key Themes</label>
+                  <label className="text-sm font-medium text-primary">Key Themes</label>
                   <Textarea className="mt-1" rows={3} placeholder="Enter key themes..." />
                 </div>
               </div>
@@ -552,9 +556,9 @@ export default function TrendWorkshopContent() {
 
           {/* Action Buttons */}
           <div className="flex justify-end space-x-3 pt-6">
-            <Button variant="outline" size="lg">Cancel</Button>
-            <Button variant="secondary" size="lg">Save Draft</Button>
-            <Button variant="default" size="lg">Generate Ideas</Button>
+            <Button variant="outline" size="lg" className="text-primary">Cancel</Button>
+            <Button variant="secondary" size="lg" className="text-primary">Save Draft</Button>
+            <Button variant="default" size="lg" className="text-primary">Generate Ideas</Button>
           </div>
         </div>
           )}

@@ -51,11 +51,11 @@ export async function GET() {
     let trendsData = [];
     try {
       // Fetch from trends collection (main collection)
-      const rawTrends = await db.collection("trends").find({}).toArray();
+      const rawTrends = await db.collection("trends").find({}).limit(100).toArray();
       console.log('Raw trends fetched from trends collection:', rawTrends.length, 'records');
       
       // Also fetch from trend_list collection to get any additional fields
-      const trendListData = await db.collection("trend_list").find({}).toArray();
+      const trendListData = await db.collection("trend_list").find({}).limit(100).toArray();
       console.log('Raw trends fetched from trend_list collection:', trendListData.length, 'records');
       
       // Also check if there's a trends_detailed collection that might have more fields
@@ -82,6 +82,50 @@ export async function GET() {
           trendListMap[key] = trend;
         }
       });
+      
+      // If no trends found in either collection, use mock data
+      if (rawTrends.length === 0 && trendListData.length === 0) {
+        console.log('No trends found in database, using mock data');
+        trendsData = [
+          {
+            _id: '1',
+            Title: 'AI in Content Marketing',
+            name: 'AI in Content Marketing',
+            status: 'Active',
+            relevanceScore: 85,
+            date: new Date().toISOString(),
+            topics: ['AI', 'Content Marketing', 'Digital Strategy'],
+            companyName: 'Binate AI',
+            content: 'Artificial intelligence is revolutionizing content marketing by enabling personalized content creation at scale.',
+            notes: 'This trend is gaining significant traction across B2B and B2C sectors.',
+            suggestions: 'Leverage AI tools to create personalized content strategies for clients.',
+            scoreExplanation: 'High relevance due to increasing adoption rates and proven ROI.',
+            targetPainPoints: 'Content creation bottlenecks, personalization challenges, and scaling issues.',
+            keyThemes: 'Automation, Personalization, Efficiency',
+            source: 'Industry Research',
+            url: 'https://thebinate.com/blog'
+          },
+          {
+            _id: '2',
+            Title: 'Voice Search Optimization',
+            name: 'Voice Search Optimization',
+            status: 'New',
+            relevanceScore: 78,
+            date: new Date().toISOString(),
+            topics: ['SEO', 'Voice Technology', 'Search'],
+            companyName: 'Tech Innovations',
+            content: 'Voice search is changing how users interact with search engines, requiring new optimization strategies.',
+            notes: 'Particularly important for local businesses and mobile-first strategies.',
+            suggestions: 'Develop voice search optimization services for clients with local presence.',
+            scoreExplanation: 'Growing rapidly with smart speaker and voice assistant adoption.',
+            targetPainPoints: 'Traditional SEO not capturing voice queries, missed local opportunities.',
+            keyThemes: 'Conversational Keywords, Local Search, Mobile Optimization',
+            source: 'Search Engine Journal',
+            url: 'https://thebinate.com/blog/voice-search'
+          }
+        ];
+        return trendsData;
+      }
       
       // Normalize the data structure to ensure consistent field names
       trendsData = rawTrends.map(trend => {
@@ -143,35 +187,107 @@ export async function GET() {
       console.log('Normalized trends from trend_list:', trendsData.length, 'records');
     } catch (trendError) {
       console.error('Error fetching trends:', trendError);
-      // If no trends, use mock data
+      // If no trends, use detailed mock data
       trendsData = [
-        { 
-          _id: '6881e25e1463a98149739a5e', 
-          name: 'Tesla profits pulled down by falling EV sales and regulatory credits', 
-          date: 'Wed, 23 Jul 2025 20:40:00 +0000',
-          status: 'New',
-          topics: ['Tesla', 'EV', 'Business']
-        },
-        { 
-          _id: '6881e25e1463a98149739a5f', 
-          name: 'AI Content Generation Strategies for 2025', 
-          date: 'Tue, 22 Jul 2025 15:30:00 +0000',
+        {
+          _id: '6881e25e1463a98149739a5e',
+          Title: 'AI in Content Marketing',
+          name: 'AI in Content Marketing',
           status: 'Active',
-          topics: ['AI', 'Content', 'Marketing']
+          relevanceScore: 85,
+          date: 'Wed, 23 Jul 2025 20:40:00 +0000',
+          topics: ['AI', 'Content Marketing', 'Digital Strategy'],
+          companyName: 'Binate AI',
+          companyId: '1',
+          volume: 1250,
+          change: 15,
+          content: 'Artificial intelligence is revolutionizing content marketing by enabling personalized content creation at scale. Companies are increasingly adopting AI tools to generate, optimize, and distribute content more efficiently. This trend is particularly strong in sectors with high content volume needs such as media, e-commerce, and B2B technology.',
+          notes: 'This trend is gaining significant traction across B2B and B2C sectors. Early adopters are reporting 30-40% increases in content production efficiency.',
+          suggestions: 'Leverage AI tools to create personalized content strategies for clients. Focus on developing hybrid workflows that combine AI efficiency with human creativity and oversight.',
+          scoreExplanation: 'High relevance due to increasing adoption rates and proven ROI. Market analysis shows 65% of enterprise companies plan to increase AI content tool budgets in the next fiscal year.',
+          targetPainPoints: 'Content creation bottlenecks, personalization challenges, and scaling issues. Many marketing teams struggle with producing sufficient high-quality content to meet demand across multiple channels.',
+          keyThemes: 'Automation, Personalization, Efficiency, Human-AI Collaboration',
+          source: 'Industry Research Report by ContentTech Institute',
+          url: 'https://thebinate.com/blog/ai-content-marketing',
+          likes: 245,
+          comments: 37,
+          shares: 128,
+          summary: 'AI tools are transforming content marketing workflows, enabling greater personalization and efficiency.'
+        },
+        {
+          _id: '6881e25e1463a98149739a5f',
+          Title: 'Voice Search Optimization',
+          name: 'Voice Search Optimization',
+          status: 'New',
+          relevanceScore: 78,
+          date: 'Tue, 22 Jul 2025 15:30:00 +0000',
+          topics: ['SEO', 'Voice Technology', 'Search'],
+          companyName: 'Tech Innovations',
+          companyId: '2',
+          volume: 850,
+          change: 22,
+          content: 'Voice search is changing how users interact with search engines, requiring new optimization strategies. With the proliferation of smart speakers and voice assistants, conversational queries are becoming increasingly common. This shift demands a fundamental rethinking of keyword strategies and content formatting.',
+          notes: 'Particularly important for local businesses and mobile-first strategies. Voice searches are 3x more likely to be local-based than text searches.',
+          suggestions: 'Develop voice search optimization services for clients with local presence. Create FAQ-style content that directly answers common voice queries in natural language.',
+          scoreExplanation: 'Growing rapidly with smart speaker and voice assistant adoption. Current estimates show 55% of households now own at least one smart speaker device.',
+          targetPainPoints: 'Traditional SEO not capturing voice queries, missed local opportunities. Many businesses are losing visibility in voice search results due to outdated optimization approaches.',
+          keyThemes: 'Conversational Keywords, Local Search, Mobile Optimization, Featured Snippets',
+          source: 'Search Engine Journal Annual Report',
+          url: 'https://thebinate.com/blog/voice-search-optimization',
+          likes: 189,
+          comments: 24,
+          shares: 76,
+          summary: 'Voice search is transforming SEO, requiring new strategies focused on conversational content and local optimization.'
         },
         {
           _id: '6881e25e1463a98149739a60',
-          name: 'Social Media Trends Reshaping Digital Marketing',
+          Title: 'Video Content Dominance',
+          name: 'Video Content Dominance',
+          status: 'Active',
+          relevanceScore: 92,
           date: 'Mon, 21 Jul 2025 09:45:00 +0000',
-          status: 'Pending',
-          topics: ['Social Media', 'Marketing', 'Digital']
+          topics: ['Video Marketing', 'Content Strategy', 'Social Media'],
+          companyName: 'Digital Frontiers',
+          companyId: '3',
+          volume: 1750,
+          change: 35,
+          content: 'Short-form video content continues to dominate engagement metrics across all major platforms. The rise of TikTok, Instagram Reels, and YouTube Shorts has created a new paradigm in content consumption, with users increasingly preferring brief, high-impact video experiences.',
+          notes: 'TikTok and Instagram Reels are driving this trend with unprecedented engagement rates. Videos under 60 seconds generate 2.5x more engagement than longer formats.',
+          suggestions: 'Develop vertical video templates and strategies for clients across multiple platforms. Focus on authentic, trend-responsive content that can be quickly produced and distributed.',
+          scoreExplanation: 'Highest engagement rates across all content types with growing platform support. Platform algorithms heavily favor short-form video, providing greater organic reach potential.',
+          targetPainPoints: 'Production costs, content consistency, cross-platform optimization. Many brands struggle with maintaining quality while producing the volume of video content needed to stay relevant.',
+          keyThemes: 'Short-form, Authenticity, Platform-specific optimization, User-generated content',
+          source: 'Social Media Examiner Industry Report',
+          url: 'https://thebinate.com/blog/video-content-trends',
+          likes: 312,
+          comments: 58,
+          shares: 203,
+          summary: 'Short-form video dominates engagement across platforms, requiring brands to adapt their content strategies.'
         },
         {
           _id: '6881e25e1463a98149739a61',
+          Title: 'Sustainable Content Marketing',
           name: 'Sustainable Content Marketing Practices',
+          status: 'Pending',
+          relevanceScore: 73,
           date: 'Sun, 20 Jul 2025 12:20:00 +0000',
-          status: 'Completed',
-          topics: ['Sustainability', 'Content', 'Marketing']
+          topics: ['Sustainability', 'Content', 'ESG'],
+          companyName: 'Green Solutions',
+          companyId: '4',
+          volume: 620,
+          change: 18,
+          content: 'Sustainable content marketing focuses on creating enduring value while minimizing environmental impact. This approach emphasizes evergreen content, resource efficiency, and authentic messaging around environmental and social governance (ESG) topics.',
+          notes: 'Growing consumer demand for authentic sustainability messaging is driving this trend. 78% of consumers say they value brands with genuine environmental commitments.',
+          suggestions: 'Help clients develop authentic sustainability narratives backed by real actions. Create content audits to identify opportunities for more sustainable and evergreen content strategies.',
+          scoreExplanation: 'Moderate but steadily increasing relevance as ESG becomes more central to brand identity and consumer choice.',
+          targetPainPoints: 'Greenwashing concerns, difficulty measuring impact, balancing business goals with sustainability messaging.',
+          keyThemes: 'Authenticity, Resource Efficiency, Long-term Value, ESG Integration',
+          source: 'Content Marketing Institute Sustainability Report',
+          url: 'https://thebinate.com/blog/sustainable-content-marketing',
+          likes: 156,
+          comments: 42,
+          shares: 89,
+          summary: 'Sustainable content marketing focuses on creating enduring value while authentically addressing environmental concerns.'
         }
       ];
       console.log('Using mock trend data');
