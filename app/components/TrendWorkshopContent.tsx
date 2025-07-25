@@ -249,10 +249,10 @@ export default function TrendWorkshopContent() {
 
           {/* Section 1: Basic Metadata */}
           <div className="bg-card border p-6 rounded-lg shadow-sm">
-            <h2 className="text-xl font-semibold mb-4 text-primary border-b pb-2">Basic Information</h2>
+            <h2 className="text-xl font-bold mb-4 text-primary border-l-4 border-blue-500 pl-3">Basic Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-primary">Status</label>
+                <label className="text-sm font-bold text-primary uppercase tracking-wide">Status</label>
                 <div className="relative">
                   <button
                     className="w-full flex items-center justify-between p-2 border rounded-md bg-card hover:bg-accent/50"
@@ -287,16 +287,16 @@ export default function TrendWorkshopContent() {
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-primary">Relevance Score</label>
-                <div className="p-2 border rounded-md bg-card text-primary">{selectedTrend.relevanceScore || '—'}</div>
+                <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Relevance Score</label>
+                <div className="text-primary py-1">{selectedTrend.relevanceScore || '—'}</div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-primary">Discovery Date</label>
-                <div className="p-2 border rounded-md bg-card text-primary">{formatDate(selectedTrend.discoveryDate || selectedTrend.date)}</div>
+                <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Discovery Date</label>
+                <div className="text-primary py-1">{formatDate(selectedTrend.discoveryDate || selectedTrend.date)}</div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-primary">URL</label>
-                <div className="p-2 border rounded-md bg-card text-primary">
+                <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">URL</label>
+                <div className="text-primary py-1">
                   {selectedTrend.workshopUrl ? (
                     <Button variant="ghost" size="sm" asChild className="h-6 px-2 -ml-2">
                       <Link href={selectedTrend.workshopUrl} target="_blank">
@@ -308,8 +308,8 @@ export default function TrendWorkshopContent() {
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-primary">Topics</label>
-                <div className="p-2 border rounded-md min-h-[40px] bg-card text-primary">
+                <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Topics</label>
+                <div className="text-primary py-1">
                   {(() => {
                     const topicsData = selectedTrend.topics || selectedTrend.Topics;
                     if (!topicsData) return '—';
@@ -318,7 +318,7 @@ export default function TrendWorkshopContent() {
                       return (
                         <div className="flex flex-wrap gap-1">
                           {topicsData.map((topic: string, index: number) => (
-                            <Badge variant="outline" className="text-xs py-0 h-5 bg-card text-primary">
+                            <Badge key={index} variant="outline" className="text-xs py-0 h-5 bg-slate-700 text-primary hover:bg-slate-600">
                               {topic}
                             </Badge>
                           ))}
@@ -328,7 +328,7 @@ export default function TrendWorkshopContent() {
                       return (
                         <div className="flex flex-wrap gap-1">
                           {topicsData.split(',').map((topic: string, index: number) => (
-                            <Badge variant="outline" className="text-xs py-0 h-5 bg-card text-primary">
+                            <Badge key={index} variant="outline" className="text-xs py-0 h-5 bg-slate-700 text-primary hover:bg-slate-600">
                               {topic.trim()}
                             </Badge>
                           ))}
@@ -340,18 +340,18 @@ export default function TrendWorkshopContent() {
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-primary">Source</label>
-                <div className="p-2 border rounded-md bg-card text-primary">{selectedTrend.source || '—'}</div>
+                <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Source</label>
+                <div className="text-primary py-1">{selectedTrend.source || '—'}</div>
               </div>
             </div>
           </div>
 
           {/* Section 4: User Selection */}
           <div className="bg-card border rounded-lg p-6 shadow-sm">
-            <h2 className="text-xl font-semibold mb-4 text-primary border-b pb-2">User Selection for Idea Generation</h2>
+            <h2 className="text-xl font-bold mb-4 text-primary border-l-4 border-blue-500 pl-3">User Selection for Idea Generation</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-primary">Status</label>
+                <label className="text-sm font-bold text-primary uppercase tracking-wide">Status</label>
                 <div className="relative">
                   <button
                     className="w-full flex items-center justify-between p-2 border rounded-md bg-card hover:bg-accent/50"
@@ -390,22 +390,22 @@ export default function TrendWorkshopContent() {
 
           {/* Section 3: Social Stats */}
           <div className="bg-card border rounded-lg p-6 shadow-sm">
-            <h2 className="text-xl font-semibold mb-4 text-primary border-b pb-2">Social Stats</h2>
+            <h2 className="text-xl font-bold mb-4 text-primary border-l-4 border-blue-500 pl-3">Social Stats</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-primary">Likes</label>
+                <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Likes</label>
                 <div className="p-3 bg-card border rounded-md flex items-center justify-center">
                   <span className="text-lg font-bold text-blue-400">{selectedTrend.likes || '0'}</span>
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-primary">Comments</label>
+                <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Comments</label>
                 <div className="p-3 bg-card border rounded-md flex items-center justify-center">
                   <span className="text-lg font-bold text-green-400">{selectedTrend.comments || '0'}</span>
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-primary">Shares</label>
+                <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Shares</label>
                 <div className="p-3 bg-card border rounded-md flex items-center justify-center">
                   <span className="text-lg font-bold text-purple-400">{selectedTrend.shares || '0'}</span>
                 </div>
@@ -415,11 +415,11 @@ export default function TrendWorkshopContent() {
 
           {/* Section 2: Content */}
           <div className="bg-card border rounded-lg p-6 shadow-sm">
-            <h2 className="text-xl font-semibold mb-4 text-primary border-b pb-2">Content</h2>
+            <h2 className="text-xl font-bold mb-4 text-primary border-l-4 border-blue-500 pl-3">Content</h2>
             <div className="space-y-6">
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-primary">Content</label>
-                <div className="p-5 border rounded-md bg-card whitespace-pre-wrap text-primary leading-relaxed">
+                <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Content</label>
+                <div className="whitespace-pre-wrap text-primary leading-relaxed py-1">
                   {selectedTrend.content || selectedTrend.Content || '—'}
                 </div>
               </div>
@@ -428,27 +428,27 @@ export default function TrendWorkshopContent() {
 
           {/* Section 3: Additional Trend Details */}
           <div className="bg-card border rounded-lg p-6 shadow-sm">
-            <h2 className="text-xl font-semibold mb-4 text-primary border-b pb-2">Additional Trend Details</h2>
+            <h2 className="text-xl font-bold mb-4 text-primary border-l-4 border-blue-500 pl-3">Additional Trend Details</h2>
             <div className="grid grid-cols-1 gap-6">
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-primary">Notes</label>
-                <div className="p-5 border rounded-md bg-card whitespace-pre-wrap text-primary leading-relaxed min-h-[80px]">{selectedTrend.notes || selectedTrend.Notes || '—'}</div>
+                <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Notes</label>
+                <div className="whitespace-pre-wrap text-primary leading-relaxed py-1">{selectedTrend.notes || selectedTrend.Notes || '—'}</div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-primary">Suggestions for Marketing</label>
-                <div className="p-5 border rounded-md bg-card whitespace-pre-wrap text-primary leading-relaxed min-h-[80px]">{selectedTrend.suggestions || selectedTrend["Suggestions to leverage this content for marketing"] || '—'}</div>
+                <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Suggestions for Marketing</label>
+                <div className="whitespace-pre-wrap text-primary leading-relaxed py-1">{selectedTrend.suggestions || selectedTrend["Suggestions to leverage this content for marketing"] || '—'}</div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-primary">Score Explanation</label>
-                <div className="p-5 border rounded-md bg-card whitespace-pre-wrap text-primary leading-relaxed min-h-[80px]">{selectedTrend.scoreExplanation || selectedTrend["Score Explanation"] || '—'}</div>
+                <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Score Explanation</label>
+                <div className="whitespace-pre-wrap text-primary leading-relaxed py-1">{selectedTrend.scoreExplanation || selectedTrend["Score Explanation"] || '—'}</div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-primary">Target Pain Points</label>
-                <div className="p-5 border rounded-md bg-card whitespace-pre-wrap text-primary leading-relaxed min-h-[80px]">{selectedTrend.targetPainPoints || selectedTrend["Target pain points"] || '—'}</div>
+                <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Target Pain Points</label>
+                <div className="whitespace-pre-wrap text-primary leading-relaxed py-1">{selectedTrend.targetPainPoints || selectedTrend["Target pain points"] || '—'}</div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-primary">Key Themes</label>
-                <div className="p-5 border rounded-md bg-card whitespace-pre-wrap text-primary leading-relaxed min-h-[80px]">
+                <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Key Themes</label>
+                <div className="whitespace-pre-wrap text-primary leading-relaxed py-1">
                   {selectedTrend.keyThemes || selectedTrend["Key Themes"] ? (
                     <div className="whitespace-pre-line">{selectedTrend.keyThemes || selectedTrend["Key Themes"]}</div>
                   ) : '—'}
@@ -460,7 +460,7 @@ export default function TrendWorkshopContent() {
           {/* Section 3: User Selection */}
           <div className="flex flex-col md:flex-row gap-6">
             <div className="flex-1 bg-card border rounded-lg p-6 shadow-sm">
-              <h2 className="text-xl font-semibold mb-4 text-primary border-b pb-2">Idea Generation</h2>
+              <h2 className="text-xl font-bold mb-4 text-primary border-l-4 border-blue-500 pl-3">Idea Generation</h2>
               <p className="text-base mb-4 text-primary">
                 Select users to generate content ideas for this trend.
               </p>
@@ -468,19 +468,19 @@ export default function TrendWorkshopContent() {
               {/* Additional Idea Fields - Left Side */}
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium text-primary">Score Explanation</label>
+                  <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Score Explanation</label>
                   <Textarea className="mt-1" rows={3} placeholder="Enter score explanation..." />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-primary">Suggestions to leverage this content for marketing</label>
+                  <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Suggestions to leverage this content for marketing</label>
                   <Textarea className="mt-1" rows={3} placeholder="Enter suggestions..." />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-primary">Notes</label>
+                  <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Notes</label>
                   <Textarea className="mt-1" rows={3} placeholder="Enter notes..." />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-primary">Content</label>
+                  <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Content</label>
                   <Textarea className="mt-1" rows={4} placeholder="Enter content..." />
                 </div>
               </div>
@@ -525,7 +525,7 @@ export default function TrendWorkshopContent() {
               {/* Right Side Fields */}
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium text-primary">Pushed To</label>
+                  <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Pushed To</label>
                   <div className="mt-1 flex items-center">
                     <select className="w-full p-2 border rounded-md">
                       <option>Select platform...</option>
@@ -539,15 +539,15 @@ export default function TrendWorkshopContent() {
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-primary">Content Ideas</label>
+                  <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Content Ideas</label>
                   <Textarea className="mt-1" rows={3} placeholder="Enter content ideas..." />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-primary">Target Pain Points</label>
+                  <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Target Pain Points</label>
                   <Textarea className="mt-1" rows={3} placeholder="Enter pain points..." />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-primary">Key Themes</label>
+                  <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Key Themes</label>
                   <Textarea className="mt-1" rows={3} placeholder="Enter key themes..." />
                 </div>
               </div>
