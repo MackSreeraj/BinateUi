@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Filter, Plus, ExternalLink, ChevronDown, Check, Calendar as CalendarIcon, Sparkles, Building2 } from 'lucide-react';
+import { Search, Filter, Plus, ExternalLink, ChevronDown, Check, Calendar as CalendarIcon, Sparkles, Building2, X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -29,6 +29,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
+  DialogClose,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -98,6 +100,8 @@ export default function TrendsListContent() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [generatingForCompany, setGeneratingForCompany] = useState<string | null>(null);
   const [updatingCompanyForTrend, setUpdatingCompanyForTrend] = useState<string | null>(null);
+  const [selectedTrendDetails, setSelectedTrendDetails] = useState<Trend | null>(null);
+  const [trendDetailsOpen, setTrendDetailsOpen] = useState(false);
 
   // Fetch trends data from the API
   const fetchTrends = async () => {
@@ -755,7 +759,17 @@ export default function TrendsListContent() {
                 };
                 
                 return (
-                  <TableRow key={normalizeId(trend._id) || `trend-${index}`} className="h-14 hover:bg-muted/30 transition-colors">
+                  <TableRow 
+                    key={normalizeId(trend._id) || `trend-${index}`} 
+                    className="h-14 hover:bg-muted/30 transition-colors cursor-pointer"
+                    onClick={(e) => {
+                      // Only open details if not clicking on a button or dropdown
+                      if (!(e.target as HTMLElement).closest('button, [role="menuitem"]')) {
+                        setSelectedTrendDetails(trend);
+                        setTrendDetailsOpen(true);
+                      }
+                    }}
+                  >
                     <TableCell className="py-2">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -902,6 +916,131 @@ export default function TrendsListContent() {
         </div>
       
       {/* Find Trends Dialog removed as requested */}
+      
+      {/* Trend Details Dialog */}
+      <Dialog open={trendDetailsOpen} onOpenChange={setTrendDetailsOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold flex items-center justify-between">
+              <span>{selectedTrendDetails?.Title || selectedTrendDetails?.name || 'Trend Details'}</span>
+              <DialogClose className="h-6 w-6 rounded-full hover:bg-muted p-1">
+                <X className="h-4 w-4" />
+              </DialogClose>
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedTrendDetails && (
+            <div className="space-y-4 py-2">
+              {/* Status */}
+              <div className="flex items-center gap-2">
+                <span className="font-medium w-24">Status:</span>
+                <Badge 
+                  className={`${selectedTrendDetails.status?.toLowerCase() === 'active' ? 'bg-green-100 text-green-800 hover:bg-green-200' : 
+                    selectedTrendDetails.status?.toLowerCase() === 'pending' ? 'bg-amber-100 text-amber-800 hover:bg-amber-200' : 
+                    selectedTrendDetails.status?.toLowerCase() === 'completed' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' : 
+                    selectedTrendDetails.status?.toLowerCase() === 'new' ? 'bg-purple-100 text-purple-800 hover:bg-purple-200' : 
+                    selectedTrendDetails.status?.toLowerCase() === 'approved' ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 
+                    selectedTrendDetails.status?.toLowerCase() === 'archived' ? 'bg-gray-100 text-gray-800 hover:bg-gray-200' : 
+                    selectedTrendDetails.status?.toLowerCase() === 'discarded' ? 'bg-red-100 text-red-800 hover:bg-red-200' : 
+                    'bg-gray-100 text-gray-800 hover:bg-gray-200'}`}
+                >
+                  {selectedTrendDetails.status || 'Not Set'}
+                </Badge>
+              </div>
+              
+              {/* Company */}
+              <div className="flex items-center gap-2">
+                <span className="font-medium w-24">Company:</span>
+                <span className="flex items-center">
+                  <Building2 className="h-4 w-4 mr-2 text-muted-foreground" />
+                  {selectedTrendDetails.companyName || 
+                   companies.find(c => normalizeId(c._id) === normalizeId(selectedTrendDetails.companyId || ''))?.name || 
+                   'Not assigned'}
+                </span>
+              </div>
+              
+              {/* Date */}
+              <div className="flex items-center gap-2">
+                <span className="font-medium w-24">Date:</span>
+                <span className="flex items-center">
+                  <CalendarIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+                  {selectedTrendDetails.date ? 
+                    new Date(selectedTrendDetails.date).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    }) : 'No date'}
+                </span>
+              </div>
+              
+              {/* Topics */}
+              {selectedTrendDetails.topics && selectedTrendDetails.topics.length > 0 && (
+                <div className="flex gap-2">
+                  <span className="font-medium w-24">Topics:</span>
+                  <div className="flex flex-wrap gap-1">
+                    {selectedTrendDetails.topics.map((topic, i) => (
+                      <Badge key={i} variant="outline" className="bg-blue-50">
+                        {topic}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Volume & Change */}
+              {(selectedTrendDetails.volume !== undefined || selectedTrendDetails.change !== undefined) && (
+                <div className="flex items-center gap-6">
+                  {selectedTrendDetails.volume !== undefined && (
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">Volume:</span>
+                      <span>{selectedTrendDetails.volume.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {selectedTrendDetails.change !== undefined && (
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">Change:</span>
+                      <span className={selectedTrendDetails.change > 0 ? 'text-green-600' : 'text-red-600'}>
+                        {selectedTrendDetails.change > 0 ? '+' : ''}{selectedTrendDetails.change}%
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* Assigned User */}
+              {selectedTrendDetails.pushedTo && (
+                <div className="flex items-center gap-2">
+                  <span className="font-medium w-24">Assigned to:</span>
+                  <span>{getUserNameById(selectedTrendDetails.pushedTo)}</span>
+                </div>
+              )}
+            </div>
+          )}
+          
+          <DialogFooter className="mt-4">
+            {selectedTrendDetails?.companyId && (
+              <Button 
+                variant="outline"
+                size="sm"
+                className="bg-green-50 text-green-800 border-green-300 hover:bg-green-100"
+                onClick={() => {
+                  if (selectedTrendDetails) {
+                    // Navigate to workshop with trend ID and company ID
+                    window.open(`/trend-workshop?trendId=${encodeURIComponent(normalizeId(selectedTrendDetails._id || ''))}&companyId=${encodeURIComponent(normalizeId(selectedTrendDetails.companyId || ''))}`, '_blank');
+                  }
+                  setTrendDetailsOpen(false);
+                }}
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                Open in Workshop
+              </Button>
+            )}
+            <DialogClose asChild>
+              <Button variant="outline">Close</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
