@@ -106,13 +106,13 @@ export default function TrendsListContent() {
   // Fetch trends data from the API
   const fetchTrends = async () => {
     try {
-      console.log('Starting to fetch trends data...');
+      console.log('Starting to fetch trends data from trend_list table...');
       setLoading(true);
       
       // Add a small delay to ensure the API route is ready
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      const response = await fetch('/api/trends', {
+      const response = await fetch('/api/trend-list', {
         method: 'GET',
         headers: {
           'Cache-Control': 'no-cache',
