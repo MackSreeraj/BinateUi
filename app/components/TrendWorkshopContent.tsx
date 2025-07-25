@@ -81,6 +81,9 @@ export default function TrendWorkshopContent() {
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [selectedUser, setSelectedUser] = useState<string>('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
+  const [generateSuccess, setGenerateSuccess] = useState(false);
   
   // Fetch trends data from the API
   useEffect(() => {
@@ -435,6 +438,19 @@ export default function TrendWorkshopContent() {
             </div>
           </div>
 
+          {/* Error and Success Messages */}
+          {generateError && (
+            <div className="bg-red-900/20 border border-red-500 text-red-300 p-4 rounded-md mb-4">
+              <p className="font-medium">Error: {generateError}</p>
+            </div>
+          )}
+          
+          {generateSuccess && (
+            <div className="bg-green-900/20 border border-green-500 text-green-300 p-4 rounded-md mb-4">
+              <p className="font-medium">Success! Idea generation has been triggered.</p>
+            </div>
+          )}
+          
           {/* Action Buttons */}
           <div className="flex justify-end space-x-3 pt-6">
             <Button variant="outline" size="lg" className="text-primary">Cancel</Button>
@@ -442,9 +458,48 @@ export default function TrendWorkshopContent() {
               variant="default" 
               size="lg" 
               className="bg-blue-600 hover:bg-blue-700 text-white" 
-              disabled={!selectedUser}
+              disabled={!selectedUser || isGenerating}
+              onClick={async () => {
+                if (!selectedUser || !selectedTrend) return;
+                
+                try {
+                  setIsGenerating(true);
+                  setGenerateError(null);
+                  
+                  const trendId = getIdString(selectedTrend._id);
+                  const webhookUrl = 'https://n8n.srv775152.hstgr.cloud/webhook/f4b913d5-7ba2-4435-af37-cd36df67b200';
+                  
+                  const response = await fetch(`${webhookUrl}?userId=${selectedUser}&trendId=${trendId}`, {
+                    method: 'GET',
+                    headers: {
+                      'Content-Type': 'application/json'
+                    }
+                  });
+                  
+                  if (!response.ok) {
+                    throw new Error(`Failed to trigger webhook: ${response.status}`);
+                  }
+                  
+                  // Optional: Handle successful response
+                  const data = await response.json();
+                  console.log('Webhook triggered successfully:', data);
+                  
+                  // Show success message
+                  setGenerateSuccess(true);
+                  
+                  // Auto-hide success message after 5 seconds
+                  setTimeout(() => {
+                    setGenerateSuccess(false);
+                  }, 5000);
+                } catch (err) {
+                  console.error('Error triggering webhook:', err);
+                  setGenerateError(err instanceof Error ? err.message : 'Failed to trigger idea generation');
+                } finally {
+                  setIsGenerating(false);
+                }
+              }}
             >
-              Generate Ideas
+              {isGenerating ? 'Generating...' : 'Generate Ideas'}
             </Button>
           </div>
         </div>
