@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ChevronDown, ChevronUp, Plus, Check, Users, ExternalLink } from 'lucide-react';
+import { ChevronDown, ChevronUp, Check, Users, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -76,8 +76,7 @@ export default function TrendWorkshopContent() {
   const [isTrendDropdownOpen, setIsTrendDropdownOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState(statusOptions[0]);
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
-  const [isUserSelectorOpen, setIsUserSelectorOpen] = useState(false);
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
@@ -124,13 +123,7 @@ export default function TrendWorkshopContent() {
     fetchTrends();
   }, [retryCount]); // Add retryCount as dependency to allow manual retries
 
-  const toggleUserSelection = (userId: string) => {
-    setSelectedUsers(prev => 
-      prev.includes(userId)
-        ? prev.filter(id => id !== userId)
-        : [...prev, userId]
-    );
-  };
+
   
   // Helper function to get ID string from either string or MongoObjectId
   const getIdString = (id: string | MongoObjectId | undefined): string => {
@@ -346,47 +339,7 @@ export default function TrendWorkshopContent() {
             </div>
           </div>
 
-          {/* Section 4: User Selection */}
-          <div className="bg-card border rounded-lg p-6 shadow-sm">
-            <h2 className="text-xl font-bold mb-4 text-primary border-l-4 border-blue-500 pl-3">User Selection for Idea Generation</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-primary uppercase tracking-wide">Status</label>
-                <div className="relative">
-                  <button
-                    className="w-full flex items-center justify-between p-2 border rounded-md bg-card hover:bg-accent/50"
-                    onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
-                  >
-                    <Badge className="bg-purple-900/30 text-purple-300 hover:bg-purple-800/50">
-                      {selectedTrend.status || selectedStatus.label}
-                    </Badge>
-                    <ChevronDown className="h-4 w-4" />
-                  </button>
-                  {isStatusDropdownOpen && (
-                    <div className="absolute z-10 mt-1 w-full bg-card border rounded-md shadow-lg">
-                      {statusOptions.map(status => (
-                        <div
-                          key={status.value}
-                          className="p-2 hover:bg-accent/50 cursor-pointer flex items-center justify-between"
-                          onClick={() => {
-                            setSelectedStatus(status);
-                            setIsStatusDropdownOpen(false);
-                          }}
-                        >
-                          <Badge className="bg-purple-900/30 text-purple-300 hover:bg-purple-800/50">
-                            {status.label}
-                          </Badge>
-                          {selectedStatus.value === status.value && (
-                            <Check className="h-4 w-4 text-green-500" />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+
 
           {/* Section 3: Social Stats */}
           <div className="bg-card border rounded-lg p-6 shadow-sm">
@@ -457,102 +410,7 @@ export default function TrendWorkshopContent() {
             </div>
           </div>
 
-          {/* Section 3: User Selection */}
-          <div className="flex flex-col md:flex-row gap-6">
-            <div className="flex-1 bg-card border rounded-lg p-6 shadow-sm">
-              <h2 className="text-xl font-bold mb-4 text-primary border-l-4 border-blue-500 pl-3">Idea Generation</h2>
-              <p className="text-base mb-4 text-primary">
-                Select users to generate content ideas for this trend.
-              </p>
-              
-              {/* Additional Idea Fields - Left Side */}
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Score Explanation</label>
-                  <Textarea className="mt-1" rows={3} placeholder="Enter score explanation..." />
-                </div>
-                <div>
-                  <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Suggestions to leverage this content for marketing</label>
-                  <Textarea className="mt-1" rows={3} placeholder="Enter suggestions..." />
-                </div>
-                <div>
-                  <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Notes</label>
-                  <Textarea className="mt-1" rows={3} placeholder="Enter notes..." />
-                </div>
-                <div>
-                  <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Content</label>
-                  <Textarea className="mt-1" rows={4} placeholder="Enter content..." />
-                </div>
-              </div>
-            </div>
 
-            {/* User Selection Sidebar */}
-            <div className="w-full md:w-80 bg-card border rounded-lg p-6 shadow-sm">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold">Select Users</h3>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsUserSelectorOpen(!isUserSelectorOpen)}
-                >
-                  <Users className="h-4 w-4 mr-2" />
-                  {selectedUsers.length > 0 ? `${selectedUsers.length} selected` : 'Select'}
-                </Button>
-              </div>
-
-              {isUserSelectorOpen && (
-                <div className="border rounded-md p-2 mb-4 max-h-60 overflow-y-auto bg-background">
-                  {trendsData?.users && trendsData.users.map(user => (
-                    <div
-                      key={getIdString(user._id)}
-                      className={`p-2 rounded-md cursor-pointer flex items-center justify-between ${
-                        selectedUsers.includes(getIdString(user._id)) ? 'bg-blue-900/20' : 'hover:bg-accent/50'
-                      }`}
-                      onClick={() => toggleUserSelection(getIdString(user._id))}
-                    >
-                      <div>
-                        <div className="font-medium">{user.name}</div>
-                        <div className="text-xs text-muted-foreground">{user.email}</div>
-                      </div>
-                      {selectedUsers.includes(getIdString(user._id)) && (
-                        <Check className="h-4 w-4 text-blue-500" />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Right Side Fields */}
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Pushed To</label>
-                  <div className="mt-1 flex items-center">
-                    <select className="w-full p-2 border rounded-md">
-                      <option>Select platform...</option>
-                      <option>LinkedIn</option>
-                      <option>Twitter</option>
-                      <option>Facebook</option>
-                    </select>
-                    <Button variant="ghost" size="icon" className="ml-2">
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Content Ideas</label>
-                  <Textarea className="mt-1" rows={3} placeholder="Enter content ideas..." />
-                </div>
-                <div>
-                  <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Target Pain Points</label>
-                  <Textarea className="mt-1" rows={3} placeholder="Enter pain points..." />
-                </div>
-                <div>
-                  <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Key Themes</label>
-                  <Textarea className="mt-1" rows={3} placeholder="Enter key themes..." />
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* Action Buttons */}
           <div className="flex justify-end space-x-3 pt-6">
