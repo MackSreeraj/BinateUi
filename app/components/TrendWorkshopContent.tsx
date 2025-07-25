@@ -19,14 +19,16 @@ interface Trend {
   Title?: string;
   volume?: number;
   change?: number;
-  relevanceScore?: number;
+  relevanceScore?: string | number;
   workshopUrl?: string;
   pushedTo?: string;
-  topics?: string[];
+  topics?: string | string[];
   status?: string;
   discoveryDate?: string;
   date?: string;
   source?: string;
+  url?: string;
+  content?: string;
   // Social stats
   likes?: number | null;
   comments?: number | null;
@@ -34,6 +36,20 @@ interface Trend {
   summary?: string | null;
   companyName?: string | null;
   companyId?: string | null;
+  // Additional fields
+  notes?: string;
+  suggestions?: string;
+  "Suggestions to leverage this content for marketing"?: string;
+  scoreExplanation?: string;
+  "Score Explanation"?: string;
+  targetPainPoints?: string;
+  "Target pain points"?: string;
+  keyThemes?: string;
+  "Key Themes"?: string;
+  "Relevance Score"?: string | number;
+  Content?: string;
+  Notes?: string;
+  Topics?: string | string[];
 }
 
 interface User {
@@ -257,20 +273,120 @@ export default function TrendWorkshopContent() {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-muted-foreground">Topics</label>
                 <div className="p-2 border rounded-md min-h-[40px]">
-                  {selectedTrend.topics && selectedTrend.topics.length > 0 ? (
-                    <div className="flex flex-wrap gap-1">
-                      {selectedTrend.topics.map((topic, index) => (
-                        <Badge key={index} variant="outline" className="text-xs py-0 h-5">
-                          {topic}
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : '—'}
+                  {(() => {
+                    const topicsData = selectedTrend.topics || selectedTrend.Topics;
+                    if (!topicsData) return '—';
+                    
+                    if (Array.isArray(topicsData) && topicsData.length > 0) {
+                      return (
+                        <div className="flex flex-wrap gap-1">
+                          {topicsData.map((topic: string, index: number) => (
+                            <Badge key={index} variant="outline" className="text-xs py-0 h-5">
+                              {topic}
+                            </Badge>
+                          ))}
+                        </div>
+                      );
+                    } else if (typeof topicsData === 'string' && topicsData.trim()) {
+                      return (
+                        <div className="flex flex-wrap gap-1">
+                          {topicsData.split(',').map((topic: string, index: number) => (
+                            <Badge key={index} variant="outline" className="text-xs py-0 h-5">
+                              {topic.trim()}
+                            </Badge>
+                          ))}
+                        </div>
+                      );
+                    }
+                    return '—';
+                  })()}
                 </div>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-muted-foreground">Source</label>
                 <div className="p-2 border rounded-md">{selectedTrend.source || '—'}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 1: Trend Metadata */}
+          <div className="bg-card border rounded-lg p-6 shadow-sm">
+            <h2 className="text-xl font-semibold mb-4">Trend Metadata</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">ID</label>
+                  <div className="p-2 border rounded-md text-xs font-mono">{getIdString(selectedTrend._id) || '—'}</div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Status</label>
+                  <div className="p-2 border rounded-md">{selectedTrend.status || '—'}</div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Relevance Score</label>
+                  <div className="p-2 border rounded-md">{selectedTrend.relevanceScore || selectedTrend["Relevance Score"] || '—'}</div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Discovery Date</label>
+                  <div className="p-2 border rounded-md">{selectedTrend.date ? formatDate(selectedTrend.date) : '—'}</div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">URL</label>
+                  <div className="p-2 border rounded-md">
+                    {selectedTrend.url ? (
+                      <a href={selectedTrend.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                        {selectedTrend.url}
+                      </a>
+                    ) : (
+                      '—'
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Topics</label>
+                  <div className="p-2 border rounded-md">
+                    {(selectedTrend.topics || selectedTrend.Topics) ? (
+                      <div className="flex flex-wrap gap-1">
+                        {(() => {
+                          const topicsData = selectedTrend.topics || selectedTrend.Topics;
+                          if (Array.isArray(topicsData)) {
+                            return topicsData.map((topic: string, index: number) => (
+                              <span key={index} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                                {topic.trim()}
+                              </span>
+                            ));
+                          } else if (typeof topicsData === 'string') {
+                            if (!topicsData.trim()) return null;
+                            return topicsData.split(',').map((topic: string, index: number) => (
+                              <span key={index} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                                {topic.trim()}
+                              </span>
+                            ));
+                          }
+                          return null;
+                        })()} 
+                      </div>
+                    ) : (
+                      '—'
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Source</label>
+                  <div className="p-2 border rounded-md">{selectedTrend.source || '—'}</div>
+                </div>
+                {selectedTrend.companyName && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground">Company</label>
+                    <div className="p-2 border rounded-md">{selectedTrend.companyName}</div>
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Content</label>
+                  <div className="p-2 border rounded-md max-h-24 overflow-y-auto">{selectedTrend.content || selectedTrend.Content || '—'}</div>
+                </div>
               </div>
             </div>
           </div>
@@ -301,6 +417,37 @@ export default function TrendWorkshopContent() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">Shares</label>
                   <div className="p-2 border rounded-md">{selectedTrend.shares?.toLocaleString() || '—'}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Section 3: Additional Trend Details */}
+          <div className="bg-card border rounded-lg p-6 shadow-sm">
+            <h2 className="text-xl font-semibold mb-4">Additional Trend Details</h2>
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Notes</label>
+                <div className="p-2 border rounded-md min-h-[80px]">{selectedTrend.notes || selectedTrend.Notes || '—'}</div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Suggestions to leverage this content for marketing</label>
+                <div className="p-2 border rounded-md min-h-[80px]">{selectedTrend.suggestions || selectedTrend["Suggestions to leverage this content for marketing"] || '—'}</div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Score Explanation</label>
+                <div className="p-2 border rounded-md min-h-[80px]">{selectedTrend.scoreExplanation || selectedTrend["Score Explanation"] || '—'}</div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Target Pain Points</label>
+                <div className="p-2 border rounded-md min-h-[80px]">{selectedTrend.targetPainPoints || selectedTrend["Target pain points"] || '—'}</div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Key Themes</label>
+                <div className="p-2 border rounded-md min-h-[80px]">
+                  {selectedTrend.keyThemes || selectedTrend["Key Themes"] ? (
+                    <div className="whitespace-pre-line">{selectedTrend.keyThemes || selectedTrend["Key Themes"]}</div>
+                  ) : '—'}
                 </div>
               </div>
             </div>

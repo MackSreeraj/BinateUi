@@ -46,53 +46,97 @@ export async function GET() {
       console.log('Using mock company data due to error');
     }
     
-    console.log('Fetching trends from trend_list table...');
-    // Fetch trends from the trend_list table
+    console.log('Fetching trends from both collections...');
+    // Fetch trends from both collections to ensure we get all fields
     let trendsData = [];
     try {
-      const rawTrends = await db.collection("trend_list").find({}).toArray();
-      console.log('Raw trends fetched from trend_list:', rawTrends.length, 'records');
+      // Fetch from trends collection (main collection)
+      const rawTrends = await db.collection("trends").find({}).toArray();
+      console.log('Raw trends fetched from trends collection:', rawTrends.length, 'records');
+      
+      // Also fetch from trend_list collection to get any additional fields
+      const trendListData = await db.collection("trend_list").find({}).toArray();
+      console.log('Raw trends fetched from trend_list collection:', trendListData.length, 'records');
+      
+      // Also check if there's a trends_detailed collection that might have more fields
+      let detailedTrendsData = [];
+      try {
+        detailedTrendsData = await db.collection("trends_detailed").find({}).toArray();
+        console.log('Raw trends fetched from trends_detailed collection:', detailedTrendsData.length, 'records');
+      } catch (err) {
+        console.log('No trends_detailed collection found or error fetching from it');
+      }
+      
+      // Create a map of trend_list items by title for easy lookup
+      interface TrendItem {
+        _id?: string | any;
+        Title?: string;
+        name?: string;
+        [key: string]: any;
+      }
+      
+      const trendListMap: Record<string, TrendItem> = {};
+      trendListData.forEach((trend: TrendItem) => {
+        const key = trend.Title || trend.name;
+        if (key) {
+          trendListMap[key] = trend;
+        }
+      });
       
       // Normalize the data structure to ensure consistent field names
       trendsData = rawTrends.map(trend => {
+        // Get the title or name to use as a key
+        const trendKey = trend.Title || trend.name;
+        
+        // Find matching trend from trend_list collection to merge data
+        const trendListItem = trendKey && trendListMap.hasOwnProperty(trendKey) ? trendListMap[trendKey] : null;
+        
+        // Merge data from both sources, with trend (from trends collection) taking precedence
+        const mergedTrend: Record<string, any> = trendListItem ? { ...trendListItem, ...trend } : trend;
+        
         // Extract topics if available
         let topics: string[] = [];
-        if (trend.topics && Array.isArray(trend.topics)) {
-          topics = trend.topics;
-        } else if (trend.topics && typeof trend.topics === 'string' && trend.topics.trim()) {
-          topics = trend.topics.split(',').map(t => t.trim()).filter(Boolean);
+        if (mergedTrend.topics && Array.isArray(mergedTrend.topics)) {
+          topics = mergedTrend.topics;
+        } else if (mergedTrend.topics && typeof mergedTrend.topics === 'string' && mergedTrend.topics.trim()) {
+          topics = mergedTrend.topics.split(',').map((t: string) => t.trim()).filter(Boolean);
         }
         
         // Find company info if companyId exists
-        const companyId = trend.companyId || null;
+        const companyId = mergedTrend.companyId || null;
         const company = companyId ? companiesData.find(c => 
           c._id.toString() === companyId.toString() || 
           c._id === companyId
         ) : null;
         
         return {
-          _id: trend._id?.toString() || Math.random().toString(36).substring(2, 15),
-          Title: trend.Title || trend.title || 'Unnamed Trend',  // Keep original Title field
-          name: trend.Title || trend.title || 'Unnamed Trend',  // Try both Title and title fields
-          date: trend['Published Date'] || trend.date || new Date().toISOString(), // Try both Published Date and date fields
-          status: trend.Status || trend.status || 'New',  // Try both Status and status fields
+          _id: mergedTrend._id?.toString() || Math.random().toString(36).substring(2, 15),
+          name: mergedTrend.Title || mergedTrend.name || 'Unnamed Trend',
+          Title: mergedTrend.Title || mergedTrend.name,
+          date: mergedTrend.date || mergedTrend.discoveryDate || new Date().toUTCString(),
+          status: mergedTrend.status || 'New',
           topics: topics,
-          // Include company information
           companyId: companyId,
-          companyName: company ? company.name : null,
-          // Keep other fields for backward compatibility
-          volume: 0,
-          change: 0,
-          relevanceScore: 0,
-          workshopUrl: null,
-          pushedTo: null,
-          assignmentCompleted: false,
-          discoveryDate: trend.date || new Date().toISOString(),
-          source: null,
-          likes: null,
-          comments: null,
-          shares: null,
-          summary: null
+          companyName: company ? company.name : (mergedTrend.companyName || null),
+          volume: mergedTrend.volume || 0,
+          change: mergedTrend.change || 0,
+          relevanceScore: mergedTrend.relevanceScore || mergedTrend["Relevance Score"] || 0,
+          workshopUrl: mergedTrend.workshopUrl || null,
+          pushedTo: mergedTrend.pushedTo || null,
+          assignmentCompleted: mergedTrend.assignmentCompleted || false,
+          discoveryDate: mergedTrend.discoveryDate || mergedTrend.date || new Date().toISOString(),
+          url: mergedTrend.url || mergedTrend.URL || null,
+          source: mergedTrend.source || mergedTrend.Source || null,
+          content: mergedTrend.content || mergedTrend.Content || null,
+          notes: mergedTrend.notes || mergedTrend.Notes || null,
+          suggestions: mergedTrend.suggestions || mergedTrend["Suggestions to leverage this content for marketing"] || null,
+          scoreExplanation: mergedTrend.scoreExplanation || mergedTrend["Score Explanation"] || null,
+          targetPainPoints: mergedTrend.targetPainPoints || mergedTrend["Target pain points"] || null,
+          keyThemes: mergedTrend.keyThemes || mergedTrend["Key Themes"] || null,
+          likes: mergedTrend.likes || null,
+          comments: mergedTrend.comments || null,
+          shares: mergedTrend.shares || null,
+          summary: mergedTrend.summary || null
         };
       });
       
