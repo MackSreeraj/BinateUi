@@ -560,13 +560,13 @@ export default function TrendsListContent() {
       {error && <div className="text-red-500 text-sm">{error}</div>}
 
       <div className="rounded-md border">
-        <Table className="table-fixed">
+        <Table className="table-fixed w-full">
           <TableHeader>
             <TableRow className="bg-muted/50">
-              <TableHead className="py-1 w-1/6">Status</TableHead>
-              <TableHead className="py-1 w-1/2">Title</TableHead>
-              <TableHead className="py-1 w-1/6">Date</TableHead>
-              <TableHead className="py-1 w-1/6">Company</TableHead>
+              <TableHead className="py-1 w-[15%]">Status</TableHead>
+              <TableHead className="py-1 w-[30%]">Title</TableHead>
+              <TableHead className="py-1 w-[15%]">Date</TableHead>
+              <TableHead className="py-1 w-[40%]">Company & Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -838,19 +838,20 @@ export default function TrendsListContent() {
                       </div>
                     </TableCell>
                     <TableCell className="py-2">
-                      <div className="flex items-center space-x-2">
-                        <div className="flex items-center">
+                      <div className="flex items-center w-full">
+                        <div className="flex items-center gap-2">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button 
                                 variant="outline" 
                                 size="sm" 
-                                className="h-8 px-3 bg-blue-50 text-blue-800 border-blue-300 hover:bg-opacity-80 transition-colors"
+                                className="h-8 w-[160px] whitespace-nowrap overflow-hidden bg-blue-50 text-blue-800 border-blue-300 hover:bg-opacity-80 transition-colors"
                               >
-                                <span className="mr-1">
+                                <Building2 className="h-3 w-3 mr-1 flex-shrink-0" />
+                                <span className="truncate">
                                   {trend.companyName || companies.find(c => normalizeId(c._id) === normalizeId(trend.companyId))?.name || 'Select Company'}
                                 </span>
-                                <ChevronDown className="h-3 w-3" />
+                                <ChevronDown className="h-3 w-3 ml-1 flex-shrink-0" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-56">
@@ -870,16 +871,32 @@ export default function TrendsListContent() {
                             </DropdownMenuContent>
                           </DropdownMenu>
                           {updatingCompanyForTrend === normalizeId(trend._id) && (
-                            <span className="ml-2 inline-block animate-spin rounded-full h-3 w-3 border-b-2 border-primary"></span>
+                            <span className="inline-block animate-spin rounded-full h-3 w-3 border-b-2 border-primary flex-shrink-0"></span>
                           )}
                         </div>
-                        {/* Spinner already added above */}
+                        
+                        {/* Open Workshop button - enabled only when company is selected */}
+                        <Button 
+                          variant="outline"
+                          size="sm"
+                          className="h-8 whitespace-nowrap flex-shrink-0 bg-green-50 text-green-800 border-green-300 hover:bg-opacity-80 transition-colors ml-auto mr-4"
+                          disabled={!trend.companyId}
+                          onClick={() => {
+                            if (trend.companyId) {
+                              // Navigate to workshop with trend ID and company ID
+                              window.open(`/trend-workshop?trendId=${encodeURIComponent(normalizeId(trend._id))}&companyId=${encodeURIComponent(normalizeId(trend.companyId))}`, '_blank');
+                            }
+                          }}
+                        >
+                          <Sparkles className="h-3 w-3 mr-1" />
+                          Workshop
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
                 );
-              })
-            )}
+              }))
+            }
             </TableBody>
           </Table>
         </div>
