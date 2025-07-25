@@ -921,11 +921,8 @@ export default function TrendsListContent() {
       <Dialog open={trendDetailsOpen} onOpenChange={setTrendDetailsOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold flex items-center justify-between">
-              <span>{selectedTrendDetails?.Title || selectedTrendDetails?.name || 'Trend Details'}</span>
-              <DialogClose className="h-6 w-6 rounded-full hover:bg-muted p-1">
-                <X className="h-4 w-4" />
-              </DialogClose>
+            <DialogTitle className="text-xl font-semibold">
+              {selectedTrendDetails?.Title || selectedTrendDetails?.name || 'Trend Details'}
             </DialogTitle>
           </DialogHeader>
           
@@ -1035,9 +1032,7 @@ export default function TrendsListContent() {
                 Open in Workshop
               </Button>
             )}
-            <DialogClose asChild>
-              <Button variant="outline">Close</Button>
-            </DialogClose>
+            {/* Close button removed to avoid duplication with the X in the header */}
           </DialogFooter>
         </DialogContent>
       </Dialog>
