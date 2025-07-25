@@ -427,7 +427,7 @@ export default function TrendWorkshopContent() {
                   <option value="">Select a user...</option>
                   {trendsData?.users && trendsData.users.map(user => (
                     <option key={getIdString(user._id)} value={getIdString(user._id)}>
-                      {user.name} - {user.email}
+                      {user.name}
                     </option>
                   ))}
                 </select>
