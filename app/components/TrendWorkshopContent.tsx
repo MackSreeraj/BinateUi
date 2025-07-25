@@ -80,6 +80,7 @@ export default function TrendWorkshopContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [selectedUser, setSelectedUser] = useState<string>('');
   
   // Fetch trends data from the API
   useEffect(() => {
@@ -412,11 +413,39 @@ export default function TrendWorkshopContent() {
 
 
 
+          {/* User Selection Dropdown */}
+          <div className="bg-card border rounded-lg p-6 shadow-sm mt-6">
+            <h2 className="text-xl font-bold mb-4 text-primary border-l-4 border-blue-500 pl-3">Select User for Idea Generation</h2>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Select User</label>
+                <select 
+                  className="w-full p-2 border rounded-md bg-card text-primary" 
+                  value={selectedUser}
+                  onChange={(e) => setSelectedUser(e.target.value)}
+                >
+                  <option value="">Select a user...</option>
+                  {trendsData?.users && trendsData.users.map(user => (
+                    <option key={getIdString(user._id)} value={getIdString(user._id)}>
+                      {user.name} - {user.email}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
           {/* Action Buttons */}
           <div className="flex justify-end space-x-3 pt-6">
             <Button variant="outline" size="lg" className="text-primary">Cancel</Button>
-            <Button variant="secondary" size="lg" className="text-primary">Save Draft</Button>
-            <Button variant="default" size="lg" className="text-primary">Generate Ideas</Button>
+            <Button 
+              variant="default" 
+              size="lg" 
+              className="bg-blue-600 hover:bg-blue-700 text-white" 
+              disabled={!selectedUser}
+            >
+              Generate Ideas
+            </Button>
           </div>
         </div>
           )}
