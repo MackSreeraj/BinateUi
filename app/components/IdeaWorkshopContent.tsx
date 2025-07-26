@@ -400,7 +400,7 @@ const IdeaWorkshopContent = () => {
       
       console.log(`🔄 Fetching drafts after content generation for trend: ${selectedTrend}`);
       // Fetch drafts for the selected trend after generation
-      await fetchDraftsForTrend(selectedTrend);
+      await fetchDrafts(selectedTrend);
     } catch (error) {
       console.error('Error generating content:', error);
       alert('Failed to generate content. Please try again.');
@@ -520,7 +520,7 @@ const IdeaWorkshopContent = () => {
                 // Also update selectedIdea for backward compatibility with existing code
                 setSelectedIdea(value);
                 // Fetch drafts for the selected trend
-                fetchDraftsForTrend(value);
+                fetchDrafts(value);
               }}>
                 <SelectTrigger id="trend" className="w-full">
                   {isLoading.trends ? (
