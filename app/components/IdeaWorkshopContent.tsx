@@ -726,40 +726,40 @@ const IdeaWorkshopContent = () => {
 
 
       {/* Drafts Section */}
-      <Card className="shadow-md border-gray-700">
-        <CardHeader className="flex flex-row items-center justify-between bg-gray-900">
+      <Card className="shadow-md border-gray-800 bg-black">
+        <CardHeader className="flex flex-row items-center justify-between bg-black border-b border-gray-800">
           <CardTitle className="text-xl font-bold flex items-center">
-            <span className="text-blue-400 mr-2">📄</span> Drafts
-            {drafts.length > 0 && <Badge className="ml-2 bg-blue-600">{drafts.length}</Badge>}
+            <span className="text-gray-400 mr-2">📄</span> Drafts
+            {drafts.length > 0 && <Badge className="ml-2 bg-gray-800 text-gray-300">{drafts.length}</Badge>}
           </CardTitle>
-          {isLoading.drafts && <Loader2 className="h-5 w-5 animate-spin text-blue-400" />}
+          {isLoading.drafts && <Loader2 className="h-5 w-5 animate-spin text-gray-400" />}
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 bg-black">
           {drafts.length > 0 ? (
-            <div className="divide-y divide-gray-700">
+            <div className="divide-y divide-gray-800">
               {drafts.map((draft, index) => (
                 <div 
                   key={draft._id} 
-                  className="p-5 hover:bg-gray-800 transition-colors cursor-pointer" 
+                  className="p-5 hover:bg-gray-900 transition-colors cursor-pointer bg-black" 
                   onClick={() => setDraftContent(draft.content)}
                 >
                   <div className="flex flex-col space-y-4">
                     <div className="flex items-center justify-between">
                       <h3 className="text-lg font-semibold flex items-center">
-                        <span className="text-blue-400 mr-2">{index === 0 ? '✨' : '📄'}</span>
+                        <span className="text-gray-400 mr-2">{index === 0 ? '✨' : '📄'}</span>
                         Draft {index + 1}
                       </h3>
-                      <Badge variant={index === 0 ? "default" : "outline"} className={index === 0 ? "bg-blue-600" : ""}>
+                      <Badge variant={index === 0 ? "default" : "outline"} className={index === 0 ? "bg-gray-800 text-gray-300" : "border-gray-700 text-gray-400"}>
                         {index === 0 ? "Latest" : new Date(draft.createdAt).toLocaleDateString()}
                       </Badge>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="bg-gray-900 rounded-md p-3">
-                        <div className="text-sm text-gray-400 mb-1">Trend</div>
+                      <div className="bg-gray-950 rounded-md p-3 border border-gray-800">
+                        <div className="text-sm text-gray-500 mb-1">Trend</div>
                         <div className="font-medium flex items-center">
                           {draft.trendId ? (
-                            <Badge className="bg-blue-900 text-blue-200 hover:bg-blue-800">
+                            <Badge className="bg-black text-gray-400 hover:bg-gray-900 border border-gray-800">
                               {trends.find(t => t._id === draft.trendId)?.name || draft.trendId}
                             </Badge>
                           ) : (
@@ -768,11 +768,11 @@ const IdeaWorkshopContent = () => {
                         </div>
                       </div>
                       
-                      <div className="bg-gray-900 rounded-md p-3">
-                        <div className="text-sm text-gray-400 mb-1">Platform</div>
+                      <div className="bg-gray-950 rounded-md p-3 border border-gray-800">
+                        <div className="text-sm text-gray-500 mb-1">Platform</div>
                         <div className="font-medium flex items-center">
                           {(draft as any).platform ? (
-                            <Badge className="bg-indigo-900 text-indigo-200 hover:bg-indigo-800">
+                            <Badge className="bg-black text-gray-400 hover:bg-gray-900 border border-gray-800">
                               {platforms.find(p => p._id === selectedPlatform)?.name || (draft as any).platform}
                             </Badge>
                           ) : (
@@ -781,16 +781,16 @@ const IdeaWorkshopContent = () => {
                         </div>
                       </div>
                       
-                      <div className="bg-gray-900 rounded-md p-3">
-                        <div className="text-sm text-gray-400 mb-1">Writer</div>
-                        <div className="font-medium">
+                      <div className="bg-gray-950 rounded-md p-3 border border-gray-800">
+                        <div className="text-sm text-gray-500 mb-1">Writer</div>
+                        <div className="font-medium text-gray-300">
                           {writers.find(w => w._id === selectedWriter)?.name || '–'}
                         </div>
                       </div>
                       
-                      <div className="bg-gray-900 rounded-md p-3">
-                        <div className="text-sm text-gray-400 mb-1">Created</div>
-                        <div className="font-medium">
+                      <div className="bg-gray-950 rounded-md p-3 border border-gray-800">
+                        <div className="text-sm text-gray-500 mb-1">Created</div>
+                        <div className="font-medium text-gray-300">
                           {new Date(draft.createdAt).toLocaleDateString('en-US', {
                             year: 'numeric',
                             month: 'short',
@@ -802,8 +802,8 @@ const IdeaWorkshopContent = () => {
                       </div>
                     </div>
                     
-                    <div className="bg-gray-900 rounded-md p-3">
-                      <div className="text-sm text-gray-400 mb-1">Content Preview</div>
+                    <div className="bg-gray-950 rounded-md p-3 border border-gray-800">
+                      <div className="text-sm text-gray-500 mb-1">Content Preview</div>
                       <div className="text-sm line-clamp-2 text-gray-300">
                         {draft.content.substring(0, 150)}...
                       </div>
@@ -812,7 +812,7 @@ const IdeaWorkshopContent = () => {
                     <div className="flex justify-between items-center">
                       <div className="flex items-center">
                         <span className="text-sm text-gray-400 mr-2">Status:</span>
-                        <Badge className="bg-yellow-900 text-yellow-200">
+                        <Badge className="bg-gray-800 text-gray-300 border border-gray-700">
                           Draft
                         </Badge>
                       </div>
@@ -820,7 +820,7 @@ const IdeaWorkshopContent = () => {
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="text-blue-400 border-blue-800 hover:bg-blue-900/30"
+                        className="text-gray-400 border-gray-700 hover:bg-gray-800"
                         onClick={(e) => {
                           e.stopPropagation();
                           setDraftContent(draft.content);
@@ -836,8 +836,8 @@ const IdeaWorkshopContent = () => {
           ) : (
             <div className="p-8 text-center">
               <div className="flex flex-col items-center space-y-3">
-                <div className="p-3 bg-blue-900/20 rounded-full">
-                  <AlertTriangle className="h-6 w-6 text-blue-400" />
+                <div className="p-3 bg-gray-800 rounded-full">
+                  <AlertTriangle className="h-6 w-6 text-gray-400" />
                 </div>
                 <h3 className="font-medium text-lg">No drafts found</h3>
                 <p className="text-gray-400 max-w-sm">
@@ -845,16 +845,16 @@ const IdeaWorkshopContent = () => {
                 </p>
                 
                 <div className="pt-4 grid grid-cols-2 gap-4 w-full max-w-md">
-                  <div className="bg-gray-900 rounded-md p-3">
+                  <div className="bg-gray-950 rounded-md p-3 border border-gray-800">
                     <div className="text-sm text-gray-400 mb-1">Selected Trend</div>
                     <div className="font-medium truncate">
                       {trends.find(t => t._id === selectedTrend)?.name || 'None selected'}
                     </div>
                   </div>
                   
-                  <div className="bg-gray-900 rounded-md p-3">
-                    <div className="text-sm text-gray-400 mb-1">Selected Platform</div>
-                    <div className="font-medium truncate">
+                  <div className="bg-gray-950 rounded-md p-3 border border-gray-800">
+                    <div className="text-sm text-gray-500 mb-1">Selected Platform</div>
+                    <div className="font-medium truncate text-gray-300">
                       {platforms.find(p => p._id === selectedPlatform)?.name || 'None selected'}
                     </div>
                   </div>
