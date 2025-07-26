@@ -465,6 +465,65 @@ const IdeaWorkshopContent = () => {
       setIsPushing(false);
     }
   };
+  
+  // Function to push a specific draft to the pipeline
+  const handlePushToPipeline = async (draftId: string) => {
+    if (!selectedPlatform) {
+      alert('Please select a platform before pushing to pipeline');
+      return;
+    }
+    
+    setIsPushing(true);
+    
+    try {
+      // Find the draft by ID
+      const draftToPush = drafts.find(draft => draft._id.toString() === draftId);
+      
+      if (!draftToPush) {
+        throw new Error('Draft not found');
+      }
+      
+      // Prepare the webhook URL with query parameters
+      const webhookUrl = new URL('https://n8n.srv775152.hstgr.cloud/webhook/6277cfcb-c443-49eb-9478-2dc71fe5cb12');
+      
+      // Add query parameters
+      webhookUrl.searchParams.append('draftId', draftId);
+      webhookUrl.searchParams.append('ideaId', draftToPush.trendId || '');
+      webhookUrl.searchParams.append('platformId', selectedPlatform);
+      
+      console.log(`🚀 Pushing draft ${draftId} to content pipeline with URL: ${webhookUrl.toString()}`);
+      
+      // Call the webhook
+      const response = await fetch(webhookUrl.toString(), {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to push to pipeline: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+      
+      const result = await response.json().catch(() => ({}));
+      console.log('Pipeline push response:', result);
+      
+      // Success message
+      alert(`Successfully pushed draft to content pipeline!`);
+      
+      // Refresh drafts to update status
+      if (selectedTrend) {
+        fetchDrafts(selectedTrend);
+      }
+    } catch (error: unknown) {
+      console.error('Error pushing draft to pipeline:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      alert(`Failed to push draft to content pipeline: ${errorMessage}`);
+    } finally {
+      setIsPushing(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -858,20 +917,34 @@ const IdeaWorkshopContent = () => {
                         </Badge>
                       </div>
                       
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="text-gray-400 border-gray-700 hover:bg-gray-800"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDraftContent(draft.content);
-                          setCurrentDraftContent(draft.content);
-                          setCurrentDraftTitle(`Draft ${index + 1}${draft.title ? `: ${draft.title}` : ''}`);
-                          setIsDialogOpen(true);
-                        }}
-                      >
-                        View Full Content
-                      </Button>
+                      <div className="flex space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="text-gray-400 border-gray-700 hover:bg-gray-800"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDraftContent(draft.content);
+                            setCurrentDraftContent(draft.content);
+                            setCurrentDraftTitle(`Draft ${index + 1}${draft.title ? `: ${draft.title}` : ''}`);
+                            setIsDialogOpen(true);
+                          }}
+                        >
+                          View Full Content
+                        </Button>
+                        
+                        <Button 
+                          variant="default" 
+                          size="sm" 
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePushToPipeline(draft._id);
+                          }}
+                        >
+                          Push to pipeline
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
