@@ -142,10 +142,13 @@ export async function GET(): Promise<Response> {
         
         // Extract topics if available
         let topics: string[] = [];
-        if (mergedTrend.topics && Array.isArray(mergedTrend.topics)) {
-          topics = mergedTrend.topics;
-        } else if (mergedTrend.topics && typeof mergedTrend.topics === 'string' && mergedTrend.topics.trim()) {
-          topics = mergedTrend.topics.split(',').map((t: string) => t.trim()).filter(Boolean);
+        // Check both lowercase 'topics' and uppercase 'Topics' fields
+        const topicsData = mergedTrend.topics || mergedTrend.Topics;
+        
+        if (topicsData && Array.isArray(topicsData)) {
+          topics = topicsData;
+        } else if (topicsData && typeof topicsData === 'string' && topicsData.trim()) {
+          topics = topicsData.split(',').map((t: string) => t.trim()).filter(Boolean);
         }
         
         // Find company info if companyId exists
