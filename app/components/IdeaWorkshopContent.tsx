@@ -78,6 +78,8 @@ interface Draft {
   content: string;
   trendId: string;
   createdAt: string;
+  platform: string; // Changed from optional to required
+  title?: string;
 }
 
 const IdeaWorkshopContent = () => {
@@ -234,16 +236,14 @@ const IdeaWorkshopContent = () => {
     }
   }, [selectedIdea, ideas]);
 
-  // Fetch drafts when trend is selected
-  const fetchDraftsForTrend = async (trendId: string) => {
-    if (!trendId) return;
-    
-    console.log(`🔍 Fetching drafts for trend ID: ${trendId}`);
+  // Fetch all drafts or drafts for a specific trend
+  const fetchDrafts = async (trendId?: string) => {
+    console.log(`🔍 Fetching drafts${trendId ? ` for trend ID: ${trendId}` : ' (all drafts)'}`);
     setIsLoading(prev => ({ ...prev, drafts: true }));
     setIsFetchingDrafts(true);
     
     try {
-      const apiUrl = `/api/drafts?trendId=${trendId}`;
+      const apiUrl = trendId ? `/api/drafts?trendId=${trendId}` : '/api/drafts';
       console.log(`📡 Making API request to: ${apiUrl}`);
       
       const response = await fetch(apiUrl);
@@ -272,7 +272,7 @@ const IdeaWorkshopContent = () => {
         // Set the draft content to the most recent draft
         setDraftContent(sortedDrafts[0].content || '');
       } else {
-        console.log(`ℹ️ No drafts found for this trend, using demo content`);
+        console.log(`ℹ️ No drafts found, using demo content`);
       }
     } catch (error) {
       console.error('❌ Error fetching drafts:', error);
@@ -283,10 +283,15 @@ const IdeaWorkshopContent = () => {
     }
   };
   
+  // Fetch all drafts on component load
+  useEffect(() => {
+    fetchDrafts();
+  }, []);
+  
   // Fetch drafts when trend is selected
   useEffect(() => {
     if (selectedTrend) {
-      fetchDraftsForTrend(selectedTrend);
+      fetchDrafts(selectedTrend);
     }
   }, [selectedTrend]);
 
@@ -775,110 +780,138 @@ const IdeaWorkshopContent = () => {
 
 
       {/* Drafts Section */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Drafts</CardTitle>
-          {isLoading.drafts && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+      <Card className="shadow-md border-gray-700">
+        <CardHeader className="flex flex-row items-center justify-between bg-gray-900">
+          <CardTitle className="text-xl font-bold flex items-center">
+            <span className="text-blue-400 mr-2">📄</span> Drafts
+            {drafts.length > 0 && <Badge className="ml-2 bg-blue-600">{drafts.length}</Badge>}
+          </CardTitle>
+          {isLoading.drafts && <Loader2 className="h-5 w-5 animate-spin text-blue-400" />}
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {drafts.length > 0 ? (
-            <div className="space-y-4">
+            <div className="divide-y divide-gray-700">
               {drafts.map((draft, index) => (
-                <div key={draft._id} className="border rounded-md p-4 hover:border-purple-400 transition-colors cursor-pointer" onClick={() => setDraftContent(draft.content)}>
-                  <div className="flex flex-col space-y-3">
-                    <div className="font-medium flex items-center justify-between">
-                      <span>Draft {index + 1}</span>
-                      <Badge variant={index === 0 ? "default" : "outline"} className={index === 0 ? "bg-purple-500" : ""}>
+                <div 
+                  key={draft._id} 
+                  className="p-5 hover:bg-gray-800 transition-colors cursor-pointer" 
+                  onClick={() => setDraftContent(draft.content)}
+                >
+                  <div className="flex flex-col space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold flex items-center">
+                        <span className="text-blue-400 mr-2">{index === 0 ? '✨' : '📄'}</span>
+                        Draft {index + 1}
+                      </h3>
+                      <Badge variant={index === 0 ? "default" : "outline"} className={index === 0 ? "bg-blue-600" : ""}>
                         {index === 0 ? "Latest" : new Date(draft.createdAt).toLocaleDateString()}
                       </Badge>
                     </div>
                     
-                    <div className="flex items-center">
-                      <span className="text-sm text-muted-foreground w-40">Content Idea:</span>
-                      <Badge variant="outline">
-                        {ideas.find(i => i._id === selectedIdea)?.content || '–'}
-                      </Badge>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-gray-900 rounded-md p-3">
+                        <div className="text-sm text-gray-400 mb-1">Trend</div>
+                        <div className="font-medium flex items-center">
+                          {draft.trendId ? (
+                            <Badge className="bg-blue-900 text-blue-200 hover:bg-blue-800">
+                              {trends.find(t => t._id === draft.trendId)?.name || draft.trendId}
+                            </Badge>
+                          ) : (
+                            <span className="text-gray-500">Not specified</span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gray-900 rounded-md p-3">
+                        <div className="text-sm text-gray-400 mb-1">Platform</div>
+                        <div className="font-medium flex items-center">
+                          {(draft as any).platform ? (
+                            <Badge className="bg-indigo-900 text-indigo-200 hover:bg-indigo-800">
+                              {platforms.find(p => p._id === selectedPlatform)?.name || (draft as any).platform}
+                            </Badge>
+                          ) : (
+                            <span className="text-gray-500">Not specified</span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gray-900 rounded-md p-3">
+                        <div className="text-sm text-gray-400 mb-1">Writer</div>
+                        <div className="font-medium">
+                          {writers.find(w => w._id === selectedWriter)?.name || '–'}
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gray-900 rounded-md p-3">
+                        <div className="text-sm text-gray-400 mb-1">Created</div>
+                        <div className="font-medium">
+                          {new Date(draft.createdAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </div>
+                      </div>
                     </div>
                     
-                    <div className="flex items-center">
-                      <span className="text-sm text-muted-foreground w-40">Company:</span>
-                      <Badge variant="outline">
-                        {companies.find(c => c._id === selectedCompany)?.name || '–'}
-                      </Badge>
+                    <div className="bg-gray-900 rounded-md p-3">
+                      <div className="text-sm text-gray-400 mb-1">Content Preview</div>
+                      <div className="text-sm line-clamp-2 text-gray-300">
+                        {draft.content.substring(0, 150)}...
+                      </div>
                     </div>
                     
-                    <div className="flex items-center">
-                      <span className="text-sm text-muted-foreground w-40">Writer:</span>
-                      <Badge variant="outline">
-                        {writers.find(w => w._id === selectedWriter)?.name || '–'}
-                      </Badge>
-                    </div>
-                    
-                    <div className="flex items-center">
-                      <span className="text-sm text-muted-foreground w-40">Platform:</span>
-                      <Badge variant="outline">
-                        {platforms.find(p => p._id === selectedPlatform)?.name || '–'}
-                      </Badge>
-                    </div>
-                    
-                    <div className="flex items-center">
-                      <span className="text-sm text-muted-foreground w-40">User:</span>
-                      <Badge variant="outline">
-                        {users.find(u => u._id === selectedUser)?.username || '–'}
-                      </Badge>
-                    </div>
-                    
-                    <div className="flex items-center">
-                      <span className="text-sm text-muted-foreground w-40">Is In Content Pipeline:</span>
-                      <X className="h-4 w-4 text-red-500" />
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center">
+                        <span className="text-sm text-gray-400 mr-2">Status:</span>
+                        <Badge className="bg-yellow-900 text-yellow-200">
+                          Draft
+                        </Badge>
+                      </div>
+                      
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-blue-400 border-blue-800 hover:bg-blue-900/30"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDraftContent(draft.content);
+                        }}
+                      >
+                        View Full Content
+                      </Button>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="border rounded-md p-4">
-              <div className="flex flex-col space-y-3">
-                <div className="font-medium">{trends.find(t => t._id === selectedTrend)?.name || 'No trend selected'}</div>
-                
-                <div className="flex items-center">
-                  <span className="text-sm text-muted-foreground w-40">Content Idea:</span>
-                  <Badge variant="outline">
-                    {ideas.find(i => i._id === selectedIdea)?.content || '–'}
-                  </Badge>
+            <div className="p-8 text-center">
+              <div className="flex flex-col items-center space-y-3">
+                <div className="p-3 bg-blue-900/20 rounded-full">
+                  <AlertTriangle className="h-6 w-6 text-blue-400" />
                 </div>
+                <h3 className="font-medium text-lg">No drafts found</h3>
+                <p className="text-gray-400 max-w-sm">
+                  Select a trend and generate content to create drafts. They will appear here once created.
+                </p>
                 
-                <div className="flex items-center">
-                  <span className="text-sm text-muted-foreground w-40">Company:</span>
-                  <Badge variant="outline">
-                    {companies.find(c => c._id === selectedCompany)?.name || '–'}
-                  </Badge>
-                </div>
-                
-                <div className="flex items-center">
-                  <span className="text-sm text-muted-foreground w-40">Writer:</span>
-                  <Badge variant="outline">
-                    {writers.find(w => w._id === selectedWriter)?.name || '–'}
-                  </Badge>
-                </div>
-                
-                <div className="flex items-center">
-                  <span className="text-sm text-muted-foreground w-40">Platform:</span>
-                  <Badge variant="outline">
-                    {platforms.find(p => p._id === selectedPlatform)?.name || '–'}
-                  </Badge>
-                </div>
-                
-                <div className="flex items-center">
-                  <span className="text-sm text-muted-foreground w-40">User:</span>
-                  <Badge variant="outline">
-                    {users.find(u => u._id === selectedUser)?.username || '–'}
-                  </Badge>
-                </div>
-                
-                <div className="flex items-center">
-                  <span className="text-sm text-muted-foreground w-40">Is In Content Pipeline:</span>
-                  <X className="h-4 w-4 text-red-500" />
+                <div className="pt-4 grid grid-cols-2 gap-4 w-full max-w-md">
+                  <div className="bg-gray-900 rounded-md p-3">
+                    <div className="text-sm text-gray-400 mb-1">Selected Trend</div>
+                    <div className="font-medium truncate">
+                      {trends.find(t => t._id === selectedTrend)?.name || 'None selected'}
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gray-900 rounded-md p-3">
+                    <div className="text-sm text-gray-400 mb-1">Selected Platform</div>
+                    <div className="font-medium truncate">
+                      {platforms.find(p => p._id === selectedPlatform)?.name || 'None selected'}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

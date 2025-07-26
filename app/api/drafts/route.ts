@@ -24,20 +24,37 @@ export async function GET(request: NextRequest) {
     // Get the trendId from the query parameters
     const { searchParams } = new URL(request.url);
     const trendId = searchParams.get('trendId');
-
-    // Check if trendId is provided
-    if (!trendId) {
-      return NextResponse.json(
-        { error: 'trendId is required' },
-        { status: 400 }
-      );
-    }
-
-    console.log(`Searching for drafts with trendId: ${trendId}`);
     
     // Connect to the database
     const client = await clientPromise;
     const db = client.db();
+    
+    // If no trendId is provided, return all drafts
+    if (!trendId) {
+      console.log('No trendId provided, fetching all drafts');
+      
+      const allDrafts = await db
+        .collection('drafts')
+        .find({})
+        .sort({ DiscoveryDate: -1 })
+        .toArray() as unknown as Draft[];
+      
+      console.log(`Found ${allDrafts.length} total drafts`);
+      
+      // Map the database fields to the expected format
+      const formattedDrafts = allDrafts.map(draft => ({
+        _id: draft._id,
+        trendId: draft.trendId || '',
+        content: draft.Drafts || '',
+        title: draft['Content Idea'] || '',
+        platform: draft.Platform || '',
+        createdAt: draft.DiscoveryDate || new Date().toISOString()
+      }));
+      
+      return NextResponse.json({ drafts: formattedDrafts });
+    }
+
+    console.log(`Searching for drafts with trendId: ${trendId}`);
     
     // STEP 1: Get all trends to find the one with matching ID
     console.log('Fetching all trends to find the matching one...');
