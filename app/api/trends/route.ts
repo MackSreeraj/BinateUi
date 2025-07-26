@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { Response } from 'next/dist/compiled/@edge-runtime/primitives';
 import clientPromise from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 
-export async function GET() {
+export async function GET(): Promise<Response> {
   try {
     console.log('Connecting to MongoDB...');
     const client = await clientPromise;
@@ -124,7 +126,7 @@ export async function GET() {
             url: 'https://thebinate.com/blog/voice-search'
           }
         ];
-        return trendsData;
+        return NextResponse.json({ trends: trendsData, users: [], companies: [] }, { status: 200 });
       }
       
       // Normalize the data structure to ensure consistent field names
