@@ -3,6 +3,12 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import ReactMarkdown from 'react-markdown';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -88,6 +94,11 @@ const IdeaWorkshopContent = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isFetchingDrafts, setIsFetchingDrafts] = useState(false);
   const [isPushing, setIsPushing] = useState(false);
+  
+  // Dialog state for full content view
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [currentDraftContent, setCurrentDraftContent] = useState<string>('');
+  const [currentDraftTitle, setCurrentDraftTitle] = useState<string>('');
   
   // Selected values
   const [selectedCompany, setSelectedCompany] = useState<string>('');
@@ -802,10 +813,40 @@ const IdeaWorkshopContent = () => {
                       </div>
                     </div>
                     
-                    <div className="bg-gray-950 rounded-md p-3 border border-gray-800">
-                      <div className="text-sm text-gray-500 mb-1">Content Preview</div>
-                      <div className="text-sm line-clamp-2 text-gray-300">
-                        {draft.content.substring(0, 150)}...
+                    <div className="bg-gray-950 rounded-md p-4 border border-gray-800">
+                      <div className="text-sm text-gray-500 mb-2">Content Preview</div>
+                      <div className="text-sm text-gray-300 space-y-2">
+                        {draft.content.split('\n').slice(0, 3).map((line, i) => {
+                          // Format headings (lines starting with ### or ##)
+                          if (line.startsWith('###')) {
+                            return (
+                              <div key={i} className="font-semibold text-gray-100">
+                                {line.replace(/^###\s*/, '')}
+                              </div>
+                            );
+                          }
+                          // Format bold text (text between ** **)
+                          else if (line.includes('**')) {
+                            return (
+                              <div key={i} className="font-medium">
+                                {line.split('**').map((part, j) => (
+                                  j % 2 === 0 ? 
+                                    <span key={j}>{part}</span> : 
+                                    <span key={j} className="font-bold text-white">{part}</span>
+                                ))}
+                              </div>
+                            );
+                          } 
+                          // Regular text
+                          else {
+                            return <div key={i} className="line-clamp-1">{
+                              line.length > 100 ? `${line.substring(0, 100)}...` : line
+                            }</div>;
+                          }
+                        })}
+                        {draft.content.split('\n').length > 3 && (
+                          <div className="text-xs text-gray-500 italic mt-1">More content available...</div>
+                        )}
                       </div>
                     </div>
                     
@@ -824,6 +865,9 @@ const IdeaWorkshopContent = () => {
                         onClick={(e) => {
                           e.stopPropagation();
                           setDraftContent(draft.content);
+                          setCurrentDraftContent(draft.content);
+                          setCurrentDraftTitle(`Draft ${index + 1}${draft.title ? `: ${draft.title}` : ''}`);
+                          setIsDialogOpen(true);
                         }}
                       >
                         View Full Content
@@ -895,6 +939,103 @@ const IdeaWorkshopContent = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Full Content Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto bg-gradient-to-b from-black to-gray-900 border border-gray-800 p-0">
+          <div className="sticky top-0 z-10 bg-black border-b border-gray-800 p-6 backdrop-blur-sm bg-opacity-90">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-white flex items-center gap-2">
+                <span className="text-gray-400">📄</span>
+                {currentDraftTitle}
+              </DialogTitle>
+            </DialogHeader>
+          </div>
+          
+          <div className="p-6 pt-4">
+            <div className="bg-gray-950 rounded-lg border border-gray-800 p-8 shadow-inner">
+              <div className="prose prose-lg prose-invert max-w-none">
+                {currentDraftContent.split('\n').map((line, index) => {
+                  // Format H1 headings (lines starting with # or --- **)
+                  if (line.startsWith('#') && !line.startsWith('##')) {
+                    return (
+                      <h1 key={index} className="text-3xl font-bold text-white mb-6 mt-8 pb-2 border-b border-gray-700">
+                        {line.replace(/^#\s*/, '')}
+                      </h1>
+                    );
+                  }
+                  // Format H2 headings (lines starting with ##)
+                  else if (line.startsWith('##') && !line.startsWith('###')) {
+                    return (
+                      <h2 key={index} className="text-2xl font-bold text-white mb-4 mt-6">
+                        {line.replace(/^##\s*/, '')}
+                      </h2>
+                    );
+                  }
+                  // Format H3 headings (lines starting with ###)
+                  else if (line.startsWith('###')) {
+                    return (
+                      <h3 key={index} className="text-xl font-semibold text-gray-100 mb-3 mt-5">
+                        {line.replace(/^###\s*/, '')}
+                      </h3>
+                    );
+                  }
+                  // Format special title format (lines with --- **Title**)
+                  else if (line.startsWith('---') && line.includes('**')) {
+                    return (
+                      <h1 key={index} className="text-3xl font-bold text-white mb-6 mt-8 pb-2 border-b border-gray-700">
+                        {line.replace(/---\s*\*\*|\*\*/g, '')}
+                      </h1>
+                    );
+                  }
+                  // Format bold text (text between ** **)
+                  else if (line.includes('**')) {
+                    return (
+                      <p key={index} className="mb-4 text-gray-200 leading-relaxed">
+                        {line.split('**').map((part, j) => (
+                          j % 2 === 0 ? 
+                            <span key={j}>{part}</span> : 
+                            <span key={j} className="font-bold text-white">{part}</span>
+                        ))}
+                      </p>
+                    );
+                  }
+                  // Format emoji emphasis (text with 🌀 emoji)
+                  else if (line.includes('🌀') || line.includes('💡') || line.includes('✨') || line.includes('🚀')) {
+                    return (
+                      <p key={index} className="mb-4 text-gray-200 leading-relaxed bg-gray-900 p-3 rounded-md border-l-4 border-purple-700">
+                        {line}
+                      </p>
+                    );
+                  }
+                  // Empty line creates spacing
+                  else if (line.trim() === '') {
+                    return <div key={index} className="h-2"></div>;
+                  }
+                  // Regular paragraph
+                  else {
+                    return (
+                      <p key={index} className="mb-4 text-gray-200 leading-relaxed">
+                        {line}
+                      </p>
+                    );
+                  }
+                })}
+              </div>
+            </div>
+            
+            <div className="mt-6 flex justify-end">
+              <Button 
+                variant="outline" 
+                className="bg-gray-900 text-gray-300 border-gray-700 hover:bg-gray-800 hover:text-white"
+                onClick={() => setIsDialogOpen(false)}
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
