@@ -701,60 +701,6 @@ const IdeaWorkshopContent = () => {
         </CardContent>
       </Card>
 
-      {/* Draft & Processing Sections */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="shadow-sm border-gray-800 hover:shadow-md transition-shadow bg-black">
-          <CardHeader className="bg-black pb-2 border-b border-gray-800">
-            <CardTitle className="text-base font-medium flex items-center gap-2 text-white">
-              <span className="text-purple-400">✦</span> Specificities Draft
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="bg-black">
-            <div className="p-4 min-h-[150px] whitespace-pre-wrap text-gray-200 leading-relaxed">
-              {specificitiesDraft || ''}
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="shadow-sm border-gray-800 hover:shadow-md transition-shadow bg-black">
-          <CardHeader className="bg-black pb-2 border-b border-gray-800">
-            <CardTitle className="text-base font-medium flex items-center gap-2 text-white">
-              <span className="text-blue-400">🖼️</span> Specificities for Images
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="bg-black">
-            <div className="p-4 min-h-[150px] whitespace-pre-wrap text-gray-200 leading-relaxed">
-              {specificitiesForImages || ''}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      
-      {/* Display Draft Content */}
-      <Card className="shadow-sm border-gray-800 hover:shadow-md transition-shadow mt-6 bg-black">
-        <CardHeader className="bg-black pb-2 border-b border-gray-800">
-          <CardTitle className="text-base font-medium flex items-center gap-2 text-white">
-            <span className="text-emerald-400">✨</span> Specificities of Draft
-            {isFetchingDrafts && <Loader2 className="ml-2 h-4 w-4 animate-spin text-emerald-400" />}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="bg-black">
-          <div className="p-4 text-gray-200 leading-relaxed">
-            {isLoading.drafts ? (
-              <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-6 w-6 animate-spin text-emerald-400 mr-2" />
-                <span>Loading drafts...</span>
-              </div>
-            ) : (
-              <div className="prose prose-invert prose-headings:text-emerald-400 prose-a:text-blue-400 prose-strong:text-white prose-em:text-yellow-200 max-w-none">
-                <ReactMarkdown>
-                  {draftContent || ''}
-                </ReactMarkdown>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Push ALL drafts bar */}
       <div className="bg-black border border-gray-800 rounded-md p-3 flex items-center justify-between">
         <div className="flex items-center">
