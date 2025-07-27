@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,7 +44,11 @@ import {
   Bell,
   HelpCircle,
   User,
-  LogOut
+  LogOut,
+  Plus,
+  Clock,
+  Archive,
+  ChevronRight
 } from 'lucide-react';
 
 const navigationItems = [
@@ -151,6 +155,7 @@ const resourceLinks = [
 
 // Import the content components
 import UsersContent from './components/UsersContent';
+import ContentPipelineSidebar from './components/ContentPipelineSidebar';
 import IdeasContent from './components/IdeasContent';
 import IdeaWorkshopContent from './components/IdeaWorkshopContent';
 import CompanyProfilesContent from './components/CompanyProfilesContent';
@@ -170,6 +175,7 @@ export default function Dashboard() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [activeNav, setActiveNav] = useState('Home');
+  const [contentPipelineExpanded, setContentPipelineExpanded] = useState(false);
   // Settings now use a dedicated page instead of a dialog
 
   // Update active nav based on URL
@@ -182,9 +188,24 @@ export default function Dashboard() {
 
   // Update URL when active nav changes
   const handleNavClick = (nav: string) => {
-    setActiveNav(nav);
+    // If clicking on Content Pipeline, toggle the expanded state
+    if (nav === 'Content Pipeline') {
+      setContentPipelineExpanded(!contentPipelineExpanded);
+    } else {
+      // Set the active nav and update URL
+      setActiveNav(nav);
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('tab', nav);
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    }
+  };
+  
+  // Handle sub-item click for Content Pipeline
+  const handleSubItemClick = (section: string) => {
+    setActiveNav('Content Pipeline');
     const params = new URLSearchParams(searchParams.toString());
-    params.set('tab', nav);
+    params.set('tab', 'Content Pipeline');
+    params.set('section', section);
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
@@ -246,6 +267,58 @@ export default function Dashboard() {
     'Trend Workshop': () => <TrendWorkshopContent />,
     'Ideas List': () => <IdeasContent />,
     'Idea Workshop': () => <IdeaWorkshopContent />,
+    'Content Pipeline': () => {
+      // Get the current section from the URL
+      const section = searchParams.get('section') || 'content-overview';
+      
+      // Render different content based on the section
+      switch(section) {
+        case 'add-new-post':
+          return (
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2 mb-4">
+                <Plus className="h-5 w-5" />
+                <h1 className="text-2xl font-bold">Add New Post</h1>
+              </div>
+              <p>Create a new post for your content calendar.</p>
+              {/* Add New Post content would go here */}
+            </div>
+          );
+        case 'scheduled-posts':
+          return (
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2 mb-4">
+                <Clock className="h-5 w-5" />
+                <h1 className="text-2xl font-bold">Scheduled Posts</h1>
+              </div>
+              <p>View and manage your scheduled content.</p>
+              {/* Scheduled Posts content would go here */}
+            </div>
+          );
+        case 'past-posts':
+          return (
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2 mb-4">
+                <Archive className="h-5 w-5" />
+                <h1 className="text-2xl font-bold">Past Posts</h1>
+              </div>
+              <p>Review your published content history.</p>
+              {/* Past Posts content would go here */}
+            </div>
+          );
+        default:
+          return (
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2 mb-4">
+                <Calendar className="h-5 w-5" />
+                <h1 className="text-2xl font-bold">Content Calendar Overview</h1>
+              </div>
+              <p>Manage your content publishing schedule and track performance.</p>
+              {/* Overview content would go here */}
+            </div>
+          );
+      }
+    },
     'Content List': () => <ContentList />,
     // Add other content components here as needed
   };
@@ -304,19 +377,63 @@ export default function Dashboard() {
               {navigationItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeNav === item.label;
+                const isContentPipeline = item.label === 'Content Pipeline';
+                
                 return (
-                  <button
-                    key={item.label}
-                    onClick={() => handleNavClick(item.label)}
-                    className={`flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${
-                      isActive 
-                        ? 'bg-accent text-accent-foreground' 
-                        : 'text-muted-foreground'
-                    }`}
-                  >
-                    <Icon className="mr-3 h-4 w-4" />
-                    {item.label}
-                  </button>
+                  <div key={item.label} className="flex flex-col">
+                    <button
+                      onClick={() => handleNavClick(item.label)}
+                      className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${
+                        isActive && !isContentPipeline
+                          ? 'bg-accent text-accent-foreground' 
+                          : isContentPipeline && contentPipelineExpanded
+                          ? 'bg-accent/80 text-accent-foreground'
+                          : 'text-muted-foreground'
+                      }`}
+                    >
+                      <div className="flex items-center">
+                        <Icon className="mr-3 h-4 w-4" />
+                        {item.label}
+                      </div>
+                      {isContentPipeline && (
+                        <ChevronRight className={`h-4 w-4 transition-transform ${contentPipelineExpanded ? 'rotate-90' : ''}`} />
+                      )}
+                    </button>
+                    
+                    {/* Content Pipeline Sub-items */}
+                    {isContentPipeline && (
+                      <div 
+                        className={`overflow-hidden transition-all duration-300 ease-in-out pl-7 ${contentPipelineExpanded ? 'max-h-48 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}
+                      >
+                        <div className="space-y-1 py-1">
+                          {[
+                            { icon: Calendar, label: 'Overview', param: 'content-overview' },
+                            { icon: Plus, label: 'Add New Post', param: 'add-new-post' },
+                            { icon: Clock, label: 'Scheduled Posts', param: 'scheduled-posts' },
+                            { icon: Archive, label: 'Past Posts', param: 'past-posts' }
+                          ].map((subItem) => {
+                            const SubIcon = subItem.icon;
+                            const isSubActive = searchParams.get('section') === subItem.param && activeNav === 'Content Pipeline';
+                            
+                            return (
+                              <button
+                                key={subItem.param}
+                                onClick={() => handleSubItemClick(subItem.param)}
+                                className={`flex w-full items-center rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent/50 hover:text-accent-foreground ${
+                                  isSubActive 
+                                    ? 'bg-accent/50 text-accent-foreground' 
+                                    : 'text-muted-foreground'
+                                }`}
+                              >
+                                <SubIcon className="mr-2 h-3.5 w-3.5" />
+                                {subItem.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </nav>
@@ -345,6 +462,8 @@ export default function Dashboard() {
         <main className={`flex-1 p-6 ml-64 ${activeNav === 'Home' ? 'mr-80' : ''}`}>
           <CurrentContent />
         </main>
+        
+        {/* Content Pipeline is now integrated directly into the main sidebar */}
 
         {/* Settings Dialog - Now using dedicated settings page instead */}
         
