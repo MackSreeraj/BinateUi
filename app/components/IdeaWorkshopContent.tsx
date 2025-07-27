@@ -1,13 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Calendar } from '@/components/ui/calendar';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import ReactMarkdown from 'react-markdown';
 import { Input } from '@/components/ui/input';
@@ -99,6 +102,12 @@ const IdeaWorkshopContent = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentDraftContent, setCurrentDraftContent] = useState<string>('');
   const [currentDraftTitle, setCurrentDraftTitle] = useState<string>('');
+  
+  // Schedule dialog state
+  const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState<Date | undefined>(new Date());
+  const [scheduleTime, setScheduleTime] = useState<string>('12:00');
+  const [draftToSchedule, setDraftToSchedule] = useState<string>('');
   
   // Selected values
   const [selectedCompany, setSelectedCompany] = useState<string>('');
@@ -466,10 +475,54 @@ const IdeaWorkshopContent = () => {
     }
   };
   
-  // Function to push a specific draft to the pipeline
-  const handlePushToPipeline = async (draftId: string) => {
-    if (!selectedPlatform) {
+  // Function to open scheduling dialog for a draft
+  const handlePushToPipeline = (draftId: string) => {
+    // Find the draft by ID
+    const draftToPush = drafts.find(draft => draft._id.toString() === draftId);
+    
+    if (!draftToPush) {
+      alert('Draft not found');
+      return;
+    }
+    
+    // Use the draft's platform if available, otherwise use the selected platform
+    if (!draftToPush.platform && !selectedPlatform) {
       alert('Please select a platform before pushing to pipeline');
+      return;
+    }
+    
+    // If there's a platform in the draft but none selected, set it as the selected platform
+    if (draftToPush.platform && !selectedPlatform) {
+      setSelectedPlatform(draftToPush.platform);
+    }
+    
+    // Set the draft ID to schedule and open the dialog
+    setDraftToSchedule(draftId);
+    setScheduleDate(new Date()); // Default to today
+    setScheduleTime('12:00'); // Default to noon
+    setIsScheduleDialogOpen(true);
+  };
+  
+  // Function to schedule and push a draft to the pipeline
+  const scheduleDraft = async () => {
+    if (!draftToSchedule || !scheduleDate || !scheduleTime) {
+      alert('Please select a date and time for scheduling');
+      return;
+    }
+    
+    // Find the draft by ID
+    const draftToPush = drafts.find(draft => draft._id.toString() === draftToSchedule);
+    
+    if (!draftToPush) {
+      alert('Draft not found');
+      return;
+    }
+    
+    // Use the draft's platform if available, otherwise use the selected platform
+    const platformToUse = draftToPush.platform || selectedPlatform;
+    
+    if (!platformToUse) {
+      alert('Please select a platform before scheduling');
       return;
     }
     
@@ -477,21 +530,28 @@ const IdeaWorkshopContent = () => {
     
     try {
       // Find the draft by ID
-      const draftToPush = drafts.find(draft => draft._id.toString() === draftId);
+      const draftToPush = drafts.find(draft => draft._id.toString() === draftToSchedule);
       
       if (!draftToPush) {
         throw new Error('Draft not found');
       }
       
+      // Combine date and time for scheduling
+      const scheduledDateTime = new Date(scheduleDate);
+      const [hours, minutes] = scheduleTime.split(':').map(Number);
+      scheduledDateTime.setHours(hours, minutes, 0, 0);
+      
       // Prepare the webhook URL with query parameters
       const webhookUrl = new URL('https://n8n.srv775152.hstgr.cloud/webhook/6277cfcb-c443-49eb-9478-2dc71fe5cb12');
       
       // Add query parameters
-      webhookUrl.searchParams.append('draftId', draftId);
+      webhookUrl.searchParams.append('draftId', draftToSchedule);
       webhookUrl.searchParams.append('ideaId', draftToPush.trendId || '');
-      webhookUrl.searchParams.append('platformId', selectedPlatform);
+      webhookUrl.searchParams.append('platformId', platformToUse);
+      webhookUrl.searchParams.append('scheduledTime', scheduledDateTime.toISOString());
       
-      console.log(`🚀 Pushing draft ${draftId} to content pipeline with URL: ${webhookUrl.toString()}`);
+      console.log(`🚀 Scheduling draft ${draftToSchedule} to content pipeline for ${format(scheduledDateTime, 'PPpp')}`);
+      console.log(`URL: ${webhookUrl.toString()}`);
       
       // Call the webhook
       const response = await fetch(webhookUrl.toString(), {
@@ -503,23 +563,24 @@ const IdeaWorkshopContent = () => {
       
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Failed to push to pipeline: ${response.status} ${response.statusText} - ${errorText}`);
+        throw new Error(`Failed to schedule draft: ${response.status} ${response.statusText} - ${errorText}`);
       }
       
       const result = await response.json().catch(() => ({}));
-      console.log('Pipeline push response:', result);
+      console.log('Pipeline scheduling response:', result);
       
-      // Success message
-      alert(`Successfully pushed draft to content pipeline!`);
+      // Close dialog and show success message
+      setIsScheduleDialogOpen(false);
+      alert(`Successfully scheduled draft for ${format(scheduledDateTime, 'PPpp')}!`);
       
       // Refresh drafts to update status
       if (selectedTrend) {
         fetchDrafts(selectedTrend);
       }
     } catch (error: unknown) {
-      console.error('Error pushing draft to pipeline:', error);
+      console.error('Error scheduling draft:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      alert(`Failed to push draft to content pipeline: ${errorMessage}`);
+      alert(`Failed to schedule draft: ${errorMessage}`);
     } finally {
       setIsPushing(false);
     }
@@ -1107,6 +1168,62 @@ const IdeaWorkshopContent = () => {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Schedule Draft Dialog */}
+      <Dialog open={isScheduleDialogOpen} onOpenChange={setIsScheduleDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Schedule Draft Publication</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="flex flex-col space-y-2">
+              <Label htmlFor="schedule-date">Publication Date</Label>
+              <Calendar
+                id="schedule-date"
+                mode="single"
+                selected={scheduleDate}
+                onSelect={setScheduleDate}
+                className="rounded-md border mx-auto"
+                disabled={(date) => date < new Date()}
+              />
+            </div>
+            
+            <div className="flex flex-col space-y-2">
+              <Label htmlFor="schedule-time">Publication Time</Label>
+              <Input
+                id="schedule-time"
+                type="time"
+                value={scheduleTime}
+                onChange={(e) => setScheduleTime(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+            
+            <div className="bg-gray-50 dark:bg-gray-900 p-3 rounded-md">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                The draft will be automatically published at the scheduled date and time.
+                Make sure the selected platform is correct before scheduling.
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="sm:justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsScheduleDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={scheduleDraft}
+              disabled={isPushing || !scheduleDate || !scheduleTime}
+            >
+              {isPushing ? "Scheduling..." : "Schedule Publication"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
