@@ -164,6 +164,7 @@ import PlatformProfilesContent from './components/PlatformProfilesContent';
 import TrendsListContent from './components/TrendsListContent';
 import TrendWorkshopContent from './components/TrendWorkshopContent';
 import ContentList from './components/ContentList';
+import ContentCalendarOverview from './components/ContentCalendarOverview';
 
 // Add a type for the content components
 type ContentComponents = {
@@ -307,16 +308,7 @@ export default function Dashboard() {
             </div>
           );
         default:
-          return (
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2 mb-4">
-                <Calendar className="h-5 w-5" />
-                <h1 className="text-2xl font-bold">Content Calendar Overview</h1>
-              </div>
-              <p>Manage your content publishing schedule and track performance.</p>
-              {/* Overview content would go here */}
-            </div>
-          );
+          return <ContentCalendarOverview />;
       }
     },
     'Content List': () => <ContentList />,
