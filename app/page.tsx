@@ -155,7 +155,6 @@ const resourceLinks = [
 
 // Import the content components
 import UsersContent from './components/UsersContent';
-import ContentPipelineSidebar from './components/ContentPipelineSidebar';
 import IdeasContent from './components/IdeasContent';
 import IdeaWorkshopContent from './components/IdeaWorkshopContent';
 import CompanyProfilesContent from './components/CompanyProfilesContent';
