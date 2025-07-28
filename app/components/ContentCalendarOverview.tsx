@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Calendar, { CalendarProps } from 'react-calendar';
-import { format, isSameDay } from 'date-fns';
+import { format, isSameDay, parseISO } from 'date-fns';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,64 +9,63 @@ import 'react-calendar/dist/Calendar.css';
 
 // Define the type for scheduled content
 interface ScheduledContent {
-  id: string;
+  _id: string;
   title: string;
-  date: Date;
+  scheduledDate: string;
   platform: string;
-  status: 'draft' | 'scheduled' | 'published';
-  type: 'blog' | 'social' | 'email' | 'other';
+  status: string;
+  draft: string;
+  publishedDate: string;
+  user: string;
 }
 
 const ContentCalendarOverview: React.FC = () => {
   const [value, setValue] = useState<Date>(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [scheduledContent, setScheduledContent] = useState<ScheduledContent[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [datesWithContent, setDatesWithContent] = useState<Date[]>([]);
   
-  // Mock data for scheduled content - in a real app, this would come from an API
+  // Fetch real data from the API
   useEffect(() => {
-    const mockData: ScheduledContent[] = [
-      {
-        id: '1',
-        title: 'AI Trends in 2025',
-        date: new Date(2025, 6, 29), // July 29, 2025
-        platform: 'Blog',
-        status: 'scheduled',
-        type: 'blog'
-      },
-      {
-        id: '2',
-        title: 'New Product Announcement',
-        date: new Date(2025, 6, 30), // July 30, 2025
-        platform: 'Twitter',
-        status: 'draft',
-        type: 'social'
-      },
-      {
-        id: '3',
-        title: 'Weekly Newsletter',
-        date: new Date(2025, 6, 27), // Today (July 27, 2025)
-        platform: 'Email',
-        status: 'scheduled',
-        type: 'email'
-      },
-      {
-        id: '4',
-        title: 'Case Study: AI Implementation',
-        date: new Date(2025, 6, 27), // Today (July 27, 2025)
-        platform: 'LinkedIn',
-        status: 'scheduled',
-        type: 'social'
+    const fetchScheduledContent = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        const response = await fetch('/api/content-schedule');
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch content schedule data');
+        }
+        
+        const data = await response.json();
+        setScheduledContent(data.schedules);
+        
+        // Extract dates with content for calendar marking
+        const dates = data.schedules
+          .filter((item: ScheduledContent) => item.scheduledDate)
+          .map((item: ScheduledContent) => new Date(item.scheduledDate));
+        
+        setDatesWithContent(dates);
+      } catch (err) {
+        console.error('Error fetching content schedule:', err);
+        setError('Failed to load content schedule data');
+      } finally {
+        setIsLoading(false);
       }
-    ];
+    };
     
-    setScheduledContent(mockData);
+    fetchScheduledContent();
   }, []);
   
   // Get content for a specific date
   const getContentForDate = (date: Date) => {
-    return scheduledContent.filter(content => 
-      isSameDay(new Date(content.date), date)
-    );
+    return scheduledContent.filter(content => {
+      if (!content.scheduledDate) return false;
+      return isSameDay(new Date(content.scheduledDate), date);
+    });
   };
   
   // Custom tile content to show indicators for dates with content
@@ -79,9 +78,7 @@ const ContentCalendarOverview: React.FC = () => {
             {content.map((item, index) => (
               <div 
                 key={index}
-                className={`h-2 w-2 rounded-full mx-0.5 ${item.type === 'blog' ? 'bg-purple-500' : 
-                  item.type === 'social' ? 'bg-pink-500' : 
-                  item.type === 'email' ? 'bg-indigo-500' : 'bg-gray-500'}`}
+                className={`h-2 w-2 rounded-full mx-0.5 ${getPlatformColor(item.platform).replace('bg-', '').replace('/10 text-', '-500').replace(' hover:bg-', '')}`}
                 title={item.title}
               ></div>
             ))}
@@ -113,7 +110,9 @@ const ContentCalendarOverview: React.FC = () => {
   
   // Get status badge color
   const getStatusColor = (status: string) => {
-    switch (status) {
+    if (!status) return 'bg-gray-500/10 text-gray-500 hover:bg-gray-500/20';
+    
+    switch (status.toLowerCase()) {
       case 'draft': return 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20';
       case 'scheduled': return 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20';
       case 'published': return 'bg-green-500/10 text-green-500 hover:bg-green-500/20';
@@ -121,13 +120,28 @@ const ContentCalendarOverview: React.FC = () => {
     }
   };
   
-  // Get type badge color
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'blog': return 'bg-purple-500/10 text-purple-500 hover:bg-purple-500/20';
-      case 'social': return 'bg-pink-500/10 text-pink-500 hover:bg-pink-500/20';
-      case 'email': return 'bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500/20';
-      default: return 'bg-gray-500/10 text-gray-500 hover:bg-gray-500/20';
+  // Get platform badge color
+  const getPlatformColor = (platform: string) => {
+    if (!platform) return 'bg-gray-500/10 text-gray-500 hover:bg-gray-500/20';
+    
+    switch (platform.toLowerCase()) {
+      case 'blog': 
+      case 'medium':
+      case 'wordpress':
+        return 'bg-purple-500/10 text-purple-500 hover:bg-purple-500/20';
+      case 'twitter':
+      case 'x':
+      case 'facebook':
+      case 'instagram':
+      case 'linkedin':
+      case 'tiktok':
+        return 'bg-pink-500/10 text-pink-500 hover:bg-pink-500/20';
+      case 'email':
+      case 'newsletter':
+      case 'mailchimp':
+        return 'bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500/20';
+      default: 
+        return 'bg-gray-500/10 text-gray-500 hover:bg-gray-500/20';
     }
   };
   
@@ -297,8 +311,7 @@ const ContentCalendarOverview: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-        
-        {/* Scheduled Content for Selected Date */}
+                {/* Scheduled Content for Selected Date */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center">
@@ -313,27 +326,37 @@ const ContentCalendarOverview: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {(selectedDate ? getContentForDate(selectedDate) : getContentForDate(new Date())).map((content) => (
+              {isLoading ? (
+                <div className="text-center py-6 text-muted-foreground">
+                  <p>Loading content...</p>
+                </div>
+              ) : error ? (
+                <div className="text-center py-6 text-red-500">
+                  <p>{error}</p>
+                </div>
+              ) : (selectedDate ? getContentForDate(selectedDate) : getContentForDate(new Date())).map((content) => (
                 <div 
-                  key={content.id} 
+                  key={content._id} 
                   className="p-3 border border-border rounded-lg hover:bg-accent/5 transition-colors cursor-pointer"
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium">{content.title}</h3>
+                    <h3 className="font-medium">{content.title || '-'}</h3>
                     <Badge className={getStatusColor(content.status)}>
-                      {content.status.charAt(0).toUpperCase() + content.status.slice(1)}
+                      {content.status ? (content.status.charAt(0).toUpperCase() + content.status.slice(1)) : '-'}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>{content.platform}</span>
-                    <Badge variant="outline" className={getTypeColor(content.type)}>
-                      {content.type.charAt(0).toUpperCase() + content.type.slice(1)}
-                    </Badge>
+                    <span>{content.platform || '-'}</span>
+                    {content.platform && (
+                      <Badge variant="outline" className={getPlatformColor(content.platform)}>
+                        {content.platform}
+                      </Badge>
+                    )}
                   </div>
                 </div>
               ))}
               
-              {(selectedDate ? getContentForDate(selectedDate) : getContentForDate(new Date())).length === 0 && (
+              {!isLoading && !error && (selectedDate ? getContentForDate(selectedDate) : getContentForDate(new Date())).length === 0 && (
                 <div className="text-center py-6 text-muted-foreground">
                   <p>No content scheduled for this date</p>
                   <Button variant="outline" className="mt-2">
@@ -357,38 +380,65 @@ const ContentCalendarOverview: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {scheduledContent
-              .filter(content => content.date >= new Date())
-              .sort((a, b) => a.date.getTime() - b.date.getTime())
+            {isLoading ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <p>Loading upcoming content...</p>
+              </div>
+            ) : error ? (
+              <div className="text-center py-6 text-red-500">
+                <p>{error}</p>
+              </div>
+            ) : scheduledContent
+              .filter(content => {
+                if (!content.scheduledDate) return false;
+                return new Date(content.scheduledDate) >= new Date();
+              })
+              .sort((a, b) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime())
               .slice(0, 5)
               .map((content) => (
                 <div 
-                  key={content.id} 
+                  key={content._id} 
                   className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-accent/5 transition-colors cursor-pointer"
                 >
                   <div className="flex items-center">
                     <div className="mr-4 flex-shrink-0">
                       <div className="bg-accent/50 text-accent-foreground w-12 h-12 rounded-md flex flex-col items-center justify-center text-center">
-                        <span className="text-xs">{format(content.date, 'MMM')}</span>
-                        <span className="text-lg font-bold">{format(content.date, 'd')}</span>
+                        <span className="text-xs">{content.scheduledDate ? format(parseISO(content.scheduledDate), 'MMM') : '-'}</span>
+                        <span className="text-lg font-bold">{content.scheduledDate ? format(parseISO(content.scheduledDate), 'd') : '-'}</span>
                       </div>
                     </div>
                     <div>
-                      <h3 className="font-medium">{content.title}</h3>
+                      <h3 className="font-medium">{content.title || '-'}</h3>
                       <div className="flex items-center text-sm text-muted-foreground">
-                        <span>{content.platform}</span>
-                        <span className="mx-2">•</span>
-                        <Badge variant="outline" className={getTypeColor(content.type)}>
-                          {content.type}
-                        </Badge>
+                        <span>{content.platform || '-'}</span>
+                        {content.platform && (
+                          <>
+                            <span className="mx-2">•</span>
+                            <Badge variant="outline" className={getPlatformColor(content.platform)}>
+                              {content.platform}
+                            </Badge>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
                   <Badge className={getStatusColor(content.status)}>
-                    {content.status}
+                    {content.status || '-'}
                   </Badge>
                 </div>
               ))}
+              {!isLoading && !error && scheduledContent.filter(content => {
+                if (!content.scheduledDate) return false;
+                return new Date(content.scheduledDate) >= new Date();
+              }).length === 0 && (
+                <div className="text-center py-6 text-muted-foreground">
+                  <p>No upcoming content scheduled</p>
+                  <Button variant="outline" className="mt-2">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Content
+                  </Button>
+                </div>
+              )}
           </div>
         </CardContent>
       </Card>
