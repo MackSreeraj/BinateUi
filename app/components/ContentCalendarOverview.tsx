@@ -41,13 +41,18 @@ const ContentCalendarOverview: React.FC = () => {
         }
         
         const data = await response.json();
+        console.log('Fetched content schedules:', data.schedules);
         setScheduledContent(data.schedules);
         
         // Extract dates with content for calendar marking
         const dates = data.schedules
           .filter((item: ScheduledContent) => item.scheduledDate)
-          .map((item: ScheduledContent) => new Date(item.scheduledDate));
+          .map((item: ScheduledContent) => {
+            console.log(`Schedule date for ${item.title}: ${item.scheduledDate}`);
+            return new Date(item.scheduledDate);
+          });
         
+        console.log('Dates with content:', dates);
         setDatesWithContent(dates);
       } catch (err) {
         console.error('Error fetching content schedule:', err);
@@ -68,37 +73,48 @@ const ContentCalendarOverview: React.FC = () => {
     });
   };
   
-  // Custom tile content to show indicators for dates with content
-  const tileContent = ({ date, view }: { date: Date; view: string }) => {
-    if (view === 'month') {
-      const content = getContentForDate(date);
-      if (content.length > 0) {
-        return (
-          <div className="flex justify-center mt-2">
-            {content.map((item, index) => (
-              <div 
-                key={index}
-                className={`h-2 w-2 rounded-full mx-0.5 ${getPlatformColor(item.platform).replace('bg-', '').replace('/10 text-', '-500').replace(' hover:bg-', '')}`}
-                title={item.title}
-              ></div>
-            ))}
-          </div>
-        );
-      }
-    }
-    return null;
+  // Check if a date has scheduled content
+  const hasScheduledContent = (date: Date) => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    
+    return scheduledContent.some(content => {
+      if (!content.scheduledDate) return false;
+      const scheduleDate = new Date(content.scheduledDate);
+      const scheduleDateStr = format(scheduleDate, 'yyyy-MM-dd');
+      return scheduleDateStr === dateStr;
+    });
   };
   
-  // Custom tile className to style the current date and selected date
+  // We don't need tileContent anymore as we're using CSS to show the indicator
+  const tileContent = null;
+  
+  // Custom tile className to style the current date, selected date, and dates with content
   const tileClassName = ({ date, view }: { date: Date; view: string }) => {
     if (view === 'month') {
       const isToday = isSameDay(date, new Date());
-      const isSelected = selectedDate && isSameDay(date, selectedDate);
+      const isSelected = selectedDate ? isSameDay(date, selectedDate) : false;
+      const hasContent = hasScheduledContent(date);
       
-      if (isSelected) return 'bg-accent text-accent-foreground rounded-md';
-      if (isToday) return 'bg-primary/10 text-primary-foreground font-bold rounded-md';
+      let className = '';
       
-      return '';
+      if (isToday) {
+        className += ' bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground';
+      }
+      
+      if (isSelected && !isToday) {
+        className += ' bg-muted text-foreground hover:bg-muted hover:text-foreground';
+      }
+      
+      if (hasContent) {
+        className += ' has-content';
+        
+        // Debug log for July 31
+        if (format(date, 'yyyy-MM-dd') === '2025-07-31') {
+          console.log('July 31 has content class added');
+        }
+      }
+      
+      return className;
     }
     return '';
   };
@@ -174,11 +190,32 @@ const ContentCalendarOverview: React.FC = () => {
               <style jsx global>{`
                 .react-calendar {
                   width: 100%;
+                  max-width: 100%;
                   border: none;
                   font-family: inherit;
                   line-height: 1.5;
                   background-color: var(--background);
                   color: var(--foreground);
+                  border-radius: 8px;
+                  overflow: hidden;
+                  font-size: 1.1rem;
+                }
+                
+                /* Style for dates with content */
+                .has-content {
+                  position: relative;
+                }
+                
+                .has-content::after {
+                  content: '';
+                  position: absolute;
+                  bottom: 2px;
+                  left: 50%;
+                  transform: translateX(-50%);
+                  width: 6px;
+                  height: 6px;
+                  background-color: #f43f5e; /* rose-500 */
+                  border-radius: 50%;
                 }
                 .react-calendar__navigation {
                   height: 44px;
@@ -221,14 +258,20 @@ const ContentCalendarOverview: React.FC = () => {
                   margin-bottom: 0.5rem;
                 }
                 .react-calendar__tile {
+                  max-width: 100%;
+                  padding: 0;
                   text-align: center;
-                  padding: 0.5em 0.5em;
-                  background: none;
-                  color: var(--foreground);
-                  font-size: 1em;
-                  border-radius: 6px;
+                  line-height: 20px;
                   position: relative;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  height: 50px;
+                  font-size: 1.1em;
+                  border-radius: 6px;
                   transition: all 0.2s ease;
+                  margin: 1px;
+                  box-sizing: border-box;
                 }
                 .react-calendar__tile:enabled:hover,
                 .react-calendar__tile:enabled:focus {
@@ -275,7 +318,6 @@ const ContentCalendarOverview: React.FC = () => {
                 .react-calendar__tile:hover {
                   background-color: var(--accent);
                   color: var(--accent-foreground);
-                  transform: scale(1.05);
                   z-index: 2;
                 }
                 
@@ -284,6 +326,11 @@ const ContentCalendarOverview: React.FC = () => {
                   background-color: var(--primary) !important;
                   color: white !important;
                   font-weight: bold;
+                  box-sizing: border-box;
+                  border-radius: 6px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
                 }
                 
                 /* Style the month navigation buttons */
