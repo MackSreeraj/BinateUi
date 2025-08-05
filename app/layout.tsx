@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
 import { FontErrorBoundary } from '@/components/FontErrorBoundary';
 import { Toaster } from 'sonner';
+import { ContentScheduler } from '@/components/scheduler/content-scheduler';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -52,6 +53,8 @@ export default function RootLayout({
                 },
               }}
             />
+            {/* Content Scheduler runs in the background to check for scheduled content */}
+            <ContentScheduler />
           </ThemeProvider>
         </FontErrorBoundary>
       </body>

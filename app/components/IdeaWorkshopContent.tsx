@@ -536,10 +536,18 @@ const IdeaWorkshopContent = () => {
         throw new Error('Draft not found');
       }
       
-      // Combine date and time for scheduling
+      // Combine date and time for scheduling in Mumbai time (UTC+5:30)
       const scheduledDateTime = new Date(scheduleDate);
       const [hours, minutes] = scheduleTime.split(':').map(Number);
       scheduledDateTime.setHours(hours, minutes, 0, 0);
+      
+      // Display Mumbai time for user
+      const mumbaiTimeFormatted = format(scheduledDateTime, 'PPpp');
+      console.log(`Scheduling for Mumbai time: ${mumbaiTimeFormatted}`);
+      
+      // Convert Mumbai time to UTC for storage
+      const mumbaiOffset = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
+      const utcDateTime = new Date(scheduledDateTime.getTime() - mumbaiOffset);
       
       // Prepare the webhook URL with query parameters
       const webhookUrl = new URL('https://n8n.srv775152.hstgr.cloud/webhook/6277cfcb-c443-49eb-9478-2dc71fe5cb12');
@@ -548,9 +556,11 @@ const IdeaWorkshopContent = () => {
       webhookUrl.searchParams.append('draftId', draftToSchedule);
       webhookUrl.searchParams.append('ideaId', draftToPush.trendId || '');
       webhookUrl.searchParams.append('platformId', platformToUse);
-      webhookUrl.searchParams.append('scheduledTime', scheduledDateTime.toISOString());
+      webhookUrl.searchParams.append('scheduledTime', utcDateTime.toISOString());
+      webhookUrl.searchParams.append('mumbaiTime', mumbaiTimeFormatted); // Add Mumbai time for reference
       
-      console.log(`🚀 Scheduling draft ${draftToSchedule} to content pipeline for ${format(scheduledDateTime, 'PPpp')}`);
+      console.log(`🚀 Scheduling draft ${draftToSchedule} to content pipeline for Mumbai time: ${mumbaiTimeFormatted}`);
+      console.log(`UTC time for storage: ${utcDateTime.toISOString()}`);
       console.log(`URL: ${webhookUrl.toString()}`);
       
       // Call the webhook
