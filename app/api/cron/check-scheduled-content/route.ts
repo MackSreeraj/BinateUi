@@ -143,10 +143,28 @@ export async function GET(request: NextRequest) {
     // Process each scheduled content
     const results = await Promise.all(contentSchedules.map(async (schedule) => {
       try {
+        // Get the platform document to extract its _id
+        let platformId = schedule.Platform || '';
+        
+        // If Platform field contains an ObjectId, fetch the platform document to get its _id
+        if (schedule.Platform && ObjectId.isValid(schedule.Platform)) {
+          try {
+            const platformDoc = await db.collection('platforms').findOne({ obj_id: schedule.Platform });
+            if (platformDoc && platformDoc._id) {
+              platformId = platformDoc._id.toString();
+              console.log(`[CRON] Found platform document with _id: ${platformId}`);
+            } else {
+              console.log(`[CRON] Platform document not found for obj_id: ${schedule.Platform}`);
+            }
+          } catch (error) {
+            console.error(`[CRON] Error fetching platform document: ${error}`);
+          }
+        }
+        
         // Prepare the webhook payload
         const payload = {
           contentId: schedule._id.toString(),
-          platform: schedule.Platform || '',
+          platform: platformId,
           title: schedule['Post Title / Caption'] || '',
           content: schedule.Draft || '',
           scheduledDate: schedule['Scheduled Date'] || '',
@@ -163,7 +181,7 @@ export async function GET(request: NextRequest) {
         });
         
         // Call the webhook with the content payload as URL parameters
-        const webhookUrl = `https://n8n.srv775152.hstgr.cloud/webhook/85d6c456-f2c6-43cb-bea1-239485383549?${params.toString()}`;
+        const webhookUrl = `https://n8n.srv775152.hstgr.cloud/webhook/555252a2-14d0-4fd8-b570-c70034b3c800?${params.toString()}`;
         const response = await fetch(webhookUrl, {
           method: 'GET',
           headers: {
