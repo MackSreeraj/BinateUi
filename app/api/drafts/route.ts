@@ -15,6 +15,7 @@ interface Draft {
   Drafts?: string;
   'Content Idea'?: string;
   Platform?: string;
+  Writer?: string;
   DiscoveryDate?: string;
   [key: string]: any; // Allow for other properties
 }
@@ -48,6 +49,7 @@ export async function GET(request: NextRequest) {
         content: draft.Drafts || '',
         title: draft['Content Idea'] || '',
         platform: draft.Platform || '',
+        writer: draft.Writer || '',
         createdAt: draft.DiscoveryDate || new Date().toISOString()
       }));
       
@@ -138,6 +140,7 @@ export async function GET(request: NextRequest) {
       content: draft.Drafts || '', // Map 'Drafts' field to 'content'
       title: draft['Content Idea'] || '',
       platform: draft.Platform || '',
+      writer: draft.Writer || '',
       createdAt: draft.DiscoveryDate || new Date().toISOString()
     }));
 

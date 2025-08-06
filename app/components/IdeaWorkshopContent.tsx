@@ -88,6 +88,7 @@ interface Draft {
   trendId: string;
   createdAt: string;
   platform: string; // Changed from optional to required
+  writer?: string;
   title?: string;
 }
 
@@ -179,6 +180,16 @@ const IdeaWorkshopContent = () => {
         const response = await fetch('/api/writer-profiles');
         if (!response.ok) throw new Error('Failed to fetch writers');
         const data = await response.json();
+        
+        // Add AI Writer to the writers list if it doesn't exist
+        const aiWriter = data.find((w: Writer) => w._id === "68939893c630614acc8d0e43");
+        if (!aiWriter) {
+          data.push({
+            _id: "68939893c630614acc8d0e43",
+            name: "AI Writer"
+          });
+        }
+        
         setWriters(data);
       } catch (error) {
         console.error('Error fetching writers:', error);
@@ -925,7 +936,9 @@ const IdeaWorkshopContent = () => {
                       <div className="bg-gray-950 rounded-md p-3 border border-gray-800">
                         <div className="text-sm text-gray-500 mb-1">Writer</div>
                         <div className="font-medium text-gray-300">
-                          {writers.find(w => w._id === selectedWriter)?.name || '–'}
+                          {draft.writer ? 
+                            (writers.find((w: Writer) => w._id === draft.writer)?.name || draft.writer) : 
+                            (writers.find((w: Writer) => w._id === selectedWriter)?.name || '–')}
                         </div>
                       </div>
                       
