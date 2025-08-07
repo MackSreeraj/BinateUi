@@ -96,7 +96,7 @@ export default function SettingsPage() {
                     <input
                       type="email"
                       className="w-full px-4 py-2 bg-input border border-input rounded-md text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                      defaultValue="john.doe@example.com"
+                      defaultValue="ryan.gosling@example.com"
                     />
                   </div>
                   <div>
