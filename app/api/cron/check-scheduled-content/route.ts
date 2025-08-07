@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import clientPromise from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 
+// Constants for IST timezone (Asia/Kolkata, UTC+05:30)
+const IST_TIMEZONE = 'Asia/Kolkata';
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
+
 // Define interface for content schedule data
 interface ContentSchedule {
   _id: string | ObjectId;
@@ -24,29 +28,35 @@ export async function GET(request: NextRequest) {
   try {
     console.log('[CRON] Checking for scheduled content to publish...');
     
-    // Get current date and time in Mumbai local time (UTC+5:30)
+    // Get current date and time in UTC
     const now = new Date();
     
-    // Convert to Mumbai time (UTC+5:30)
-    const mumbaiOffset = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
-    const mumbaiTime = new Date(now.getTime() + mumbaiOffset);
-    const mumbaiTimeString = mumbaiTime.toISOString();
+    // Convert to IST time (UTC+5:30)
+    const istTime = new Date(now.getTime() + IST_OFFSET_MS);
     
-    console.log(`[CRON] Current date and time (Mumbai): ${mumbaiTimeString}`);
+    // Format IST time as YYYY-MM-DD HH:mm:ss
+    const istTimeFormatted = istTime.toISOString()
+      .replace('T', ' ')
+      .replace(/\..+/, '');
     
-    // Convert Mumbai time back to UTC for database queries
-    const currentDateTimeUTC = new Date(now.toISOString()).toISOString();
+    console.log(`[CRON] Current date and time (IST): ${istTimeFormatted}`);
+    
+    // Convert IST time to ISO string for database storage
+    const istTimeString = istTime.toISOString();
+    
+    // For database queries, we need UTC time
+    const currentDateTimeUTC = now.toISOString();
     
     // Connect to the database
     const client = await clientPromise;
     const db = client.db();
     
-    // Helper function to convert Mumbai time to UTC for database comparison
-    const convertMumbaiToUTC = (mumbaiTimeStr: string) => {
-      const date = new Date(mumbaiTimeStr);
-      // Adjust for Mumbai offset (subtract 5.5 hours)
-      const utcTime = new Date(date.getTime() - (5.5 * 60 * 60 * 1000));
-      return utcTime.toISOString();
+    // Helper function to convert IST time to UTC for database comparison
+    const convertISTtoUTC = (istTimeStr: string) => {
+      // Parse the IST time string (format: YYYY-MM-DD HH:mm:ss)
+      const istDate = new Date(istTimeStr);
+      // Convert IST to UTC by subtracting the offset
+      return new Date(istDate.getTime() - IST_OFFSET_MS).toISOString();
     };
     
     // Fetch content schedules that are due for publishing
@@ -64,7 +74,7 @@ export async function GET(request: NextRequest) {
       .toArray() as unknown as ContentSchedule[];
       
     // Log the query parameters for debugging
-    console.log(`[CRON] Query parameters: Status not 'Published', Scheduled Date <= ${currentDateTimeUTC} (Mumbai time: ${mumbaiTimeString})`);
+    console.log(`[CRON] Query parameters: Status not 'Published', Scheduled Date <= ${currentDateTimeUTC} (IST time: ${istTimeFormatted})`);
       
     // Log all scheduled content for debugging
     const allSchedules = await db
@@ -89,27 +99,24 @@ export async function GET(request: NextRequest) {
       })
       .toArray();
       
-    // Add a helper function to convert UTC times to Mumbai time for display
-    const convertToMumbaiTime = (utcTimeStr: string) => {
+    // Helper function to convert UTC times to IST for display
+    const convertToISTTime = (utcTimeStr: string) => {
       if (!utcTimeStr) return 'N/A';
       const date = new Date(utcTimeStr);
-      return new Date(date.getTime() + (5.5 * 60 * 60 * 1000)).toLocaleString('en-IN', {
-        timeZone: 'Asia/Kolkata',
-        hour12: true,
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
+      // Convert UTC to IST by adding the offset
+      const istDate = new Date(date.getTime() + IST_OFFSET_MS);
+      // Format as YYYY-MM-DD HH:mm:ss
+      return istDate.toISOString()
+        .replace('T', ' ')
+        .replace(/\..+/, '');
     };
       
     console.log(`[CRON] Recently published content:`, recentlyPublished.map(s => ({ 
       id: s._id, 
       scheduledDate: s['Scheduled Date'],
-      scheduledDateMumbai: convertToMumbaiTime(s['Scheduled Date']),
+      scheduledDateIST: convertToISTTime(s['Scheduled Date']),
       publishedDate: s['Published Date'],
-      publishedDateMumbai: convertToMumbaiTime(s['Published Date']),
+      publishedDateIST: convertToISTTime(s['Published Date']),
       platform: s.Platform,
       title: s['Post Title / Caption']?.substring(0, 30) + '...'
     })));
@@ -126,7 +133,7 @@ export async function GET(request: NextRequest) {
     console.log(`[CRON] Future scheduled content:`, futureScheduled.map(s => ({ 
       id: s._id, 
       scheduledDate: s['Scheduled Date'],
-      scheduledDateMumbai: convertToMumbaiTime(s['Scheduled Date']),
+      scheduledDateIST: convertToISTTime(s['Scheduled Date']),
       platform: s.Platform,
       title: s['Post Title / Caption']?.substring(0, 30) + '...'
     })));
@@ -181,7 +188,7 @@ export async function GET(request: NextRequest) {
         });
         
         // Call the webhook with the content payload as URL parameters
-        const webhookUrl = `https://n8n.srv775152.hstgr.cloud/webhook/555252a2-14d0-4fd8-b570-c70034b3c800?${params.toString()}`;
+        const webhookUrl = `https://n8n.srv775152.hstgr.cloud/webhook/85d6c456-f2c6-43cb-bea1-239485383549?${params.toString()}`;
         const response = await fetch(webhookUrl, {
           method: 'GET',
           headers: {
@@ -206,7 +213,7 @@ export async function GET(request: NextRequest) {
           { 
             $set: { 
               Status: 'Published',
-              'Published Date': mumbaiTimeString  // Store in Mumbai time format in the database
+              'Published Date': istTimeString  // Store in ISO format but representing IST time
             } 
           }
         );
@@ -216,7 +223,7 @@ export async function GET(request: NextRequest) {
         return {
           contentId: schedule._id.toString(),
           success: true,
-          publishedDate: mumbaiTimeString
+          publishedDate: istTimeString
         };
       } catch (error) {
         console.error(`[CRON] Error processing content ${schedule._id}:`, error);
