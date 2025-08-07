@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { useAuth } from './context/AuthContext';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -174,6 +175,7 @@ export default function Dashboard() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { user, isLoading } = useAuth();
   const [activeNav, setActiveNav] = useState('Home');
   const [contentPipelineExpanded, setContentPipelineExpanded] = useState(false);
   // Settings now use a dedicated page instead of a dialog
@@ -438,8 +440,8 @@ export default function Dashboard() {
                   <Users className="h-4 w-4 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium">Sebastin Peter</p>
-                  <p className="text-xs text-muted-foreground">Admin</p>
+                  <p className="text-sm font-medium">{isLoading ? 'Guest' : user?.name || 'Guests'}</p>
+                  <p className="text-xs text-muted-foreground">User</p>
                 </div>
               </div>
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => router.push('/settings')}>
