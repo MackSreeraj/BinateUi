@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { FontErrorBoundary } from '@/components/FontErrorBoundary';
 import { Toaster } from 'sonner';
 import { ContentScheduler } from '@/components/scheduler/content-scheduler';
+import { AuthProvider } from './context/AuthContext';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -39,22 +40,24 @@ export default function RootLayout({
             defaultTheme="dark"
             disableTransitionOnChange
           >
-            {children}
-            <Toaster 
-              position="top-right"
-              toastOptions={{
-                unstyled: false,
-                classNames: {
-                  toast: 'bg-gray-800 text-white border border-gray-700 rounded-lg p-4 shadow-lg',
-                  title: 'font-medium',
-                  description: 'text-gray-300',
-                  actionButton: 'bg-blue-600 hover:bg-blue-700 text-white',
-                  cancelButton: 'bg-gray-700 hover:bg-gray-600 text-white',
-                },
-              }}
-            />
-            {/* Content Scheduler runs in the background to check for scheduled content */}
-            <ContentScheduler />
+            <AuthProvider>
+              {children}
+              <Toaster 
+                position="top-right"
+                toastOptions={{
+                  unstyled: false,
+                  classNames: {
+                    toast: 'bg-gray-800 text-white border border-gray-700 rounded-lg p-4 shadow-lg',
+                    title: 'font-medium',
+                    description: 'text-gray-300',
+                    actionButton: 'bg-blue-600 hover:bg-blue-700 text-white',
+                    cancelButton: 'bg-gray-700 hover:bg-gray-600 text-white',
+                  },
+                }}
+              />
+              {/* Content Scheduler runs in the background to check for scheduled content */}
+              <ContentScheduler />
+            </AuthProvider>
           </ThemeProvider>
         </FontErrorBoundary>
       </body>

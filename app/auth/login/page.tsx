@@ -43,12 +43,30 @@ export default function LoginPage() {
     },
   });
 
-  function onSubmit(data: LoginFormValues) {
-    // Here you would typically authenticate the user
-    console.log(data);
-    
-    // For now, just redirect to dashboard
-    router.push('/');
+  async function onSubmit(data: LoginFormValues) {
+    try {
+      // Show loading state
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to login');
+      }
+      
+      // Login successful, redirect to dashboard
+      router.push('/');
+    } catch (error) {
+      console.error('Login error:', error);
+      // You could add toast notifications here
+      alert(error instanceof Error ? error.message : 'Failed to login');
+    }
   }
 
   return (

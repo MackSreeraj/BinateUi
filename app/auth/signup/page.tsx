@@ -47,12 +47,30 @@ export default function SignupPage() {
     },
   });
 
-  function onSubmit(data: SignupFormValues) {
-    // Here you would typically send the data to your API
-    console.log(data);
-    
-    // For now, just redirect to login
-    router.push('/auth/login');
+  async function onSubmit(data: SignupFormValues) {
+    try {
+      // Show loading state
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to register');
+      }
+      
+      // Registration successful, redirect to login
+      router.push('/auth/login?registered=true');
+    } catch (error) {
+      console.error('Registration error:', error);
+      // You could add toast notifications here
+      alert(error instanceof Error ? error.message : 'Failed to register');
+    }
   }
 
   return (
