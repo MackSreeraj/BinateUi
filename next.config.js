@@ -24,9 +24,28 @@ const nextConfig = {
     domains: ['localhost'],
   },
 
+  // Configure webpack to handle .webmanifest files
+  webpack(config) {
+    config.module.rules.push({
+      test: /\.webmanifest$/,
+      type: 'json',
+    });
+    return config;
+  },
+
   // Enable CORS for API routes
   async headers() {
     return [
+      // Serve .webmanifest files with correct MIME type
+      {
+        source: '/:path*.webmanifest',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'application/manifest+json',
+          },
+        ],
+      },
       {
         source: '/api/:path*',
         headers: [

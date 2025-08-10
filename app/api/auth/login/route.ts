@@ -48,14 +48,15 @@ export async function POST(request: NextRequest) {
       email: user.email
     });
     
-    // Set cookie with token
+    // Set the auth token in an HTTP-only cookie
     cookies().set({
       name: 'auth-token',
       value: token,
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       path: '/',
+      domain: process.env.NODE_ENV === 'production' ? '.thebinate.com' : undefined,
       maxAge: 7 * 24 * 60 * 60 // 7 days
     });
     

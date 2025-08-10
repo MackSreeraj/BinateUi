@@ -12,7 +12,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  checkAuthStatus: () => Promise<void>;
+  checkAuthStatus: () => Promise<boolean>;
   logout: () => Promise<void>;
 }
 
@@ -28,6 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       const response = await fetch('/api/auth/me', {
         method: 'GET',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -35,13 +36,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (response.ok) {
         const data = await response.json();
-        setUser(data.user);
-      } else {
-        setUser(null);
+        if (data?.user) {
+          setUser(data.user);
+          return true;
+        }
       }
+      setUser(null);
+      return false;
     } catch (error) {
       console.error('Auth check error:', error);
       setUser(null);
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -71,8 +76,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Check auth status when the component mounts
   useEffect(() => {
-    checkAuthStatus();
-  }, []);
+    const verifyAuth = async () => {
+      try {
+        const isAuthenticated = await checkAuthStatus();
+        
+        // If we're on the login/signup page but already authenticated, redirect to home
+        if (typeof window !== 'undefined') {
+          const isAuthPage = ['/auth/login', '/auth/signup', '/auth/reset-password'].includes(window.location.pathname);
+          if (isAuthPage && isAuthenticated) {
+            router.push('/');
+          } else if (!isAuthPage && !isAuthenticated) {
+            // If not on auth page and not authenticated, redirect to login
+            router.push('/auth/login');
+          }
+        }
+      } catch (error) {
+        console.error('Authentication verification error:', error);
+        setUser(null);
+        if (typeof window !== 'undefined' && !['/auth/login', '/auth/signup'].includes(window.location.pathname)) {
+          router.push('/auth/login');
+        }
+      }
+    };
+    
+    verifyAuth();
+  }, [router]);
 
   return (
     <AuthContext.Provider value={{ user, isLoading, checkAuthStatus, logout }}>

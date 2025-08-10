@@ -3,21 +3,83 @@ import type { NextRequest } from 'next/server';
 import { verifyToken } from './lib/auth';
 
 // Define public paths that don't require authentication
-const publicPaths = ['/auth/login', '/auth/signup'];
+const publicPaths = [
+  '/auth/login', 
+  '/auth/signup',
+  '/api/auth/login',
+  '/api/auth/signup',
+  '/api/auth/me', // Auth status check
+  '/api/cron/check-scheduled-content', // Cron job endpoint
+  '/manifest.webmanifest' // Manifest file
+];
+
+// Add CORS headers to responses
+const addCorsHeaders = (response: NextResponse, request: NextRequest) => {
+  const origin = request.headers.get('origin');
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'https://app.thebinate.com',
+    'https://www.thebinate.com',
+    'https://www.app.thebinate.com',
+    'https://thebinate.com'
+  ];
+
+  // For development, allow all origins
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const requestOrigin = isDevelopment ? (origin || '*') : 
+    (origin && allowedOrigins.includes(origin) ? origin : allowedOrigins[0]);
+  
+  const headers = new Headers(response.headers);
+  headers.set('Access-Control-Allow-Origin', requestOrigin);
+  headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  headers.set('Access-Control-Allow-Credentials', 'true');
+  
+  // Handle preflight requests
+  if (request.method === 'OPTIONS') {
+    return new NextResponse(null, { 
+      status: 204,
+      headers: Object.fromEntries(headers.entries())
+    });
+  }
+  
+  return new NextResponse(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: headers
+  });
+};
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   
+  // Handle preflight requests
+  if (request.method === 'OPTIONS') {
+    const response = new NextResponse(null, { status: 204 });
+    return addCorsHeaders(response, request);
+  }
+  
   // Allow access to public paths without authentication
-  if (publicPaths.includes(path)) {
-    return NextResponse.next();
+  if (publicPaths.some(publicPath => path.startsWith(publicPath))) {
+    const response = NextResponse.next();
+    return addCorsHeaders(response, request);
   }
   
   // Check for auth token in cookies
   const token = request.cookies.get('auth-token')?.value;
   
-  // If no token is found, redirect to login
+  // If no token is found, handle based on route type
   if (!token) {
+    // For API routes, return 401 JSON response
+    if (path.startsWith('/api/')) {
+      const response = new NextResponse(
+        JSON.stringify({ error: 'Authentication required' }), 
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+      return addCorsHeaders(response, request);
+    }
+    
+    // For non-API routes, redirect to login
     const url = new URL('/auth/login', request.url);
     return NextResponse.redirect(url);
   }
@@ -33,13 +95,24 @@ export async function middleware(request: NextRequest) {
     }
     
     // Token is valid, allow access
-    return NextResponse.next();
+    const response = NextResponse.next();
+    return addCorsHeaders(response, request);
   } catch (error) {
     console.error('Authentication error:', error);
     
-    // On error, redirect to login
+    // For API routes, return 401 instead of redirecting
+    if (path.startsWith('/api/')) {
+      const response = new NextResponse(
+        JSON.stringify({ error: 'Authentication required' }), 
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+      return addCorsHeaders(response, request);
+    }
+    
+    // For non-API routes, redirect to login
     const url = new URL('/auth/login', request.url);
-    return NextResponse.redirect(url);
+    const response = NextResponse.redirect(url);
+    return addCorsHeaders(response, request);
   }
 }
 
@@ -48,13 +121,16 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except:
-     * - /api/auth/* (authentication API routes)
+     * - /api/auth/me (public auth status check)
+     * - /api/auth/login and /api/auth/signup (auth endpoints)
      * - /auth/login and /auth/signup (login and signup pages)
      * - /_next/static (static files)
      * - /_next/image (image optimization files)
      * - /favicon.ico (favicon file)
+     * - /favicon/* (favicon files)
      * - /logo/* (logo files)
+     * - /manifest.webmanifest (web app manifest)
      */
-    '/((?!api/auth|auth/login|auth/signup|_next/static|_next/image|favicon.ico|logo).*)',
+    '/((?!api/auth|auth/login|auth/signup|_next/static|_next/image|favicon.ico|favicon/|logo/|manifest.webmanifest).*)',
   ],
 };

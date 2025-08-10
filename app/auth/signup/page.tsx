@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -48,8 +49,9 @@ export default function SignupPage() {
   });
 
   async function onSubmit(data: SignupFormValues) {
+    const toastId = toast.loading('Creating your account...');
+    
     try {
-      // Show loading state
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: {
@@ -61,15 +63,28 @@ export default function SignupPage() {
       const result = await response.json();
       
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to register');
+        throw new Error(result.error || 'Failed to create account. Please try again.');
       }
       
-      // Registration successful, redirect to login
-      router.push('/auth/login?registered=true');
+      // Show success message
+      toast.success('Account created successfully!', { 
+        id: toastId,
+        description: 'Redirecting to login...'
+      });
+      
+      // Redirect to login after a short delay
+      setTimeout(() => {
+        router.push('/auth/login?registered=true');
+      }, 1500);
+      
     } catch (error) {
       console.error('Registration error:', error);
-      // You could add toast notifications here
-      alert(error instanceof Error ? error.message : 'Failed to register');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create account. Please try again.';
+      
+      toast.error('Registration failed', { 
+        id: toastId,
+        description: errorMessage
+      });
     }
   }
 
@@ -85,12 +100,13 @@ export default function SignupPage() {
       
       <div className="container relative z-10 px-4 mx-auto flex flex-col items-center">
         {/* Logo */}
-        <div className="mb-8">
+        <div className="mb-6 w-full max-w-[180px]">
           <Image
             src="/logo/Binate Logo wide sqr white.png"
             alt="Binate Logo"
             width={180}
-            height={56}
+            height={45}
+            className="w-full h-auto"
             priority
           />
         </div>

@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -44,28 +45,43 @@ export default function LoginPage() {
   });
 
   async function onSubmit(data: LoginFormValues) {
+    const toastId = toast.loading('Signing in...');
+    
     try {
-      // Show loading state
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(data),
       });
       
       const result = await response.json();
       
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to login');
+        throw new Error(result.error || 'Failed to login. Please check your credentials and try again.');
       }
       
-      // Login successful, redirect to dashboard
-      router.push('/');
+      // Show success message
+      toast.success('Login successful!', { 
+        id: toastId,
+        description: 'Redirecting to your dashboard...'
+      });
+      
+      // Force a full page reload to ensure all auth state is properly set
+      window.location.href = '/';
+      
     } catch (error) {
       console.error('Login error:', error);
-      // You could add toast notifications here
-      alert(error instanceof Error ? error.message : 'Failed to login');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to login. Please try again.';
+      toast.error('Login failed', { 
+        id: toastId,
+        description: errorMessage
+      });
+      
+      // Clear the form on error
+      form.reset();
     }
   }
 
@@ -81,12 +97,13 @@ export default function LoginPage() {
       
       <div className="container relative z-10 px-4 mx-auto flex flex-col items-center">
         {/* Logo */}
-        <div className="mb-8">
+        <div className="mb-6 w-full max-w-[180px]">
           <Image
             src="/logo/Binate Logo wide sqr white.png"
             alt="Binate Logo"
             width={180}
-            height={56}
+            height={45}
+            className="w-full h-auto"
             priority
           />
         </div>

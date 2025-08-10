@@ -62,17 +62,21 @@ export async function verifyToken(token: string): Promise<Session | null> {
     
     // Check if payload has the expected structure
     const payload = verified.payload as any;
-    if (!payload.name || !payload.email) {
-      // console.error('Token payload missing required fields:', payload);
+    
+    // The user data is nested under the 'user' property in the token
+    const userData = payload.user || {};
+    
+    if (!userData.id || !userData.email) {
+      // console.error('Token payload missing required user fields:', payload);
       return null;
     }
     
     // Construct a proper session object
     const session: Session = {
       user: {
-        id: payload.id || payload.sub || '',
-        name: payload.name,
-        email: payload.email
+        id: userData.id,
+        name: userData.name || '',
+        email: userData.email
       },
       exp: payload.exp || 0
     };
