@@ -363,8 +363,10 @@ export default function Dashboard() {
         {/* Left Sidebar - Fixed position */}
         <aside className="w-64 border-r bg-muted/20 h-[calc(100vh-4rem)] flex flex-col justify-between fixed top-16 left-0 overflow-y-auto">
           <div className="p-4">
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold text-green-500">Content Engine</h2>
+            <div className="mb-8 text-center">
+              <h2 className="text-2xl text-foreground venite-font">
+                Content Engine
+              </h2>
             </div>
             <nav className="space-y-1">
               {navigationItems.map((item) => {

@@ -12,14 +12,26 @@ import {
   FileText,
   Zap,
   ExternalLink,
-  ArrowLeft
+  ArrowLeft,
+  LogOut
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/AuthContext";
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("account");
   const router = useRouter();
+  const { logout } = useAuth();
+  
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.push('/auth/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
 
   const tabs = [
     { id: "account", label: "Account", icon: User },
@@ -351,6 +363,17 @@ export default function SettingsPage() {
             </div>
           )}
 
+          {/* Logout Button - Fixed at bottom */}
+          <div className="mt-auto pt-6 border-t border-border">
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
+            </button>
+          </div>
+          
           {/* Add other tab contents as needed */}
           {activeTab !== "account" && activeTab !== "integrations" && activeTab !== "notifications" && (
             <div className="flex items-center justify-center h-full">
