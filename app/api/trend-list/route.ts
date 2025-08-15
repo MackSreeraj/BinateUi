@@ -7,14 +7,38 @@ import { ObjectId } from 'mongodb';
  */
 export async function GET(request: Request) {
   try {
+    // Log environment information (helpful for debugging)
+    console.log('Environment:', process.env.NODE_ENV);
+    console.log('MongoDB URI defined:', !!process.env.MONGODB_URI);
+    
     const { searchParams } = new URL(request.url);
     const companiesOnly = searchParams.get('companiesOnly') === 'true';
     
     console.log('Connecting to MongoDB for trend_list data...');
-    const client = await clientPromise;
-    console.log('MongoDB connection established');
     
-    const db = client.db("test");
+    // Declare variables in the outer scope
+    let db;
+    let client;
+    
+    try {
+      client = await clientPromise;
+      console.log('MongoDB connection established');
+      
+      // Check if client is actually connected
+      if (!client) {
+        console.error('MongoDB client is not available');
+        throw new Error('Database client not available');
+      }
+      
+      db = client.db("test");
+      
+      // Test the connection by listing collections
+      const collections = await db.listCollections().toArray();
+      console.log('Available collections:', collections.map((c: any) => c.name));
+    } catch (dbError: any) {
+      console.error('Database connection error:', dbError);
+      throw new Error(`Failed to connect to database: ${dbError?.message || 'Unknown error'}`);
+    }
     
     // Helper function to fetch companies
     const fetchCompanies = async () => {
