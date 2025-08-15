@@ -112,12 +112,16 @@ export default function TrendsListContent() {
       // Add a small delay to ensure the API route is ready
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      const response = await fetch('/api/trend-list', {
+      // Add a timestamp to prevent caching
+      const timestamp = new Date().getTime();
+      const response = await fetch(`/api/trend-list?t=${timestamp}`, {
         method: 'GET',
         headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        },
+        cache: 'no-store'
       });
       
       console.log('API response status:', response.status);
@@ -219,7 +223,6 @@ export default function TrendsListContent() {
             { _id: '5', name: 'Future Enterprises' }
           ]
         });
-        setCompanies(trendsData?.companies || []);
         setError(null); // Clear error since we're using fallback data
       } finally {
         setLoading(false);
@@ -229,7 +232,42 @@ export default function TrendsListContent() {
   useEffect(() => {
     fetchTrends();
   }, []);
-  
+
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      try {
+        const timestamp = new Date().getTime();
+        const response = await fetch(`/api/trend-list?companiesOnly=true&t=${timestamp}`, {
+          method: 'GET',
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          },
+          cache: 'no-store'
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.companies && data.companies.length > 0) {
+            setCompanies(data.companies);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching companies:', error);
+      }
+    };
+    
+    // Initial fetch
+    fetchCompanies();
+    
+    // Refresh companies every 30 seconds
+    const interval = setInterval(fetchCompanies, 30000);
+    
+    // Cleanup interval on component unmount
+    return () => clearInterval(interval);
+  }, []);
+
   // Handle generating trends for a selected company
   const handleGenerateTrends = async () => {
     if (!selectedCompany) {

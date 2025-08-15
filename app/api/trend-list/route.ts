@@ -5,49 +5,69 @@ import { ObjectId } from 'mongodb';
 /**
  * GET handler for fetching data specifically from the trend_list table
  */
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const companiesOnly = searchParams.get('companiesOnly') === 'true';
+    
     console.log('Connecting to MongoDB for trend_list data...');
     const client = await clientPromise;
     console.log('MongoDB connection established');
     
     const db = client.db("test");
     
-    // Fetch companies data for reference
-    let companiesData = [];
-    try {
-      console.log('Fetching companies from database...');
-      const rawCompanies = await db.collection("companies").find({}).toArray();
-      console.log('Raw companies fetched:', rawCompanies.length, 'records');
-      
-      if (rawCompanies.length > 0) {
-        companiesData = rawCompanies.map(company => ({
-          _id: company._id?.toString() || Math.random().toString(36).substring(2, 15),
-          name: company.name || company.companyName || 'Unnamed Company'
-        }));
-      } else {
-        // Use mock data if no companies found
-        companiesData = [
+    // Helper function to fetch companies
+    const fetchCompanies = async () => {
+      try {
+        console.log('Fetching companies from database...');
+        const rawCompanies = await db.collection("companies").find({}).toArray();
+        console.log('Raw companies fetched:', rawCompanies.length, 'records');
+        
+        if (rawCompanies.length > 0) {
+          return rawCompanies.map(company => ({
+            _id: company._id?.toString() || Math.random().toString(36).substring(2, 15),
+            name: company.name || company.companyName || 'Unnamed Company'
+          }));
+        } else {
+          // Use mock data if no companies found
+          return [
+            { _id: '1', name: 'Acme Corp' },
+            { _id: '2', name: 'Tech Innovations' },
+            { _id: '3', name: 'Global Solutions' },
+            { _id: '4', name: 'Digital Frontiers' },
+            { _id: '5', name: 'Future Enterprises' }
+          ];
+        }
+      } catch (error) {
+        console.error('Error fetching companies:', error);
+        // Return mock data on error
+        return [
           { _id: '1', name: 'Acme Corp' },
           { _id: '2', name: 'Tech Innovations' },
           { _id: '3', name: 'Global Solutions' },
           { _id: '4', name: 'Digital Frontiers' },
           { _id: '5', name: 'Future Enterprises' }
         ];
-        console.log('Using mock company data');
       }
-    } catch (companyError) {
-      console.error('Error fetching companies:', companyError);
-      // Use mock data on error
-      companiesData = [
-        { _id: '1', name: 'Acme Corp' },
-        { _id: '2', name: 'Tech Innovations' },
-        { _id: '3', name: 'Global Solutions' },
-        { _id: '4', name: 'Digital Frontiers' },
-        { _id: '5', name: 'Future Enterprises' }
-      ];
-      console.log('Using mock company data due to error');
+    };
+    
+    // If only companies are requested, return early
+    if (companiesOnly) {
+      const companiesData = await fetchCompanies();
+      return new NextResponse(JSON.stringify({ companies: companiesData }), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+          'CDN-Cache-Control': 'no-store'
+        }
+      });
     }
+    
+    // Fetch companies data for reference
+    const companiesData = await fetchCompanies();
     
     // Fetch users for the dropdown
     let usersData = [];
