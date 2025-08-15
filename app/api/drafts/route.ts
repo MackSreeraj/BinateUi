@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import clientPromise from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 
+// Prevent static generation and ensure this runs on every request
+export const dynamic = 'force-dynamic';
+
 // Define interfaces for our data types
 interface Trend {
   _id: string | ObjectId;

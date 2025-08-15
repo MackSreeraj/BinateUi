@@ -5,14 +5,25 @@ import { ObjectId } from 'mongodb';
 /**
  * GET handler for fetching data specifically from the trend_list table
  */
+// Add this export to prevent static generation
+// This tells Next.js to always run this on the server
+// and not attempt to statically generate it
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   try {
     // Log environment information (helpful for debugging)
     console.log('Environment:', process.env.NODE_ENV);
-    console.log('MongoDB URI defined:', !!process.env.MONGODB_URI);
+    console.log('MONGODB_URI defined:', !!process.env.MONGODB_URI);
     
-    const { searchParams } = new URL(request.url);
-    const companiesOnly = searchParams.get('companiesOnly') === 'true';
+    // Safely get search params
+    let companiesOnly = false;
+    try {
+      const { searchParams } = new URL(request.url);
+      companiesOnly = searchParams.get('companiesOnly') === 'true';
+    } catch (e) {
+      console.error('Error parsing URL:', e);
+    }
     
     console.log('Connecting to MongoDB for trend_list data...');
     
