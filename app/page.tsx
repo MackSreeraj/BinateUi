@@ -22,7 +22,6 @@ import { Separator } from '@/components/ui/separator';
 import { SettingsDialog } from './components/SettingsDialog';
 import { 
   Home, 
-  Users, 
   Building2, 
   PenTool, 
   MonitorPlay, 
@@ -54,7 +53,6 @@ import {
 
 const navigationItems = [
   { icon: Home, label: 'Home', active: true },
-  { icon: Users, label: 'Users' },
   { icon: Building2, label: 'Company Profiles' },
   { icon: PenTool, label: 'Writer Profiles' },
   { icon: MonitorPlay, label: 'Platform Profiles' },
@@ -66,11 +64,6 @@ const navigationItems = [
 ];
 
 const contentEngineCards = [
-  {
-    icon: Users,
-    title: 'Users',
-    description: 'Manage user accounts and permissions for your content team'
-  },
   {
     icon: Building2,
     title: 'Company Profiles',
@@ -155,7 +148,6 @@ const resourceLinks = [
 ];
 
 // Import the content components
-import UsersContent from './components/UsersContent';
 import IdeasContent from './components/IdeasContent';
 import IdeaWorkshopContent from './components/IdeaWorkshopContent';
 import CompanyProfilesContent from './components/CompanyProfilesContent';
@@ -261,7 +253,6 @@ export default function Dashboard() {
         </div>
       </>
     ),
-    'Users': () => <UsersContent />,
     'Company Profiles': () => <CompanyProfilesContent />,
     'Writer Profiles': () => <WriterProfilesContent />,
     'Platform Profiles': () => <PlatformProfilesContent />,
@@ -439,7 +430,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center mr-2">
-                  <Users className="h-4 w-4 text-primary" />
+                  <User className="h-4 w-4 text-primary" />
                 </div>
                 <div>
                   <p className="text-sm font-medium">{isLoading ? 'Guest' : user?.name || 'Guests'}</p>

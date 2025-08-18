@@ -2,7 +2,6 @@
 
 import { 
   Home, 
-  Users, 
   Building2, 
   PenTool, 
   MonitorPlay, 
@@ -22,7 +21,6 @@ export default function DashboardLayout({
 }) {
   const navigationItems = [
     { icon: Home, label: 'Home', href: '/' },
-    { icon: Users, label: 'Users', href: '/users' },
     { icon: Building2, label: 'Company Profiles', href: '/company-profiles' },
     { icon: PenTool, label: 'Writer Profiles', href: '#' },
     { icon: MonitorPlay, label: 'Platform Profiles', href: '#' },
