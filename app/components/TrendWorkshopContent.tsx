@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { ChevronDown, ChevronUp, Check, Users, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -80,7 +81,8 @@ export default function TrendWorkshopContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
-  const [selectedUser, setSelectedUser] = useState<string>('');
+  // Use logged-in user instead of dropdown selection
+  const { user } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [generateSuccess, setGenerateSuccess] = useState(false);
@@ -416,24 +418,16 @@ export default function TrendWorkshopContent() {
 
 
 
-          {/* User Selection Dropdown */}
+          {/* User Display (Static) */}
           <div className="bg-card border rounded-lg p-6 shadow-sm mt-6">
-            <h2 className="text-xl font-bold mb-4 text-primary border-l-4 border-blue-500 pl-3">Select User for Idea Generation</h2>
+            <h2 className="text-xl font-bold mb-4 text-primary border-l-4 border-blue-500 pl-3">User for Idea Generation</h2>
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">Select User</label>
-                <select 
-                  className="w-full p-2 border rounded-md bg-card text-primary" 
-                  value={selectedUser}
-                  onChange={(e) => setSelectedUser(e.target.value)}
-                >
-                  <option value="">Select a user...</option>
-                  {trendsData?.users && trendsData.users.map(user => (
-                    <option key={getIdString(user._id)} value={getIdString(user._id)}>
-                      {user.name}
-                    </option>
-                  ))}
-                </select>
+                <label className="text-sm font-bold text-primary uppercase tracking-wide border-b border-gray-600 pb-1 inline-block">User</label>
+                <div className="flex items-center h-10 px-3 py-2 text-sm border rounded-md bg-card text-primary">
+                  {user ? user.name : 'Loading user...'}
+                  {user && <input type="hidden" name="userId" value={user._id} />}
+                </div>
               </div>
             </div>
           </div>
@@ -458,9 +452,9 @@ export default function TrendWorkshopContent() {
               variant="default" 
               size="lg" 
               className="bg-blue-600 hover:bg-blue-700 text-white" 
-              disabled={!selectedUser || isGenerating}
+              disabled={!user?._id || isGenerating}
               onClick={async () => {
-                if (!selectedUser || !selectedTrend) return;
+                if (!user?._id || !selectedTrend) return;
                 
                 try {
                   setIsGenerating(true);
@@ -469,7 +463,7 @@ export default function TrendWorkshopContent() {
                   const trendId = getIdString(selectedTrend._id);
                   const webhookUrl = 'https://n8n.srv775152.hstgr.cloud/webhook/f4b913d5-7ba2-4435-af37-cd36df67b200';
                   
-                  const response = await fetch(`${webhookUrl}?userId=${selectedUser}&trendId=${trendId}`, {
+                  const response = await fetch(`${webhookUrl}?userId=${user._id}&trendId=${trendId}`, {
                     method: 'GET',
                     headers: {
                       'Content-Type': 'application/json'
