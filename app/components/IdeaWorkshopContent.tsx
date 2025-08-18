@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,11 +33,7 @@ interface Company {
   name: string;
 }
 
-interface User {
-  _id: string;
-  username: string;
-  imageUrl?: string;
-}
+// User interface is now provided by AuthContext
 
 interface Writer {
   _id: string;
@@ -93,6 +90,8 @@ interface Draft {
 }
 
 const IdeaWorkshopContent = () => {
+  // Get the logged-in user from auth context
+  const { user } = useAuth();
   const [selectedIdeaTitle, setSelectedIdeaTitle] = useState<string>('');
   const [status, setStatus] = useState('Draft');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -112,7 +111,6 @@ const IdeaWorkshopContent = () => {
   
   // Selected values
   const [selectedCompany, setSelectedCompany] = useState<string>('');
-  const [selectedUser, setSelectedUser] = useState<string>('');
   const [selectedWriter, setSelectedWriter] = useState<string>('');
   const [selectedPlatform, setSelectedPlatform] = useState<string>('');
   const [selectedIdea, setSelectedIdea] = useState<string>('');
@@ -130,7 +128,6 @@ const IdeaWorkshopContent = () => {
   
   // Data from API
   const [companies, setCompanies] = useState<Company[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
   const [writers, setWriters] = useState<Writer[]>([]);
   const [platforms, setPlatforms] = useState<Platform[]>([]);
   const [ideas, setIdeas] = useState<Idea[]>([]);
@@ -139,7 +136,6 @@ const IdeaWorkshopContent = () => {
   // Loading states
   const [isLoading, setIsLoading] = useState({
     companies: true,
-    users: true,
     writers: true,
     platforms: true,
     ideas: true,
@@ -162,18 +158,7 @@ const IdeaWorkshopContent = () => {
       }
     };
 
-    const fetchUsers = async () => {
-      try {
-        const response = await fetch('/api/users');
-        if (!response.ok) throw new Error('Failed to fetch users');
-        const data = await response.json();
-        setUsers(data);
-      } catch (error) {
-        console.error('Error fetching users:', error);
-      } finally {
-        setIsLoading(prev => ({ ...prev, users: false }));
-      }
-    };
+    // No longer fetching users from API
 
     const fetchWriters = async () => {
       try {
@@ -238,7 +223,6 @@ const IdeaWorkshopContent = () => {
     };
 
     fetchCompanies();
-    fetchUsers();
     fetchWriters();
     fetchPlatforms();
     fetchIdeas();
@@ -262,7 +246,6 @@ const IdeaWorkshopContent = () => {
         if (selectedIdeaData.writer) setSelectedWriter(selectedIdeaData.writer);
         if (selectedIdeaData.platform) setSelectedPlatform(selectedIdeaData.platform);
         if (selectedIdeaData.status) setStatus(selectedIdeaData.status);
-        if (selectedIdeaData.userId) setSelectedUser(selectedIdeaData.userId);
       }
     }
   }, [selectedIdea, ideas]);
@@ -805,30 +788,14 @@ const IdeaWorkshopContent = () => {
               </Select>
             </div>
 
-            {/* User Dropdown */}
+            {/* User Display - Static field showing logged-in user */}
             <div className="space-y-2">
               <Label htmlFor="user" className="text-sm font-medium">
                 User
               </Label>
-              <Select value={selectedUser} onValueChange={setSelectedUser}>
-                <SelectTrigger id="user" className="w-full">
-                  {isLoading.users ? (
-                    <div className="flex items-center">
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      <span>Loading...</span>
-                    </div>
-                  ) : (
-                    <SelectValue placeholder="Select user" />
-                  )}
-                </SelectTrigger>
-                <SelectContent>
-                  {users.map((user) => (
-                    <SelectItem key={user._id} value={user._id}>
-                      {user.username}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex items-center h-10 px-3 py-2 text-sm border rounded-md bg-background">
+                {user ? user.name : 'Loading user...'}
+              </div>
             </div>
 
             {/* Generate Content Button - Centered */}
