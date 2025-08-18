@@ -336,7 +336,7 @@ const IdeaWorkshopContent = () => {
         companyId: selectedCompany,
         writerId: selectedWriter,
         platformId: selectedPlatform,
-        userId: selectedUser || '',
+        userId: user?._id || '', // Use logged-in user's ID from auth context
         status: status,
         specificitiesDraft: specificitiesDraft || '',
         specificitiesForImages: specificitiesForImages || '',
@@ -374,7 +374,7 @@ const IdeaWorkshopContent = () => {
             companyId: selectedCompany,
             writerId: selectedWriter,
             platformId: selectedPlatform,
-            userId: selectedUser || '',
+            userId: user?._id || '',
             status: status,
             specificitiesDraft: specificitiesDraft,
             specificitiesForImages: specificitiesForImages,
