@@ -167,10 +167,13 @@ const IdeaWorkshopContent = () => {
         const data = await response.json();
         
         // Add AI Writer to the writers list if it doesn't exist
-        const aiWriter = data.find((w: Writer) => w._id === "68939893c630614acc8d0e43");
+        // Using a constant for the AI Writer ID to make it easier to reference elsewhere
+        // This is just for display in the dropdown - the actual selected ID will be used in the webhook
+        const AI_WRITER_ID = "ai-writer-real-id"; // Changed to a more descriptive ID
+        const aiWriter = data.find((w: Writer) => w.name === "AI Writer");
         if (!aiWriter) {
           data.push({
-            _id: "68939893c630614acc8d0e43",
+            _id: AI_WRITER_ID,
             name: "AI Writer"
           });
         }
