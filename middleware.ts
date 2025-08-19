@@ -10,7 +10,9 @@ const publicPaths = [
   '/api/auth/signup',
   '/api/auth/me', // Auth status check
   '/api/cron/check-scheduled-content', // Cron job endpoint
-  '/manifest.webmanifest' // Manifest file
+  '/manifest.webmanifest', // Manifest file
+  '/uploads/', // Public uploads directory
+  '/api/uploads/' // API route for uploads
 ];
 
 // Add CORS headers to responses
@@ -130,7 +132,9 @@ export const config = {
      * - /favicon/* (favicon files)
      * - /logo/* (logo files)
      * - /manifest.webmanifest (web app manifest)
+     * - /uploads/* (uploads directory)
+     * - /api/uploads/* (uploads API route)
      */
-    '/((?!api/auth|auth/login|auth/signup|_next/static|_next/image|favicon.ico|favicon/|logo/|manifest.webmanifest).*)',
+    '/((?!api/auth|auth/login|auth/signup|_next/static|_next/image|favicon.ico|favicon/|logo/|manifest.webmanifest|uploads/|api/uploads/).*)',
   ],
 };
