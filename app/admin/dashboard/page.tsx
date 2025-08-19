@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Users, FileText, Activity, TrendingUp, BarChart, Settings, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { Users, FileText, Activity, TrendingUp, BarChart, Settings, AlertCircle, CheckCircle, Timer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -43,7 +43,7 @@ export default async function AdminDashboard() {
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
         <div className="flex space-x-2">
           <Button variant="outline" size="sm">
-            <Clock className="mr-2 h-4 w-4" />
+            <Timer className="mr-2 h-4 w-4" />
             Last updated: Just now
           </Button>
           <Button variant="outline" size="sm">
@@ -166,7 +166,7 @@ export default async function AdminDashboard() {
                   <p className="font-medium mb-2">Recent Notifications</p>
                   {systemNotifications.map((notification, index) => (
                     <div key={index} className="flex items-start mb-3 last:mb-0">
-                      {notification.type === 'info' && <Clock className="h-4 w-4 text-blue-500 mr-2 mt-0.5" />}
+                      {notification.type === 'info' && <Timer className="h-4 w-4 text-blue-500 mr-2 mt-0.5" />}
                       {notification.type === 'success' && <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5" />}
                       {notification.type === 'warning' && <AlertCircle className="h-4 w-4 text-amber-500 mr-2 mt-0.5" />}
                       <div>
