@@ -43,7 +43,11 @@ export default function WriterProfilesContent() {
       }
     } catch (error) {
       console.error('Error fetching writer profiles:', error);
-      toast.error('Failed to load writer profiles');
+      toast.error('Failed to load writer profiles', {
+        description: 'Please check your connection and try again',
+        position: 'top-center',
+        duration: 4000,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -110,7 +114,15 @@ export default function WriterProfilesContent() {
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
       // Only show error if it's not a 404 (which we handle gracefully)
       if (!errorMessage.includes('404')) {
-        toast.error('Failed to load platform profile. Please try training the model first.');
+        toast.error('Platform profile not available', {
+          description: 'Please try training the model first to generate a platform profile',
+          position: 'top-center',
+          duration: 5000,
+          action: {
+            label: 'Train Model',
+            onClick: () => handleTrainModel(),
+          },
+        });
       }
       setPlatformProfiles([]);
     } finally {
@@ -121,27 +133,59 @@ export default function WriterProfilesContent() {
   const handleDeleteWriter = async () => {
     if (!selectedWriter) return;
     
-    // Confirm before deleting
-    if (!confirm(`Are you sure you want to delete "${selectedWriter.name}"? This action cannot be undone.`)) {
-      return;
-    }
+    // Use Sonner toast for confirmation instead of native confirm
+    toast((
+      <div className="flex flex-col gap-2">
+        <p>Are you sure you want to delete "{selectedWriter.name}"?</p>
+        <p className="text-sm text-muted-foreground">This action cannot be undone.</p>
+        <div className="flex justify-end gap-2 mt-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => toast.dismiss()}
+          >
+            Cancel
+          </Button>
+          <Button 
+            variant="destructive" 
+            size="sm"
+            onClick={async () => {
+              toast.dismiss();
+              
+              // Show loading toast
+              const loadingToast = toast.loading('Deleting writer profile...');
+              
+              try {
+                const response = await fetch(`/api/writer-profiles/${selectedWriter._id}`, {
+                  method: 'DELETE',
+                });
 
-    try {
-      const response = await fetch(`/api/writer-profiles/${selectedWriter._id}`, {
-        method: 'DELETE',
-      });
+                if (!response.ok) {
+                  throw new Error('Failed to delete writer profile');
+                }
 
-      if (!response.ok) {
-        throw new Error('Failed to delete writer profile');
-      }
-
-      // Show success message and refresh the page
-      toast.success('Writer profile deleted successfully');
-      window.location.reload();
-    } catch (error) {
-      console.error('Error deleting writer profile:', error);
-      toast.error('Failed to delete writer profile');
-    }
+                // Dismiss loading toast and show success
+                toast.dismiss(loadingToast);
+                toast.success('Writer profile deleted successfully');
+                
+                // Refresh the writers list instead of full page reload
+                fetchWriters();
+                setSelectedWriter(null);
+              } catch (error) {
+                console.error('Error deleting writer profile:', error);
+                toast.dismiss(loadingToast);
+                toast.error('Failed to delete writer profile');
+              }
+            }}
+          >
+            Delete
+          </Button>
+        </div>
+      </div>
+    ), {
+      duration: 10000, // 10 seconds
+      id: 'delete-confirmation',
+    });
   };
 
 
@@ -229,14 +273,23 @@ export default function WriterProfilesContent() {
 
   const handleTrainModel = async () => {
     if (!selectedWriter) {
-      toast.error('Please select a writer profile first');
+      toast.error('Please select a writer profile first', {
+        description: 'Select a writer profile from the list to continue',
+        position: 'top-center',
+        duration: 3000,
+      });
       return;
     }
 
     try {
+      // Show loading toast first
+      const loadingToast = toast.loading('Preparing to train model...', {
+        description: `Setting up training for "${selectedWriter.name}"`,
+        position: 'top-center',
+      });
+      
       setIsTraining(true);
       setTrainingError(null);
-      toast.info('Training started. This may take a few minutes...');
 
       const response = await fetch('/api/train-model', {
         method: 'POST',
@@ -257,13 +310,25 @@ export default function WriterProfilesContent() {
       }
       
       setTrainingId(data.trainingId);
-      toast.success('Training started. This may take a few minutes...');
+      
+      // Dismiss loading toast and show success
+      toast.dismiss(loadingToast);
+      toast.success('Training started successfully', {
+        description: 'This process may take a few minutes to complete',
+        position: 'top-center',
+        duration: 5000,
+      });
     } catch (error) {
       console.error('Error training model:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to start training';
       setTrainingError(errorMessage);
       setIsTraining(false);
-      toast.error(errorMessage);
+      
+      toast.error('Training failed', {
+        description: errorMessage,
+        position: 'top-center',
+        duration: 5000,
+      });
     }
   };
 
