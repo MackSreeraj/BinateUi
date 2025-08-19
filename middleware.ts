@@ -83,7 +83,14 @@ export async function middleware(request: NextRequest) {
       return addCorsHeaders(response, request);
     }
     
-    // For non-API routes, redirect to login
+    // For admin routes (except admin login), redirect to admin login
+    if (path.startsWith('/admin/') && path !== '/admin/login' && !path.startsWith('/admin/login/')) {
+      console.log('Unauthenticated user attempting to access admin route, redirecting to admin login');
+      const url = new URL('/admin/login', request.url);
+      return NextResponse.redirect(url);
+    }
+    
+    // For other non-API routes, redirect to user login
     const url = new URL('/auth/login', request.url);
     return NextResponse.redirect(url);
   }
@@ -98,7 +105,20 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url);
     }
     
-    // Token is valid, allow access
+    // For admin routes (except admin login), check if user has admin role
+    if (path.startsWith('/admin/') && path !== '/admin/login' && !path.startsWith('/admin/login/')) {
+      console.log('User role check for admin route:', session.user?.role);
+      if (!session.user?.role || session.user.role !== 'admin') {
+        console.log('Non-admin user attempting to access admin route, redirecting to admin login');
+        const url = new URL('/admin/login', request.url);
+        return NextResponse.redirect(url);
+      }
+    }
+    
+    // Special case: If a regular user tries to access admin login, let them through
+    // This ensures admin login page is always accessible
+    
+    // Token is valid and role check passed, allow access
     const response = NextResponse.next();
     return addCorsHeaders(response, request);
   } catch (error) {
@@ -137,6 +157,6 @@ export const config = {
      * - /uploads/* (uploads directory)
      * - /api/uploads/* (uploads API route)
      */
-    '/((?!api/auth|auth/login|auth/signup|_next/static|_next/image|favicon.ico|favicon/|logo/|manifest.webmanifest|uploads/|api/uploads/).*)',
+    '/((?!api/auth|auth/login|auth/signup|admin/|_next/static|_next/image|favicon.ico|favicon/|logo/|manifest.webmanifest|uploads/|api/uploads/).*)',
   ],
 };

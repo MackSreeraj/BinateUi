@@ -18,9 +18,11 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: string;
+  role?: string;
   status: 'active' | 'inactive' | 'suspended';
   lastLogin: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export default function UsersPage() {
@@ -29,26 +31,19 @@ export default function UsersPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // In a real app, you would fetch users from your API
     const fetchUsers = async () => {
       try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        setIsLoading(true);
         
-        // Mock data - replace with actual API call
-        const mockUsers: User[] = [
-          {
-            id: '1',
-            name: 'Admin User',
-            email: 'admin@example.com',
-            role: 'admin',
-            status: 'active',
-            lastLogin: '2023-06-15T10:30:00Z',
-          },
-          // Add more mock users as needed
-        ];
+        // Fetch users from our API endpoint
+        const response = await fetch('/api/admin/users');
         
-        setUsers(mockUsers);
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setUsers(data);
       } catch (error) {
         console.error('Error fetching users:', error);
       } finally {
@@ -78,16 +73,25 @@ export default function UsersPage() {
     }
   };
 
-  const getRoleBadge = (role: string) => {
+  const getRoleBadge = (role?: string) => {
+    // If the user has an email that includes 'admin', treat them as admin
+    // This is a temporary solution until roles are properly implemented
+    if (!role && filteredUsers.length > 0) {
+      const userEmail = filteredUsers[0].email.toLowerCase();
+      if (userEmail.includes('admin')) {
+        return <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">Admin</Badge>;
+      }
+    }
+    
     switch (role) {
       case 'admin':
-        return <Badge className="bg-purple-100 text-purple-800">Admin</Badge>;
+        return <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">Admin</Badge>;
       case 'editor':
-        return <Badge className="bg-blue-100 text-blue-800">Editor</Badge>;
+        return <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">Editor</Badge>;
       case 'user':
         return <Badge variant="outline">User</Badge>;
       default:
-        return <Badge variant="outline">{role}</Badge>;
+        return <Badge variant="outline">User</Badge>;
     }
   };
 
@@ -152,7 +156,7 @@ export default function UsersPage() {
                   <TableCell>{getRoleBadge(user.role)}</TableCell>
                   <TableCell>{getStatusBadge(user.status)}</TableCell>
                   <TableCell>
-                    {new Date(user.lastLogin).toLocaleString()}
+                    {user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never'}
                   </TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="sm">

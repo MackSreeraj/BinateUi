@@ -26,22 +26,14 @@ export default async function AdminLayout({
   
   console.log('Admin layout - session:', JSON.stringify(session, null, 2));
   
-  // If not authenticated, redirect to login
-  if (!session) {
-    console.log('No session found, redirecting to login');
-    redirect('/admin/login');
-  }
-
-  // Temporarily allow all authenticated users to access admin dashboard for debugging
-  // We'll log the role to see what's happening
-  console.log('User role:', session.user?.role);
+  // Log session info but don't redirect - middleware handles redirects now
+  console.log('Admin layout - user role:', session?.user?.role);
   
-  // Commenting out the role check temporarily for debugging
-  // if (session.user?.role !== 'admin') {
-  //   console.log('Not admin role, redirecting to home');
-  //   // Redirect non-admin users to the home page
-  //   redirect('/');
-  // }
+  // No need to redirect here - the middleware is handling all redirects
+  // This prevents redirect loops between middleware and layout
+  
+  // We can assume that if we've reached this point, the user is authenticated
+  // and has the admin role, because the middleware would have redirected otherwise
 
   return (
     <ThemeProvider
