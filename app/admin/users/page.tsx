@@ -68,7 +68,7 @@ export default function UsersPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
-        return <Badge variant="success">Active</Badge>;
+        return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">Active</Badge>;
       case 'inactive':
         return <Badge variant="secondary">Inactive</Badge>;
       case 'suspended':

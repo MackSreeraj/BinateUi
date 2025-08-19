@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { compare } from 'bcryptjs';
-import { signIn } from '@/auth';
+// Removed import for '@/auth' as it doesn't exist in the project
 
 export async function POST(request: Request) {
   try {
