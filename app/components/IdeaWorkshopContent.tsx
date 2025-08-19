@@ -608,77 +608,48 @@ const IdeaWorkshopContent = () => {
 
       {/* Top Bar with Dropdown */}
       <div className="flex items-center gap-4">
-        <div className="relative">
-          <Select value={selectedIdeaTitle} onValueChange={(value) => {
-            setSelectedIdeaTitle(value);
-            const selectedIdeaData = ideas.find(idea => idea._id === value);
-            if (selectedIdeaData) {
-              setSelectedIdea(value);
-            }
-          }}>
-            <SelectTrigger className="w-[300px]">
-              {isLoading.ideas ? (
-                <div className="flex items-center">
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  <span>Loading ideas...</span>
-                </div>
-              ) : (
-                <SelectValue placeholder="Select an idea" />
-              )}
-            </SelectTrigger>
-            <SelectContent className="max-h-[300px]">
-              {ideas.length === 0 && !isLoading.ideas ? (
-                <div className="p-2 text-center text-sm text-muted-foreground">
-                  No ideas found
-                </div>
-              ) : (
-                ideas.map((idea) => (
-                  <SelectItem key={idea._id} value={idea._id}>
-                    {idea.content.length > 50 ? `${idea.content.substring(0, 50)}...` : idea.content}
-                  </SelectItem>
-                ))
-              )}
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Intentionally left empty as idea dropdown is moved to filter panel */}
       </div>
 
       {/* Filter Panel Card */}
       <Card className="shadow-sm border-gray-200">
         <CardContent className="p-5 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Trend Dropdown */}
+            {/* Idea Dropdown */}
             <div className="space-y-2">
-              <Label htmlFor="trend" className="text-sm font-medium">
-                Trend
+              <Label htmlFor="idea" className="text-sm font-medium">
+                Idea
               </Label>
-              <Select value={selectedTrend} onValueChange={(value) => {
-                console.log(`🔄 Trend selected: ${value}`);
-                setSelectedTrend(value);
-                // Also update selectedIdea for backward compatibility with existing code
-                setSelectedIdea(value);
-                // Fetch drafts for the selected trend
-                fetchDrafts(value);
+              <Select value={selectedIdeaTitle} onValueChange={(value) => {
+                setSelectedIdeaTitle(value);
+                const selectedIdeaData = ideas.find(idea => idea._id === value);
+                if (selectedIdeaData) {
+                  setSelectedIdea(value);
+                  // Fetch drafts if the idea has a trendId
+                  if (selectedIdeaData.trendId) {
+                    fetchDrafts(selectedIdeaData.trendId);
+                  }
+                }
               }}>
-                <SelectTrigger id="trend" className="w-full">
-                  {isLoading.trends ? (
+                <SelectTrigger id="idea" className="w-full">
+                  {isLoading.ideas ? (
                     <div className="flex items-center">
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      <span>Loading...</span>
+                      <span>Loading ideas...</span>
                     </div>
                   ) : (
-                    <SelectValue placeholder="Select trend" />
+                    <SelectValue placeholder="Select an idea" />
                   )}
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px]">
-                  {trends.length === 0 && !isLoading.trends ? (
+                  {ideas.length === 0 && !isLoading.ideas ? (
                     <div className="p-2 text-center text-sm text-muted-foreground">
-                      No trends found
+                      No ideas found
                     </div>
                   ) : (
-                    trends.map((trend) => (
-                      <SelectItem key={trend._id} value={trend._id}>
-                        {trend.name}
+                    ideas.map((idea) => (
+                      <SelectItem key={idea._id} value={idea._id}>
+                        {idea.content.length > 50 ? `${idea.content.substring(0, 50)}...` : idea.content}
                       </SelectItem>
                     ))
                   )}
