@@ -118,7 +118,7 @@ export default function CompanyProfilesContent() {
       <div className="flex items-center justify-between pb-4">
         <div className="flex items-center space-x-2">
           <Building2 className="h-5 w-5" />
-          <h1 className="text-2xl font-semibold">Company Profiles</h1>
+          <h1 className="text-2xl font-semibold">COMPANY PROFILES</h1>
         </div>
         <AddCompanyModal onSave={handleCompanyAdded} />
       </div>

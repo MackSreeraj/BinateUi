@@ -194,7 +194,7 @@ export default function TrendWorkshopContent() {
         <>
           {/* Trend Selection Dropdown */}
           <div className="relative mb-6 w-full">
-            <h1 className="text-2xl font-bold mb-4">Trend Workshop</h1>
+            <h1 className="text-2xl font-bold mb-4">TREND WORKSHOP</h1>
             <label className="block text-sm font-medium mb-2">Select a trend to work with:</label>
             <div className="relative">
               <button

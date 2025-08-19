@@ -599,7 +599,7 @@ const IdeaWorkshopContent = () => {
       <div className="flex items-center justify-between pb-2">
         <div>
           <h1 className="text-2xl font-semibold flex items-center gap-2">
-            <span>💡</span> Idea Workshop
+            IDEA WORKSHOP
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Create and refine content ideas for your campaigns

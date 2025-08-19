@@ -112,7 +112,7 @@ const IdeasContent = () => {
       <div className="flex items-center justify-between pb-2">
         <div>
           <h1 className="text-2xl font-semibold flex items-center gap-2">
-            <span>💡</span> Content Ideas
+           CONTENT IDEAS
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Filter and manage content ideas generated from trends

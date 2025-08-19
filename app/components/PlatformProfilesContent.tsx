@@ -21,7 +21,7 @@ export default function PlatformProfilesContent() {
       <div className="flex items-center justify-between p-4 border-b">
         <div className="flex items-center space-x-2">
           <MonitorPlay className="h-5 w-5" />
-          <h1 className="text-2xl font-semibold">Platform Profiles</h1>
+          <h1 className="text-2xl font-semibold">PLATFORM PROFILES</h1>
         </div>
         <CreatePlatformModal onSuccess={handleSuccess} />
       </div>

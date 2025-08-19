@@ -351,7 +351,7 @@ export default function WriterProfilesContent() {
       <div className="flex items-center justify-between pb-4">
         <div className="flex items-center space-x-2">
           <PenTool className="h-5 w-5" />
-          <h1 className="text-2xl font-semibold">Writer Profiles</h1>
+          <h1 className="text-2xl font-semibold">WRITER PROFILES</h1>
         </div>
         <CreateWriterProfileModal onSuccess={handleProfileCreated} />
       </div>

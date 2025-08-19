@@ -165,7 +165,7 @@ const ContentCalendarOverview: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Content Calendar</h1>
+          <h1 className="text-2xl font-bold">CONTENT CALENDAR</h1>
           <p className="text-muted-foreground">
             Manage your content publishing schedule and track performance
           </p>
