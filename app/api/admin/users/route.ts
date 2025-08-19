@@ -41,7 +41,7 @@ export async function GET() {
     console.log('Available collections:', collectionNames);
     
     // Initialize variables
-    let usersData = [];
+    let usersData: any[] = [];
     let collectionUsed = '';
     let collectionsToTry = ['auth_users', 'users', 'user', 'accounts'];
     
@@ -148,7 +148,7 @@ export async function GET() {
   } catch (error) {
     console.error('Error in admin/users API:', error);
     return NextResponse.json(
-      { message: 'Internal server error', error: error.message },
+      { message: 'Internal server error', error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
