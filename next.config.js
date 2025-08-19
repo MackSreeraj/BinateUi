@@ -57,6 +57,16 @@ const nextConfig = {
       },
     ];
   },
+  
+  // Add rewrites to handle uploads path
+  async rewrites() {
+    return [
+      {
+        source: '/uploads/:path*',
+        destination: '/uploads/:path*',
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;
