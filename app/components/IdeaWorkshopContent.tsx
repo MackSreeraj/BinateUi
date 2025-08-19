@@ -313,29 +313,30 @@ const IdeaWorkshopContent = () => {
   }, [selectedTrend]);
 
   const generateContent = async () => {
-    if (!selectedCompany || !selectedWriter || !selectedPlatform || !selectedTrend) {
-      alert('Please select company, writer, platform and trend before generating content');
+    if (!selectedCompany || !selectedWriter || !selectedPlatform || !selectedIdea) {
+      alert('Please select company, writer, platform and idea before generating content');
       return;
     }
     
     setIsGenerating(true);
     
     try {
-      // Get the selected trend details
-      const selectedTrendData = trends.find(trend => trend._id === selectedTrend);
+      // Get the selected idea details
+      const selectedIdeaData = ideas.find(idea => idea._id === selectedIdea);
       
-      if (!selectedTrendData) {
-        throw new Error('Selected trend not found');
+      if (!selectedIdeaData) {
+        throw new Error('Selected idea not found');
       }
       
-      // Log the selected trend for debugging
-      console.log('Selected trend:', selectedTrend);
-      console.log('Selected trend data:', selectedTrendData);
+      // Log the selected idea for debugging
+      console.log('Selected idea:', selectedIdea);
+      console.log('Selected idea data:', selectedIdeaData);
       
       // Prepare the payload for our proxy API
       const proxyPayload = {
-        trendId: selectedTrend,
-        trendName: selectedTrendData.name || '',
+        ideaId: selectedIdea,
+        ideaContent: selectedIdeaData.content || '',
+        trendId: selectedIdeaData.trendId || '', // Use the idea's trendId if available
         companyId: selectedCompany,
         writerId: selectedWriter,
         platformId: selectedPlatform,
@@ -370,10 +371,10 @@ const IdeaWorkshopContent = () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            contentIdeaId: selectedTrend, // Use trendId as contentIdeaId for backward compatibility
-            content: selectedTrendData.name || '',
-            trendId: selectedTrend,
-            trendName: selectedTrendData.name || '',
+            contentIdeaId: selectedIdea, // Use ideaId as contentIdeaId
+            content: selectedIdeaData.content || '',
+            ideaId: selectedIdea,
+            trendId: selectedIdeaData.trendId || '', // Use the idea's trendId if available
             companyId: selectedCompany,
             writerId: selectedWriter,
             platformId: selectedPlatform,
