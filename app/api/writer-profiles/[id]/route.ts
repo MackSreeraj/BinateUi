@@ -33,16 +33,27 @@ export async function DELETE(
     }
 
     // Delete the writer profile
-    const result = await db.collection('writers').deleteOne({
+    const writerDeleteResult = await db.collection('writers').deleteOne({
       _id: new ObjectId(id)
     });
 
-    if (result.deletedCount === 0) {
+    if (writerDeleteResult.deletedCount === 0) {
       throw new Error('Failed to delete writer profile');
     }
 
+    // Also delete related trained data from writer_profiles collection
+    // where obj_id matches the writer's _id
+    const profilesDeleteResult = await db.collection('writer_profiles').deleteMany({
+      obj_id: id // Using the string ID as stored in writer_profiles
+    });
+
+    console.log(`Deleted ${profilesDeleteResult.deletedCount} related writer_profiles entries`);
+
     return NextResponse.json(
-      { message: 'Writer profile deleted successfully' },
+      { 
+        message: 'Writer profile deleted successfully',
+        deletedProfiles: profilesDeleteResult.deletedCount 
+      },
       { status: 200 }
     );
   } catch (error) {

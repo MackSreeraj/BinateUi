@@ -164,9 +164,22 @@ export default function WriterProfilesContent() {
                   throw new Error('Failed to delete writer profile');
                 }
 
+                // Parse the response to get deletion details
+                const result = await response.json();
+                const deletedProfilesCount = result.deletedProfiles || 0;
+
                 // Dismiss loading toast and show success
                 toast.dismiss(loadingToast);
-                toast.success('Writer profile deleted successfully');
+                
+                // Show success message with info about related deletions
+                if (deletedProfilesCount > 0) {
+                  toast.success(`Writer profile deleted successfully`, {
+                    description: `Also removed ${deletedProfilesCount} related trained profile${deletedProfilesCount !== 1 ? 's' : ''}.`,
+                    duration: 5000,
+                  });
+                } else {
+                  toast.success('Writer profile deleted successfully');
+                }
                 
                 // Refresh the writers list instead of full page reload
                 fetchWriters();
