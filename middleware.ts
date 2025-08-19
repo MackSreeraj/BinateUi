@@ -6,8 +6,10 @@ import { verifyToken } from './lib/auth';
 const publicPaths = [
   '/auth/login', 
   '/auth/signup',
+  '/admin/login', // Admin login page
   '/api/auth/login',
   '/api/auth/signup',
+  '/api/admin/login', // Admin login API
   '/api/auth/me', // Auth status check
   '/api/cron/check-scheduled-content', // Cron job endpoint
   '/manifest.webmanifest', // Manifest file

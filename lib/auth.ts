@@ -12,6 +12,7 @@ export interface User {
   name: string;
   email: string;
   password: string; // This should be hashed before storing
+  role?: string; // 'admin', 'user', etc.
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -22,22 +23,24 @@ export interface Session {
     id: string;
     name: string;
     email: string;
+    role?: string; // 'admin', 'user', etc.
   };
   exp: number;
 }
 
 // Create a JWT token for a user
-export async function createToken(user: { _id: string | ObjectId; name: string; email: string }): Promise<string> {
+export async function createToken(user: { _id: string | ObjectId; name: string; email: string; role?: string }): Promise<string> {
   const userId = user._id.toString();
   
-  // console.log('Creating token for user:', { id: userId, name: user.name, email: user.email });
+  // console.log('Creating token for user:', { id: userId, name: user.name, email: user.email, role: user.role });
   
   // Create a JWT that expires in 7 days
   const token = await new SignJWT({ 
     user: {
       id: userId,
       name: user.name,
-      email: user.email
+      email: user.email,
+      role: user.role || 'user' // Default to 'user' if no role specified
     }
   })
     .setProtectedHeader({ alg: 'HS256' })
@@ -76,7 +79,8 @@ export async function verifyToken(token: string): Promise<Session | null> {
       user: {
         id: userData.id,
         name: userData.name || '',
-        email: userData.email
+        email: userData.email,
+        role: userData.role || 'user' // Default to 'user' if no role specified
       },
       exp: payload.exp || 0
     };
